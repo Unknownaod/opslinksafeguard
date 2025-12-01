@@ -9,10 +9,11 @@
     :root {
       --bg-main: #060910;
       --bg-card: #0c121c;
+      --bg-hover: #101826;
       --accent: #ff6600;
       --accent2: #ff944d;
       --text-main: #e5e7eb;
-      --text-soft: #a1a1aa;
+      --text-soft: #9ca3af;
       --radius: 14px;
       --transition: 0.25s ease;
     }
@@ -90,30 +91,34 @@
 
     .module-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-      gap: 22px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
     }
 
     .module-card {
       background: var(--bg-card);
       border: 1px solid rgba(255,255,255,0.05);
       border-radius: var(--radius);
-      padding: 22px 20px;
+      padding: 24px 22px;
       transition: var(--transition);
       position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
     .module-card:hover {
+      background: var(--bg-hover);
       border-color: rgba(255,102,0,0.3);
-      box-shadow: 0 0 20px rgba(255,102,0,0.1);
       transform: translateY(-3px);
+      box-shadow: 0 0 25px rgba(255,102,0,0.1);
     }
 
     .module-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .module-header h3 {
@@ -122,17 +127,12 @@
     }
 
     .status {
-      font-size: 0.9rem;
       font-weight: 600;
+      font-size: 0.9rem;
     }
 
-    .status.enabled {
-      color: #16a34a;
-    }
-
-    .status.disabled {
-      color: #ef4444;
-    }
+    .status.enabled { color: #16a34a; }
+    .status.disabled { color: #ef4444; }
 
     .module-card p {
       color: var(--text-soft);
@@ -141,21 +141,41 @@
       margin-bottom: 16px;
     }
 
-    .toggle-btn {
-      display: inline-block;
-      padding: 10px 18px;
-      background: var(--accent);
-      color: #fff;
-      font-weight: 600;
-      font-size: 0.9rem;
-      border: none;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: var(--transition);
+    .buttons {
+      display: flex;
+      gap: 10px;
     }
 
-    .toggle-btn:hover {
+    .btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: var(--radius);
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 0.9rem;
+    }
+
+    .btn.enable {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn.enable:hover {
       background: var(--accent2);
+      transform: translateY(-2px);
+    }
+
+    .btn.manage {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+
+    .btn.manage:hover {
+      background: var(--accent);
+      color: #fff;
       transform: translateY(-2px);
     }
 
@@ -170,24 +190,92 @@
     footer a {
       color: var(--accent);
       text-decoration: none;
-      font-weight: 500;
     }
 
-    footer a:hover {
-      text-decoration: underline;
+    /* --- Popup Modal --- */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(5px);
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
     }
 
-    @keyframes fadeInUp {
+    .modal.active { display: flex; }
+
+    .modal-content {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 30px;
+      width: 420px;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 0 40px rgba(0,0,0,0.3);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-content h2 {
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .modal-content label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-soft);
+      margin-top: 10px;
+    }
+
+    .modal-content input,
+    .modal-content textarea {
+      width: 100%;
+      background: #0f172a;
+      color: var(--text-main);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-top: 5px;
+      font-size: 0.9rem;
+    }
+
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .modal-buttons button {
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .save-btn {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .cancel-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-soft);
+    }
+
+    @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
-
 <body>
   <header>
     <div class="logo">
-      <img src="/assets/Safeguard-Bot.png" alt="Safeguard Logo">
+      <img src="/assets/Safeguard-Bot.png" alt="Safeguard Logo" />
       <span>Safeguard Panel</span>
     </div>
     <div class="actions">
@@ -204,24 +292,39 @@
     </div>
   </main>
 
-  <footer>
-    © 2025 OpsLink Systems Network — Safeguard Division
-  </footer>
+  <footer>© 2025 OpsLink Systems Network — Safeguard Division</footer>
+
+  <!-- Modal -->
+  <div id="moduleModal" class="modal">
+    <div class="modal-content">
+      <h2 id="modalTitle">Manage Module</h2>
+      <label for="setting1">Example Setting</label>
+      <input id="setting1" placeholder="Enter value" />
+
+      <label for="setting2">Additional Notes</label>
+      <textarea id="setting2" rows="3" placeholder="Enter notes..."></textarea>
+
+      <div class="modal-buttons">
+        <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+        <button class="save-btn" onclick="saveModuleSettings()">Save</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const guildId = new URLSearchParams(window.location.search).get("guild") || window.location.pathname.split("/").pop();
     document.getElementById("serverId").innerText = `Server ID: ${guildId}`;
+    let currentModule = null;
 
     async function loadModules() {
       const container = document.getElementById("modulesContainer");
       try {
         const res = await fetch(`/api/modules/${guildId}`);
         const modules = await res.json();
-
         container.innerHTML = "";
 
         if (!modules || !modules.length) {
-          container.innerHTML = `<p style="color:#999">No modules found for this server.</p>`;
+          container.innerHTML = `<p style="color:#999;">No modules found for this server.</p>`;
           return;
         }
 
@@ -236,11 +339,13 @@
               </span>
             </div>
             <p>${mod.description}</p>
-            <button class="toggle-btn" onclick="toggleModule('${mod._id}', ${mod.enabled})">
-              ${mod.enabled ? "Disable" : "Enable"}
-            </button>
+            <div class="buttons">
+              <button class="btn enable" onclick="toggleModule('${mod._id}', ${mod.enabled})">
+                ${mod.enabled ? "Disable" : "Enable"}
+              </button>
+              ${mod.enabled ? `<button class="btn manage" onclick="openModal('${mod.name}', '${mod._id}')">Manage Module</button>` : ""}
+            </div>
           `;
-          card.style.animation = "fadeInUp 0.4s ease";
           container.appendChild(card);
         });
       } catch (err) {
@@ -259,6 +364,23 @@
 
       if (res.ok) loadModules();
       else alert("Failed to toggle module.");
+    }
+
+    function openModal(name, id) {
+      currentModule = id;
+      document.getElementById("modalTitle").innerText = `Manage ${name}`;
+      document.getElementById("moduleModal").classList.add("active");
+    }
+
+    function closeModal() {
+      document.getElementById("moduleModal").classList.remove("active");
+    }
+
+    function saveModuleSettings() {
+      const val1 = document.getElementById("setting1").value;
+      const val2 = document.getElementById("setting2").value;
+      alert(`Saved changes for module ${currentModule}:\nSetting1=${val1}\nSetting2=${val2}`);
+      closeModal();
     }
 
     loadModules();
