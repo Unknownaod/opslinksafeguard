@@ -21,16 +21,41 @@ button:hover{background:#ff944d;}
   <button onclick="window.location='/dashboard'">Back</button>
 </header>
 
-<div class="module"><h3>Anti-Raid System</h3><div class="toggle"><p>Protects against raids.</p><button id="raidToggle">Enable</button></div></div>
-<div class="module"><h3>Logging</h3><div class="toggle"><p>Tracks messages, bans, etc.</p><button id="logToggle">Enable</button></div></div>
-<div class="module"><h3>Verification</h3><div class="toggle"><p>Handles member verification.</p><button id="verifyToggle">Enable</button></div></div>
+<div id="modulesContainer" style="max-width:700px;margin:auto;margin-top:30px;text-align:center;">
+  <p>Loading modules...</p>
+</div>
 
 <script>
-const guildId=window.location.pathname.split("/").pop();
-document.getElementById("guildName").textContent=`Server: ${guildId}`;
-document.querySelectorAll("button").forEach(btn=>{
-  btn.addEventListener("click",()=>alert(`${btn.closest(".module").querySelector("h3").textContent} toggled!`));
-});
+const guildId = window.location.pathname.split("/").pop();
+document.getElementById("guildName").textContent = `Server: ${guildId}`;
+const container = document.getElementById("modulesContainer");
+
+async function loadModules(){
+  const res = await fetch(`/api/modules/${guildId}`);
+  const mods = await res.json();
+  if(!Array.isArray(mods)){container.innerHTML="<p>Failed to load modules.</p>";return;}
+  container.innerHTML="";
+  mods.forEach(m=>{
+    container.innerHTML += `
+      <div class="module">
+        <h3>${m.name}</h3>
+        <div class="toggle">
+          <p>${m.description}</p>
+          <button onclick="toggleModule('${m.id}', this)">${m.enabled ? "Disable" : "Enable"}</button>
+        </div>
+      </div>`;
+  });
+}
+
+async function toggleModule(id, btn){
+  btn.disabled = true;
+  const res = await fetch(`/api/modules/${guildId}/toggle/${id}`, {method:"POST"});
+  const data = await res.json();
+  if(data.success) btn.textContent = data.newState ? "Disable" : "Enable";
+  btn.disabled = false;
+}
+
+loadModules();
 </script>
 </body>
 </html>
