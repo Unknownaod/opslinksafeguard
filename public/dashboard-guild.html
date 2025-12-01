@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport"content="width=device-width,initial-scale=1.0"/>
+<title>Manage Guild – Safeguard</title>
+<link rel="icon" href="/assets/Safeguard-Bot.png"/>
+<style>
+body{background:#050816;color:#e5e7eb;font-family:"Segoe UI",sans-serif;margin:0;}
+header{display:flex;justify-content:space-between;align-items:center;padding:20px 50px;background:rgba(10,15,25,0.7);border-bottom:1px solid rgba(255,255,255,0.05);}
+header span{color:#ff6600;font-weight:600;font-size:1.3rem;}
+.module{background:#0b1220;border-radius:12px;padding:20px;margin:20px auto;max-width:600px;border:1px solid rgba(255,255,255,0.05);}
+.module h3{color:#ff6600;margin-bottom:10px;}
+.toggle{display:flex;justify-content:space-between;align-items:center;}
+button{background:#ff6600;border:none;color:#fff;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;}
+button:hover{background:#ff944d;}
+</style>
+</head>
+<body>
+<header>
+  <span id="guildName">Loading...</span>
+  <button onclick="window.location='/dashboard'">Back</button>
+</header>
+
+<div class="module"><h3>Anti-Raid System</h3><div class="toggle"><p>Protects against raids.</p><button id="raidToggle">Enable</button></div></div>
+<div class="module"><h3>Logging</h3><div class="toggle"><p>Tracks messages, bans, etc.</p><button id="logToggle">Enable</button></div></div>
+<div class="module"><h3>Verification</h3><div class="toggle"><p>Handles member verification.</p><button id="verifyToggle">Enable</button></div></div>
+
+<script>
+const guildId=window.location.pathname.split("/").pop();
+document.getElementById("guildName").textContent=`Server: ${guildId}`;
+document.querySelectorAll("button").forEach(btn=>{
+  btn.addEventListener("click",()=>alert(`${btn.closest(".module").querySelector("h3").textContent} toggled!`));
+});
+</script>
+</body>
+</html>
