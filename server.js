@@ -4,17 +4,15 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
-// node-fetch v3 in CommonJS:
-const fetch = (...args) => import("node-fetch").then(({ default: f }) => f(...args));
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
-// =====================================
-// ENV VARIABLES
-// =====================================
+/* ================================
+   ENV
+================================ */
 const {
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
@@ -24,155 +22,154 @@ const {
   MONGODB_URI
 } = process.env;
 
-// =====================================
-// STATIC PATH
-// =====================================
+if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET || !DISCORD_REDIRECT_URI || !SESSION_SECRET) {
+  console.warn("⚠️ Missing one or more Discord/SESSION env vars.");
+}
+if (!MONGODB_URI) {
+  console.warn("⚠️ MONGODB_URI is not set.");
+}
+
+/* ================================
+   STATIC
+================================ */
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
-// =====================================
-// CONNECT TO MONGODB
-// =====================================
+/* ================================
+   DB
+================================ */
 mongoose
-  .connect(MONGODB_URI)
+  .connect(MONGODB_URI, { })
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB connection failed:", err));
 
-// =====================================
-// MONGOOSE MODELS
-// =====================================
 const moduleSchema = new mongoose.Schema({
   guildId: String,
-  id: String,            // module key (e.g. "tickets", "greet")
+  id: String,          // e.g. "welcome", "verification"
   name: String,
   description: String,
-  enabled: Boolean,
-  settings: Object
+  enabled: { type: Boolean, default: false },
+  settings: { type: Object, default: {} }
 });
-
 const Module = mongoose.model("Module", moduleSchema);
 
-// Default module templates — applied per guild on first load
-const DEFAULT_MODULES = [
+/* Default module catalogue used when a guild is first opened in the panel */
+const DEFAULT_MODULE_CATALOGUE = [
   {
     id: "tickets",
     name: "Ticket System",
     description: "Advanced multi-panel ticket system with logging and transcripts.",
-    enabled: true,
-    settings: {
-      logChannelId: "",
-      supportRoleId: "",
-      ticketCategoryId: "",
-      allowClaim: true,
-      transcriptToFile: true,
-      transcriptToChannel: true
-    }
+    enabled: true
   },
   {
-    id: "greet",
-    name: "Welcome & Goodbye",
-    description: "Welcome new members, say goodbye, and assign autoroles.",
-    enabled: true,
-    settings: {
-      welcome: {
-        enabled: true,
-        channelId: "",
-        message: "Welcome {mention} to {server}! You are member #{membercount}.",
-        dm: "",
-        background: ""
-      },
-      goodbye: {
-        enabled: true,
-        channelId: "",
-        message: "Goodbye {user}, thanks for being part of {server}.",
-        dm: "",
-        background: ""
-      },
-      autoroles: [],
-      autoroleDelayMs: 0
-    }
+    id: "welcome",
+    name: "Welcome / Goodbye / Autorole",
+    description: "Welcome cards, goodbye messages, join/leave DMs and autoroles.",
+    enabled: true
   },
   {
-    id: "verify",
+    id: "verification",
     name: "Captcha Verification",
-    description: "Protect your server with captcha-based verification.",
-    enabled: true,
-    settings: {
-      enabled: true,
-      panelChannelId: "",
-      logChannelId: "",
-      roles: [],
-      message: "Click Verify to prove you're human.",
-      difficulty: {
-        mode: "medium",
-        length: 5,
-        decoys: 10,
-        trace: true
-      },
-      staffRoleId: ""
-    }
+    description: "Captcha-based verification, staff controls and logging.",
+    enabled: true
   },
   {
-    id: "level",
-    name: "Leveling System",
-    description: "XP, ranking cards and level-based role rewards.",
-    enabled: true,
-    settings: {
-      enabled: true,
-      xpPerMessage: 10,
-      levelChannelId: "",
-      roleRewards: [] // [{ level: Number, roleId: String }]
-    }
+    id: "leveling",
+    name: "Leveling & XP",
+    description: "XP per message, level-up channel and role rewards.",
+    enabled: false
   },
   {
-    id: "moderation",
-    name: "Moderation & Logging",
-    description: "Mod logs, audit logs, VC logs and mute role.",
-    enabled: true,
-    settings: {
-      modLogChannelId: "",
-      auditLogChannelId: "",
-      vcLogChannelId: "",
-      muteRoleId: ""
-    }
+    id: "logging",
+    name: "Moderation Logs",
+    description: "Moderation log channel for bans, kicks, warns and more.",
+    enabled: true
+  },
+  {
+    id: "auditlogs",
+    name: "Audit Logs",
+    description: "Tracks joins, leaves and server changes in an audit log channel.",
+    enabled: true
+  },
+  {
+    id: "vclogs",
+    name: "VC Logs",
+    description: "Logs users connecting, disconnecting and moving in voice.",
+    enabled: false
+  },
+  {
+    id: "muterole",
+    name: "Mute Role",
+    description: "Dedicated mute role used by the moderation system.",
+    enabled: true
+  },
+  {
+    id: "lockdown",
+    name: "Lockdown System",
+    description: "Lockdown channels or the whole server during incidents.",
+    enabled: true
+  },
+  {
+    id: "antiraid",
+    name: "Anti-Raid",
+    description: "Protects your server from mass joins and raid behaviour.",
+    enabled: true
+  },
+  {
+    id: "automod",
+    name: "AutoMod",
+    description: "Automatic filtering of links, spam and rule-breaking content.",
+    enabled: false
   }
 ];
 
-// Ensure module docs exist for a guild
-async function ensureGuildModules(guildId) {
+/* Ensure a guild has all default modules created */
+async function ensureModulesForGuild(guildId) {
   const existing = await Module.find({ guildId });
-  if (existing.length) return existing;
+  if (existing.length >= DEFAULT_MODULE_CATALOGUE.length) return;
 
-  const docs = DEFAULT_MODULES.map(mod => ({
-    guildId,
-    id: mod.id,
-    name: mod.name,
-    description: mod.description,
-    enabled: mod.enabled,
-    settings: mod.settings
+  const ops = DEFAULT_MODULE_CATALOGUE.map(m => ({
+    updateOne: {
+      filter: { guildId, id: m.id },
+      update: {
+        $setOnInsert: {
+          guildId,
+          id: m.id,
+          name: m.name,
+          description: m.description,
+          enabled: m.enabled,
+          settings: {}
+        }
+      },
+      upsert: true
+    }
   }));
 
-  await Module.insertMany(docs);
-  const created = await Module.find({ guildId });
-  console.log(`✅ Seeded modules for guild ${guildId}`);
-  return created;
+  if (ops.length) {
+    await Module.bulkWrite(ops);
+    console.log(`✅ Seeded modules for guild ${guildId}`);
+  }
 }
 
-// =====================================
-// ROUTES — AUTH + USER
-// =====================================
-app.get("/", (_, res) => res.sendFile(path.join(publicPath, "index.html")));
+/* node-fetch helper (works in CommonJS) */
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fn }) => fn(...args));
 
-// Discord OAuth Login
-app.get("/auth/discord", (req, res) => {
-  const scope = encodeURIComponent("identify guilds");
-  const redirect = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(
-    DISCORD_REDIRECT_URI
-  )}&response_type=code&scope=${scope}`;
-  res.redirect(redirect);
+/* ================================
+   AUTH / USER ROUTES
+================================ */
+app.get("/", (_, res) => {
+  res.sendFile(path.join(publicPath, "index.html"));
 });
 
-// Discord OAuth Callback
+app.get("/auth/discord", (req, res) => {
+  const scope = encodeURIComponent("identify guilds");
+  const url = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}` +
+    `&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}` +
+    `&response_type=code&scope=${scope}`;
+  res.redirect(url);
+});
+
 app.get("/auth/discord/callback", async (req, res) => {
   const code = req.query.code;
   if (!code) return res.redirect("/?error=no_code");
@@ -193,7 +190,6 @@ app.get("/auth/discord/callback", async (req, res) => {
       headers: { "Content-Type": "application/x-www-form-urlencoded" }
     });
     const oauthData = await tokenRes.json();
-
     if (!oauthData.access_token) {
       console.error("OAuth token error:", oauthData);
       return res.redirect("/?error=oauth_failed");
@@ -210,6 +206,7 @@ app.get("/auth/discord/callback", async (req, res) => {
       { expiresIn: "1h" }
     );
 
+    // The frontend JS stores this in localStorage.
     res.redirect("/?token=" + encodeURIComponent(token));
   } catch (err) {
     console.error("OAuth error:", err);
@@ -217,7 +214,6 @@ app.get("/auth/discord/callback", async (req, res) => {
   }
 });
 
-// Verify JWT and return user
 app.get("/api/user", (req, res) => {
   const auth = req.headers.authorization;
   if (!auth) return res.json({ loggedIn: false });
@@ -230,9 +226,9 @@ app.get("/api/user", (req, res) => {
   }
 });
 
-// =====================================
-// GUILDS ENDPOINT — LIST MANAGEABLE GUILDS
-// =====================================
+/* ================================
+   GUILDS ENDPOINT
+================================ */
 app.get("/api/guilds", async (req, res) => {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: "Missing token" });
@@ -241,23 +237,22 @@ app.get("/api/guilds", async (req, res) => {
     const decoded = jwt.verify(auth.split(" ")[1], SESSION_SECRET);
     const access = decoded.access_token;
 
-    // Get user guilds
+    // User guilds
     const userRes = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bearer ${access}` }
     });
     const userGuilds = await userRes.json();
 
-    // Get bot guilds
+    // Bot guilds
     const botRes = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bot ${BOT_TOKEN}` }
     });
     const botGuilds = await botRes.json();
-
     const botIds = new Set(Array.isArray(botGuilds) ? botGuilds.map(g => g.id) : []);
 
-    // Filter only manageable guilds (user must have MANAGE_GUILD = 0x20)
-    const manageable = userGuilds
-      .filter(g => (BigInt(g.permissions || 0n) & 0x20n) === 0x20n)
+    // MANAGE_GUILD = 0x20
+    const manageable = (Array.isArray(userGuilds) ? userGuilds : [])
+      .filter(g => (BigInt(g.permissions ?? 0n) & 0x20n) === 0x20n)
       .map(g => ({ ...g, installed: botIds.has(g.id) }));
 
     res.json(manageable);
@@ -267,57 +262,24 @@ app.get("/api/guilds", async (req, res) => {
   }
 });
 
-// =====================================
-// GUILD META — CHANNELS & ROLES
-// =====================================
-app.get("/api/guilds/:guildId/meta", async (req, res) => {
-  const { guildId } = req.params;
+/* ================================
+   MODULE API
+================================ */
 
-  try {
-    const [channelsRes, rolesRes] = await Promise.all([
-      fetch(`https://discord.com/api/guilds/${guildId}/channels`, {
-        headers: { Authorization: `Bot ${BOT_TOKEN}` }
-      }),
-      fetch(`https://discord.com/api/guilds/${guildId}/roles`, {
-        headers: { Authorization: `Bot ${BOT_TOKEN}` }
-      })
-    ]);
-
-    if (!channelsRes.ok || !rolesRes.ok) {
-      console.error("Failed to fetch guild meta:", await channelsRes.text(), await rolesRes.text());
-      return res.status(500).json({ error: "Failed to load guild metadata" });
-    }
-
-    const channels = await channelsRes.json();
-    const roles = await rolesRes.json();
-
-    res.json({
-      channels,
-      roles
-    });
-  } catch (err) {
-    console.error("Guild meta error:", err);
-    res.status(500).json({ error: "Failed to load guild metadata" });
-  }
-});
-
-// =====================================
-// SAFEGUARD MODULES API
-// =====================================
-
-// Get all modules for a guild (auto-seed defaults if missing)
+/* Get all modules for a guild (and auto-create defaults) */
 app.get("/api/modules/:guildId", async (req, res) => {
   try {
-    const { guildId } = req.params;
-    const mods = await ensureGuildModules(guildId);
-    res.json(mods);
+    const guildId = req.params.guildId;
+    await ensureModulesForGuild(guildId);
+    const modules = await Module.find({ guildId }).sort({ name: 1 });
+    res.json(modules);
   } catch (err) {
-    console.error("Load modules error:", err);
+    console.error("Get modules error:", err);
     res.status(500).json({ error: "Failed to load modules" });
   }
 });
 
-// Toggle module enable/disable
+/* Toggle enabled flag */
 app.post("/api/modules/toggle/:moduleId", async (req, res) => {
   try {
     const mod = await Module.findById(req.params.moduleId);
@@ -325,41 +287,34 @@ app.post("/api/modules/toggle/:moduleId", async (req, res) => {
 
     mod.enabled = !mod.enabled;
     await mod.save();
-
-    console.log(`🔧 Module ${mod.id} in guild ${mod.guildId} toggled → ${mod.enabled}`);
-    res.json({ success: true, newState: mod.enabled });
+    console.log(`🔧 Toggled module ${mod.id} (${mod.guildId}) → ${mod.enabled}`);
+    res.json({ success: true, enabled: mod.enabled });
   } catch (err) {
     console.error("Toggle module error:", err);
     res.status(500).json({ error: "Failed to toggle module" });
   }
 });
 
-// Update module settings
+/* Update settings object */
 app.post("/api/modules/update/:moduleId", async (req, res) => {
   try {
-    const { settings, enabled } = req.body;
     const mod = await Module.findById(req.params.moduleId);
     if (!mod) return res.status(404).json({ error: "Module not found" });
 
-    if (typeof enabled === "boolean") {
-      mod.enabled = enabled;
-    }
-    if (settings && typeof settings === "object") {
-      mod.settings = settings;
-    }
-
+    const newSettings = req.body.settings || {};
+    mod.settings = newSettings;
     await mod.save();
-    console.log(`🛠 Settings updated for module ${mod.id} in guild ${mod.guildId}`);
-    res.json({ success: true, module: mod });
+    console.log(`💾 Updated settings for ${mod.id} (${mod.guildId})`);
+    res.json({ success: true, settings: mod.settings });
   } catch (err) {
-    console.error("Update module error:", err);
-    res.status(500).json({ error: "Failed to update module settings" });
+    console.error("Update module settings error:", err);
+    res.status(500).json({ error: "Failed to update module" });
   }
 });
 
-// =====================================
-// STATIC ROUTES
-// =====================================
+/* ================================
+   STATIC ROUTES
+================================ */
 app.get("/dashboard", (_, res) =>
   res.sendFile(path.join(publicPath, "dashboard.html"))
 );
@@ -368,11 +323,12 @@ app.get("/dashboard/:id", (_, res) =>
   res.sendFile(path.join(publicPath, "dashboard-guild.html"))
 );
 
-// =====================================
-// START SERVER
-// =====================================
+/* ================================
+   START (local) / EXPORT (Vercel)
+================================ */
 const PORT = process.env.PORT || 3000;
-if (!process.env.VERCEL)
-  app.listen(PORT, () => console.log("✅ Safeguard panel on port", PORT));
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => console.log(`✅ Safeguard panel on port ${PORT}`));
+}
 
 module.exports = app;
