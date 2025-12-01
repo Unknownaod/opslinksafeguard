@@ -3,7 +3,11 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
-const fetch = require("node-fetch");
+
+// node-fetch v3 is ESM-only, so use a dynamic import wrapper:
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+
 dotenv.config();
 
 const app = express();
@@ -30,10 +34,14 @@ app.use(express.static(publicPath));
 // =====================================
 // CONNECT TO MONGODB
 // =====================================
-mongoose
-  .connect(MONGODB_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB connection failed:", err));
+if (!MONGODB_URI) {
+  console.error("❌ MONGODB_URI is not set in environment variables");
+} else {
+  mongoose
+    .connect(MONGODB_URI)
+    .then(() => console.log("✅ MongoDB connected"))
+    .catch(err => console.error("❌ MongoDB connection failed:", err));
+}
 
 // =====================================
 // MONGOOSE MODELS
@@ -84,6 +92,11 @@ app.get("/auth/discord/callback", async (req, res) => {
     });
     const oauthData = await tokenRes.json();
 
+    if (!oauthData.access_token) {
+      console.error("OAuth token error:", oauthData);
+      return res.redirect("/?error=oauth_failed");
+    }
+
     const userRes = await fetch("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${oauthData.access_token}` }
     });
@@ -132,13 +145,20 @@ app.get("/api/guilds", async (req, res) => {
     });
     const userGuilds = await userRes.json();
 
+    if (!Array.isArray(userGuilds)) {
+      console.error("Unexpected userGuilds:", userGuilds);
+      return res.status(500).json({ error: "Failed to load user guilds" });
+    }
+
     // Get bot guilds
     const botRes = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bot ${BOT_TOKEN}` }
     });
     const botGuilds = await botRes.json();
 
-    const botIds = new Set(Array.isArray(botGuilds) ? botGuilds.map(g => g.id) : []);
+    const botIds = new Set(
+      Array.isArray(botGuilds) ? botGuilds.map(g => g.id) : []
+    );
 
     // Filter only manageable guilds (user must have MANAGE_GUILD = 0x20)
     const manageable = userGuilds
@@ -162,12 +182,12 @@ app.get("/api/modules/:guildId", async (req, res) => {
     const modules = await Module.find({ guildId: req.params.guildId });
     res.json(modules);
   } catch (err) {
-    console.error(err);
+    console.error("Module fetch error:", err);
     res.status(500).json({ error: "Failed to load modules" });
   }
 });
 
-// Toggle module enable/disable (fixed route)
+// Toggle module enable/disable
 app.post("/api/modules/toggle/:moduleId", async (req, res) => {
   try {
     const mod = await Module.findById(req.params.moduleId);
@@ -176,10 +196,12 @@ app.post("/api/modules/toggle/:moduleId", async (req, res) => {
     mod.enabled = !mod.enabled;
     await mod.save();
 
-    console.log(`🔧 Module ${mod.name} in guild ${mod.guildId} toggled → ${mod.enabled}`);
+    console.log(
+      `🔧 Module ${mod.name} in guild ${mod.guildId} toggled → ${mod.enabled}`
+    );
     res.json({ success: true, newState: mod.enabled });
   } catch (err) {
-    console.error(err);
+    console.error("Module toggle error:", err);
     res.status(500).json({ error: "Failed to toggle module" });
   }
 });
@@ -198,7 +220,8 @@ app.get("/dashboard/:id", (_, res) =>
 // START SERVER
 // =====================================
 const PORT = process.env.PORT || 3000;
-if (!process.env.VERCEL)
+if (!process.env.VERCEL) {
   app.listen(PORT, () => console.log("✅ Safeguard panel on port", PORT));
+}
 
 module.exports = app;
