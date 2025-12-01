@@ -85,7 +85,8 @@ app.get("/api/user", (req, res) => {
 // ===== USER GUILDS =====
 app.get("/api/guilds", async (req, res) => {
   const auth = req.headers.authorization;
-  if (!auth) return res.status(401).json({ error: "No token" });
+  if (!auth) return res.status(401).json({ error: "Missing token" });
+
   try {
     const decoded = jwt.verify(auth.split(" ")[1], SESSION_SECRET);
     const access = decoded.access_token;
@@ -94,12 +95,27 @@ app.get("/api/guilds", async (req, res) => {
       headers: { Authorization: `Bearer ${access}` }
     });
 
-    const guilds = await guildsRes.json();
-    res.json(guilds);
+    const data = await guildsRes.json();
+
+    // Handle Discord API errors gracefully
+    if (!Array.isArray(data)) {
+      console.error("Discord returned error:", data);
+      return res.status(400).json({ error: "Failed to fetch guilds", details: data });
+    }
+
+    // Only guilds the user can manage (permission bit 0x20)
+    const manageable = data.filter(g => {
+      const perms = BigInt(g.permissions || 0);
+      return (perms & BigInt(0x20)) === BigInt(0x20);
+    });
+
+    res.json(manageable);
   } catch (err) {
-    res.status(401).json({ error: "Invalid token" });
+    console.error("Guild fetch error:", err);
+    res.status(401).json({ error: "Invalid or expired token" });
   }
 });
+
 
 // ===== DASHBOARD PAGE =====
 app.get("/dashboard", (req, res) => {
