@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpsLink Safeguard – Discord Protection by OpsLink Systems</title>
+
+  <style>
+    /* =====================================
+       OPSLINK SAFEGUARD THEME
+       ===================================== */
+    :root {
+      --bg-main: #050816;
+      --bg-card: #0b1220;
+      --accent: #ff6600;
+      --accent-soft: #ff944d;
+      --text-main: #e5e7eb;
+      --text-soft: #9ca3af;
+      --radius-lg: 18px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #0b1220, #050816);
+      color: var(--text-main);
+      overflow-x: hidden;
+    }
+
+    header {
+      text-align: center;
+      padding: 80px 20px 40px;
+      animation: fadeIn 1.2s ease;
+    }
+
+    header img {
+      width: 128px;
+      height: 128px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 12px rgba(255,102,0,0.4));
+    }
+
+    header h1 {
+      font-size: 2.8rem;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-shadow: 0 0 12px rgba(255,102,0,0.3);
+    }
+
+    header p {
+      color: var(--text-soft);
+      margin-top: 10px;
+      font-size: 1.1rem;
+    }
+
+    /* ==============================
+       FEATURE GRID
+       ============================== */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      max-width: 1100px;
+      margin: 60px auto;
+      padding: 0 30px;
+    }
+
+    .feature {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: var(--radius-lg);
+      padding: 28px 22px;
+      transition: 0.3s ease;
+      box-shadow: 0 0 15px rgba(255,102,0,0.05);
+    }
+
+    .feature:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-soft);
+      box-shadow: 0 0 22px rgba(255,102,0,0.15);
+    }
+
+    .feature h3 {
+      color: var(--accent);
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+
+    .feature p {
+      color: var(--text-soft);
+      line-height: 1.5;
+    }
+
+    /* ==============================
+       INTEGRATION SECTION
+       ============================== */
+    .integration {
+      text-align: center;
+      max-width: 900px;
+      margin: 80px auto;
+      padding: 0 30px;
+    }
+
+    .integration h2 {
+      color: var(--accent);
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+
+    .integration p {
+      color: var(--text-soft);
+      line-height: 1.6;
+      font-size: 1.1rem;
+    }
+
+    /* ==============================
+       CTA SECTION
+       ============================== */
+    .cta {
+      text-align: center;
+      margin: 80px 0;
+    }
+
+    .cta a {
+      display: inline-block;
+      padding: 14px 34px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: 0.25s ease;
+      box-shadow: 0 0 14px rgba(255,102,0,0.3);
+    }
+
+    .cta a:hover {
+      background: var(--accent-soft);
+      box-shadow: 0 0 18px rgba(255,102,0,0.5);
+      transform: translateY(-3px);
+    }
+
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      background: #070b15;
+      color: var(--text-soft);
+      text-align: center;
+      padding: 25px 10px;
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* ==============================
+       ANIMATIONS
+       ============================== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="Safeguard-Bot.png" alt="Safeguard Logo">
+    <h1>OpsLink Safeguard</h1>
+    <p>Keeping Communities Safe — Powered by OpsLink Systems.</p>
+  </header>
+
+  <section class="features">
+    <div class="feature">
+      <h3>🛡️ Advanced Anti-Raid</h3>
+      <p>Safeguard monitors server activity in real time, detecting and stopping raids before they escalate — protecting your community from mass joins and spam waves instantly.</p>
+    </div>
+    <div class="feature">
+      <h3>🤖 AI-Powered Moderation</h3>
+      <p>Detect toxicity, spam, and suspicious behavior automatically. Safeguard’s AI moderation adapts to your community’s tone and rules for smarter enforcement.</p>
+    </div>
+    <div class="feature">
+      <h3>📜 Server Logging</h3>
+      <p>Comprehensive event logging for messages, bans, roles, channels, and user actions — all accessible via web dashboard or Discord embeds.</p>
+    </div>
+    <div class="feature">
+      <h3>✅ Verification System</h3>
+      <p>Optional member verification that integrates with your OpsLinkCAD accounts or other OpsLink network services for seamless identity linking.</p>
+    </div>
+    <div class="feature">
+      <h3>🔗 OpsLink Integration</h3>
+      <p>Fully integrated with the OpsLink Systems ecosystem — from SoundWave Security to OpsLinkCAD — ensuring unified security and data synchronization.</p>
+    </div>
+    <div class="feature">
+      <h3>⚙️ Role & Permission Control</h3>
+      <p>Granular role configuration for staff and automated permission enforcement, preventing abuse and maintaining consistent moderation standards.</p>
+    </div>
+  </section>
+
+  <section class="integration">
+    <h2>Built on the OpsLink Systems Network</h2>
+    <p>Safeguard is part of the OpsLink Systems security suite, designed to unify protection across Discord communities, CAD platforms, and integrated OpsLink services. Manage everything seamlessly under one secure environment — from moderation to verified identity.</p>
+  </section>
+
+  <div class="cta">
+    <a href="#">Invite to Discord</a>
+    <a href="#" style="margin-left: 20px; background: transparent; border: 1px solid var(--accent); color: var(--accent);">View Documentation</a>
+  </div>
+
+  <footer>
+    © 2025 OpsLink Systems Network — All Rights Reserved.  
+    <br>Part of the <a href="https://opslinkcad.com">OpsLinkCAD</a> ecosystem.
+  </footer>
+
+</body>
+</html>
