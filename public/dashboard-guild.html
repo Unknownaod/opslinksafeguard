@@ -2,388 +2,1436 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <title>Safeguard Panel – Guild Modules</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Safeguard Panel – Manage Server</title>
 
   <style>
     :root {
-      --bg-main: #060910;
-      --bg-card: #0c121c;
-      --bg-hover: #101826;
-      --accent: #ff6600;
-      --accent2: #ff944d;
+      --bg-main: #05060b;
+      --bg-card: #0b0f18;
+      --bg-elevated: #111827;
+      --accent: #ff7b00;
+      --accent-soft: #ff9d4d;
+      --accent-fade: rgba(255, 123, 0, 0.2);
+      --border-subtle: rgba(255, 255, 255, 0.04);
       --text-main: #e5e7eb;
       --text-soft: #9ca3af;
-      --radius: 14px;
-      --transition: 0.25s ease;
+      --text-muted: #6b7280;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow-soft: 0 18px 45px rgba(0,0,0,0.65);
     }
 
     * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-      font-family: "Segoe UI", sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     body {
-      background: var(--bg-main);
-      color: var(--text-main);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      background: #0c1019;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 18px 32px;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 600;
-      font-size: 1.2rem;
-      color: var(--accent);
-    }
-
-    .logo img {
-      width: 32px;
-      height: 32px;
-    }
-
-    .actions button {
-      background: var(--accent);
-      border: none;
-      color: #fff;
-      font-weight: 600;
-      padding: 10px 18px;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: var(--transition);
-    }
-
-    .actions button:hover {
-      background: var(--accent2);
-      transform: translateY(-2px);
+      background:
+        radial-gradient(circle at 0% 0%, rgba(255, 123, 0, 0.12), transparent 55%),
+        radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.12), transparent 55%),
+        linear-gradient(135deg, #020617, #020915 55%, #050816);
+      color: var(--text-main);
     }
 
     main {
-      flex: 1;
-      padding: 40px 60px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 26px;
+      gap: 16px;
+    }
+
+    .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-block img {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      box-shadow: 0 0 18px rgba(255, 123, 0, 0.4);
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .logo-text span:first-child {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .logo-text span:last-child {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pill {
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: var(--text-soft);
+    }
+
+    .back-link {
+      font-size: 0.8rem;
+      padding: 5px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.8);
+      color: var(--text-soft);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .back-link:hover {
+      border-color: var(--accent-soft);
+      color: var(--accent-soft);
     }
 
     h1 {
-      font-size: 2rem;
-      color: var(--accent);
-      margin-bottom: 10px;
+      font-size: 1.8rem;
+      margin-bottom: 6px;
     }
 
-    .server-id {
+    .subtitle {
+      font-size: 0.95rem;
       color: var(--text-soft);
-      font-size: 0.9rem;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
 
-    .module-grid {
+    /* MODULE GRID */
+    .modules-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
     }
 
     .module-card {
-      background: var(--bg-card);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: var(--radius);
-      padding: 24px 22px;
-      transition: var(--transition);
       position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      background: radial-gradient(circle at 0% 0%, rgba(255, 123, 0, 0.12), transparent 65%), var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      padding: 16px 16px 14px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
     }
 
-    .module-card:hover {
-      background: var(--bg-hover);
-      border-color: rgba(255,102,0,0.3);
-      transform: translateY(-3px);
-      box-shadow: 0 0 25px rgba(255,102,0,0.1);
+    .module-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.12), transparent 55%);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+    }
+
+    .module-card:hover::before {
+      opacity: 1;
     }
 
     .module-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .module-header h3 {
-      color: var(--accent);
-      font-size: 1.1rem;
-    }
-
-    .status {
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    .status.enabled { color: #16a34a; }
-    .status.disabled { color: #ef4444; }
-
-    .module-card p {
-      color: var(--text-soft);
-      font-size: 0.95rem;
-      line-height: 1.6;
-      margin-bottom: 16px;
-    }
-
-    .buttons {
-      display: flex;
       gap: 10px;
+      margin-bottom: 8px;
     }
 
-    .btn {
-      flex: 1;
-      padding: 10px 16px;
-      border: none;
-      border-radius: var(--radius);
+    .module-title {
       font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
+      font-size: 1rem;
+    }
+
+    .module-id {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .module-desc {
       font-size: 0.9rem;
-    }
-
-    .btn.enable {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .btn.enable:hover {
-      background: var(--accent2);
-      transform: translateY(-2px);
-    }
-
-    .btn.manage {
-      background: transparent;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-    }
-
-    .btn.manage:hover {
-      background: var(--accent);
-      color: #fff;
-      transform: translateY(-2px);
-    }
-
-    footer {
-      text-align: center;
-      padding: 25px 10px;
-      border-top: 1px solid rgba(255,255,255,0.05);
       color: var(--text-soft);
-      font-size: 0.9rem;
-    }
-
-    footer a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    /* --- Popup Modal --- */
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(5px);
-      justify-content: center;
-      align-items: center;
-      z-index: 50;
-    }
-
-    .modal.active { display: flex; }
-
-    .modal-content {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      padding: 30px;
-      width: 420px;
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 0 40px rgba(0,0,0,0.3);
-      animation: fadeIn 0.3s ease;
-    }
-
-    .modal-content h2 {
-      color: var(--accent);
+      min-height: 38px;
       margin-bottom: 12px;
     }
 
-    .modal-content label {
-      display: block;
-      font-weight: 600;
+    .module-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-pill {
+      font-size: 0.78rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-pill.enabled {
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.6);
+      color: #4ade80;
+    }
+
+    .status-pill.disabled {
+      background: rgba(148, 163, 184, 0.09);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: #e5e7eb;
+    }
+
+    /* Buttons */
+    .btn {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      padding: 6px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s, transform 0.12s, box-shadow 0.2s, border-color 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+      color: #fff;
+      box-shadow: 0 0 18px rgba(255, 123, 0, 0.5);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 24px rgba(255, 123, 0, 0.75);
+    }
+
+    .btn-ghost {
+      background: rgba(15, 23, 42, 0.9);
       color: var(--text-soft);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent-soft);
+      color: var(--accent-soft);
+    }
+
+    .toggle-btn {
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .toggle-btn.on {
+      border-color: rgba(34, 197, 94, 0.7);
+      background: rgba(22, 101, 52, 0.35);
+      color: #4ade80;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(14px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+    }
+
+    .modal {
+      max-width: 720px;
+      width: 100%;
+      background: radial-gradient(circle at 0% 0%, rgba(255, 123, 0, 0.16), transparent 60%), #020617;
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      box-shadow: var(--shadow-soft);
+      padding: 18px 20px 16px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .modal-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .modal-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-soft);
+    }
+
+    .modal-section {
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 10px 12px 12px;
+      margin-bottom: 12px;
+    }
+
+    .modal-section h3 {
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+
+    .field-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .field {
+      flex: 1 1 160px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .field label {
+      font-size: 0.78rem;
+      color: var(--text-soft);
+    }
+
+    .field small {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    select,
+    input[type="text"],
+    input[type="number"],
+    textarea {
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 9px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--text-main);
+      padding: 6px 8px;
+      font-size: 0.8rem;
+      outline: none;
+      width: 100%;
+    }
+
+    select:focus,
+    input:focus,
+    textarea:focus {
+      border-color: var(--accent-soft);
+      box-shadow: 0 0 0 1px rgba(255, 123, 0, 0.35);
+    }
+
+    textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+
+    .checkbox-row input {
+      width: auto;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
       margin-top: 10px;
     }
 
-    .modal-content input,
-    .modal-content textarea {
-      width: 100%;
-      background: #0f172a;
-      color: var(--text-main);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
-      padding: 8px 10px;
-      margin-top: 5px;
-      font-size: 0.9rem;
-    }
-
-    .modal-buttons {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 18px;
-    }
-
-    .modal-buttons button {
-      padding: 10px 16px;
-      border-radius: var(--radius);
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    .save-btn {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .cancel-btn {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.1);
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
       color: var(--text-soft);
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 0.78rem;
+    }
+
+    .tag-list span {
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+    }
+
+    .error-banner {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(248, 113, 113, 0.7);
+      color: #fecaca;
+      font-size: 0.8rem;
+      border-radius: 10px;
+      padding: 6px 10px;
+      margin-bottom: 10px;
+      display: none;
+    }
+
+    .success-badge {
+      color: #bbf7d0;
+      font-size: 0.78rem;
+    }
+
+    @media (max-width: 640px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .header-right {
+        align-self: stretch;
+        justify-content: space-between;
+      }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="logo">
-      <img src="/assets/Safeguard-Bot.png" alt="Safeguard Logo" />
-      <span>Safeguard Panel</span>
-    </div>
-    <div class="actions">
-      <button onclick="window.location.href='/dashboard'">Back</button>
-    </div>
-  </header>
-
   <main>
-    <h1>Server Modules</h1>
-    <div id="serverId" class="server-id"></div>
+    <header>
+      <div class="logo-block">
+        <img src="/assets/Safeguard-Bot.png" alt="SafeGuard Logo" />
+        <div class="logo-text">
+          <span>Safeguard Panel</span>
+          <span id="guildNameLabel">Loading guild…</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="pill" id="userBadge">Not signed in</span>
+        <a href="/dashboard" class="back-link">
+          <span>←</span> Servers
+        </a>
+      </div>
+    </header>
 
-    <div id="modulesContainer" class="module-grid">
-      <p>Loading modules...</p>
+    <h1>Server Modules</h1>
+    <p class="subtitle">
+      Enable and configure SafeGuard’s systems for this server. Changes are saved live to MongoDB and mirrored by the bot.
+    </p>
+
+    <div id="modulesContainer" class="modules-grid">
+      <!-- Filled by JS -->
     </div>
   </main>
 
-  <footer>© 2025 OpsLink Systems Network — Safeguard Division</footer>
-
   <!-- Modal -->
-  <div id="moduleModal" class="modal">
-    <div class="modal-content">
-      <h2 id="modalTitle">Manage Module</h2>
-      <label for="setting1">Example Setting</label>
-      <input id="setting1" placeholder="Enter value" />
+  <div id="modalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title-block">
+          <div class="modal-title" id="modalTitle">Module</div>
+          <div class="modal-subtitle" id="modalSubtitle"></div>
+        </div>
+        <button class="btn-ghost btn" type="button" id="modalCloseBtn">Close</button>
+      </div>
 
-      <label for="setting2">Additional Notes</label>
-      <textarea id="setting2" rows="3" placeholder="Enter notes..."></textarea>
+      <div id="modalError" class="error-banner"></div>
 
-      <div class="modal-buttons">
-        <button class="cancel-btn" onclick="closeModal()">Cancel</button>
-        <button class="save-btn" onclick="saveModuleSettings()">Save</button>
+      <div id="modalBody">
+        <!-- Dynamic content -->
+      </div>
+
+      <div class="modal-footer">
+        <span id="modalStatus" class="success-badge"></span>
+        <button class="btn btn-ghost" type="button" id="modalCancelBtn">Cancel</button>
+        <button class="btn btn-primary" type="button" id="modalSaveBtn">Save Changes</button>
       </div>
     </div>
   </div>
 
   <script>
-    const guildId = new URLSearchParams(window.location.search).get("guild") || window.location.pathname.split("/").pop();
-    document.getElementById("serverId").innerText = `Server ID: ${guildId}`;
+    const token = localStorage.getItem("safeguard_token");
+    if (!token) {
+      window.location.href = "/";
+    }
+
+    const guildId = window.location.pathname.split("/").pop();
+    let guildMeta = { channels: [], roles: [] };
+    let modules = [];
     let currentModule = null;
 
-    async function loadModules() {
-      const container = document.getElementById("modulesContainer");
-      try {
-        const res = await fetch(`/api/modules/${guildId}`);
-        const modules = await res.json();
-        container.innerHTML = "";
+    const modulesContainer = document.getElementById("modulesContainer");
+    const userBadge = document.getElementById("userBadge");
+    const guildNameLabel = document.getElementById("guildNameLabel");
 
-        if (!modules || !modules.length) {
-          container.innerHTML = `<p style="color:#999;">No modules found for this server.</p>`;
-          return;
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const modalBody = document.getElementById("modalBody");
+    const modalError = document.getElementById("modalError");
+    const modalStatus = document.getElementById("modalStatus");
+    const modalCloseBtn = document.getElementById("modalCloseBtn");
+    const modalCancelBtn = document.getElementById("modalCancelBtn");
+    const modalSaveBtn = document.getElementById("modalSaveBtn");
+
+    // Helper: fetch with auth
+    async function api(path, options = {}) {
+      const res = await fetch(path, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+          ...(options.headers || {})
         }
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status}: ${text}`);
+      }
+      return res.json();
+    }
 
-        modules.forEach(mod => {
-          const card = document.createElement("div");
-          card.className = "module-card";
-          card.innerHTML = `
-            <div class="module-header">
-              <h3>${mod.name}</h3>
-              <span class="status ${mod.enabled ? "enabled" : "disabled"}">
-                ${mod.enabled ? "🟢 Enabled" : "🔴 Disabled"}
-              </span>
-            </div>
-            <p>${mod.description}</p>
-            <div class="buttons">
-              <button class="btn enable" onclick="toggleModule('${mod._id}', ${mod.enabled})">
-                ${mod.enabled ? "Disable" : "Enable"}
-              </button>
-              ${mod.enabled ? `<button class="btn manage" onclick="openModal('${mod.name}', '${mod._id}')">Manage Module</button>` : ""}
-            </div>
-          `;
-          container.appendChild(card);
-        });
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = `<p style="color:#f87171;">Failed to load modules.</p>`;
+    function setError(msg) {
+      if (!msg) {
+        modalError.style.display = "none";
+        modalError.textContent = "";
+      } else {
+        modalError.style.display = "block";
+        modalError.textContent = msg;
       }
     }
 
-    async function toggleModule(moduleId, currentState) {
-      const newState = !currentState;
-      const res = await fetch(`/api/modules/toggle/${moduleId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: newState }),
-      });
-
-      if (res.ok) loadModules();
-      else alert("Failed to toggle module.");
+    function setStatus(msg) {
+      modalStatus.textContent = msg || "";
     }
 
-    function openModal(name, id) {
-      currentModule = id;
-      document.getElementById("modalTitle").innerText = `Manage ${name}`;
-      document.getElementById("moduleModal").classList.add("active");
+    function openModal(mod) {
+      currentModule = mod;
+      setError("");
+      setStatus("");
+      modalTitle.textContent = mod.name;
+      modalSubtitle.textContent = mod.description;
+      buildModuleForm(mod);
+      modalBackdrop.style.display = "flex";
     }
 
     function closeModal() {
-      document.getElementById("moduleModal").classList.remove("active");
+      modalBackdrop.style.display = "none";
+      currentModule = null;
     }
 
-    function saveModuleSettings() {
-      const val1 = document.getElementById("setting1").value;
-      const val2 = document.getElementById("setting2").value;
-      alert(`Saved changes for module ${currentModule}:\nSetting1=${val1}\nSetting2=${val2}`);
-      closeModal();
+    modalCloseBtn.onclick = closeModal;
+    modalCancelBtn.onclick = closeModal;
+
+    modalSaveBtn.onclick = async () => {
+      if (!currentModule) return;
+      try {
+        setError("");
+        setStatus("Saving…");
+        const newSettings = collectSettingsFromForm(currentModule);
+        const res = await fetch(`/api/modules/update/${currentModule._id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            settings: newSettings,
+            enabled: currentModule.enabled
+          })
+        });
+        if (!res.ok) {
+          const t = await res.text();
+          throw new Error(t);
+        }
+        const data = await res.json();
+        // Update local copy
+        const idx = modules.findIndex(m => m._id === currentModule._id);
+        if (idx !== -1) modules[idx] = data.module;
+        currentModule = data.module;
+        renderModules();
+        setStatus("Saved.");
+        setTimeout(closeModal, 700);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to save changes. Check console/logs for details.");
+        setStatus("");
+      }
+    };
+
+    // ==========================
+    // RENDER MODULE CARDS
+    // ==========================
+    function renderModules() {
+      modulesContainer.innerHTML = "";
+      modules.forEach(mod => {
+        const card = document.createElement("div");
+        card.className = "module-card";
+
+        const header = document.createElement("div");
+        header.className = "module-header";
+
+        const left = document.createElement("div");
+        const titleEl = document.createElement("div");
+        titleEl.className = "module-title";
+        titleEl.textContent = mod.name;
+        const idEl = document.createElement("div");
+        idEl.className = "module-id";
+        idEl.textContent = mod.id;
+        left.appendChild(titleEl);
+        left.appendChild(idEl);
+
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "toggle-btn" + (mod.enabled ? " on" : "");
+        toggleBtn.textContent = mod.enabled ? "Enabled" : "Disabled";
+        toggleBtn.onclick = () => toggleModule(mod);
+
+        header.appendChild(left);
+        header.appendChild(toggleBtn);
+
+        const desc = document.createElement("div");
+        desc.className = "module-desc";
+        desc.textContent = mod.description || "";
+
+        const footer = document.createElement("div");
+        footer.className = "module-footer";
+
+        const status = document.createElement("span");
+        status.className = "status-pill " + (mod.enabled ? "enabled" : "disabled");
+        status.textContent = mod.enabled ? "Active" : "Disabled";
+
+        const manageBtn = document.createElement("button");
+        manageBtn.className = "btn btn-primary";
+        manageBtn.type = "button";
+        manageBtn.textContent = "Manage Module";
+        manageBtn.onclick = () => openModal(mod);
+
+        footer.appendChild(status);
+        footer.appendChild(manageBtn);
+
+        card.appendChild(header);
+        card.appendChild(desc);
+        card.appendChild(footer);
+
+        modulesContainer.appendChild(card);
+      });
     }
 
-    loadModules();
-  </script>
-</body>
-</html>
+    async function toggleModule(mod) {
+      try {
+        const res = await fetch(`/api/modules/toggle/${mod._id}`, {
+          method: "POST"
+        });
+        if (!res.ok) {
+          const t = await res.text();
+          throw new Error(t);
+        }
+        const data = await res.json();
+        mod.enabled = data.newState;
+        const idx = modules.findIndex(m => m._id === mod._id);
+        if (idx !== -1) modules[idx].enabled = data.newState;
+        renderModules();
+      } catch (err) {
+        console.error("Toggle error:", err);
+        alert("Failed to toggle module. Check console/logs.");
+      }
+    }
+
+    // ==========================
+    // BUILD FORMS PER MODULE
+    // ==========================
+    function buildModuleForm(mod) {
+      const s = mod.settings || {};
+      modalBody.innerHTML = "";
+
+      // Utility: options from channels/roles
+      const textChannels = guildMeta.channels.filter(c => c.type === 0 || c.type === 5);
+      const categories = guildMeta.channels.filter(c => c.type === 4);
+      const voiceChannels = guildMeta.channels.filter(c => c.type === 2);
+      const roles = guildMeta.roles.filter(r => !r.managed);
+
+      function createSelect(id, options, value, label, helper) {
+        const wrap = document.createElement("div");
+        wrap.className = "field";
+        if (label) {
+          const l = document.createElement("label");
+          l.htmlFor = id;
+          l.textContent = label;
+          wrap.appendChild(l);
+        }
+        const sel = document.createElement("select");
+        sel.id = id;
+
+        const optNone = document.createElement("option");
+        optNone.value = "";
+        optNone.textContent = "— Not set —";
+        sel.appendChild(optNone);
+
+        options.forEach(o => {
+          const opt = document.createElement("option");
+          opt.value = o.id;
+          opt.textContent = o.name;
+          if (o.id === value) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        wrap.appendChild(sel);
+
+        if (helper) {
+          const small = document.createElement("small");
+          small.textContent = helper;
+          wrap.appendChild(small);
+        }
+        return wrap;
+      }
+
+      function createInput(id, value, label, helper, type = "text") {
+        const wrap = document.createElement("div");
+        wrap.className = "field";
+        if (label) {
+          const l = document.createElement("label");
+          l.htmlFor = id;
+          l.textContent = label;
+          wrap.appendChild(l);
+        }
+        const inp = document.createElement("input");
+        inp.id = id;
+        inp.type = type;
+        inp.value = value || "";
+        wrap.appendChild(inp);
+
+        if (helper) {
+          const small = document.createElement("small");
+          small.textContent = helper;
+          wrap.appendChild(small);
+        }
+        return wrap;
+      }
+
+      function createTextarea(id, value, label, helper) {
+        const wrap = document.createElement("div");
+        wrap.className = "field";
+        if (label) {
+          const l = document.createElement("label");
+          l.htmlFor = id;
+          l.textContent = label;
+          wrap.appendChild(l);
+        }
+        const ta = document.createElement("textarea");
+        ta.id = id;
+        ta.value = value || "";
+        wrap.appendChild(ta);
+
+        if (helper) {
+          const small = document.createElement("small");
+          small.textContent = helper;
+          wrap.appendChild(small);
+        }
+        return wrap;
+      }
+
+      function createCheckbox(id, checked, label) {
+        const row = document.createElement("label");
+        row.className = "checkbox-row";
+        const inp = document.createElement("input");
+        inp.type = "checkbox";
+        inp.id = id;
+        inp.checked = !!checked;
+        row.appendChild(inp);
+        const span = document.createElement("span");
+        span.textContent = label;
+        row.appendChild(span);
+        return row;
+      }
+
+      // ===== tickets =====
+      if (mod.id === "tickets") {
+        const sec1 = document.createElement("div");
+        sec1.className = "modal-section";
+        const h = document.createElement("h3");
+        h.textContent = "Ticket Routing";
+        sec1.appendChild(h);
+
+        const row1 = document.createElement("div");
+        row1.className = "field-row";
+        row1.appendChild(createSelect(
+          "tickets_ticketCategoryId",
+          categories,
+          s.ticketCategoryId || "",
+          "Ticket Category",
+          "Category where ticket channels will be created."
+        ));
+        row1.appendChild(createSelect(
+          "tickets_logChannelId",
+          textChannels,
+          s.logChannelId || "",
+          "Log Channel",
+          "Channel where ticket actions & transcripts are logged."
+        ));
+        row1.appendChild(createSelect(
+          "tickets_supportRoleId",
+          roles,
+          s.supportRoleId || "",
+          "Support Role",
+          "Role that can manage / claim tickets."
+        ));
+        sec1.appendChild(row1);
+
+        const sec2 = document.createElement("div");
+        sec2.className = "modal-section";
+        const h2 = document.createElement("h3");
+        h2.textContent = "Ticket Behavior";
+        sec2.appendChild(h2);
+
+        sec2.appendChild(createCheckbox("tickets_allowClaim", s.allowClaim, "Enable claim button"));
+        sec2.appendChild(createCheckbox("tickets_transcriptToFile", s.transcriptToFile, "Save transcript as file"));
+        sec2.appendChild(createCheckbox("tickets_transcriptToChannel", s.transcriptToChannel, "Send transcript to log channel"));
+
+        modalBody.appendChild(sec1);
+        modalBody.appendChild(sec2);
+      }
+
+      // ===== greet (welcome & goodbye) =====
+      if (mod.id === "greet") {
+        const g = {
+          welcome: s.welcome || {},
+          goodbye: s.goodbye || {},
+          autoroles: s.autoroles || [],
+          autoroleDelayMs: s.autoroleDelayMs || 0
+        };
+
+        const secW = document.createElement("div");
+        secW.className = "modal-section";
+        const hw = document.createElement("h3");
+        hw.textContent = "Welcome Configuration";
+        secW.appendChild(hw);
+
+        secW.appendChild(createCheckbox("greet_welcome_enabled", g.welcome.enabled, "Enable welcome messages"));
+
+        const rowW = document.createElement("div");
+        rowW.className = "field-row";
+        rowW.appendChild(createSelect(
+          "greet_welcome_channelId",
+          textChannels,
+          g.welcome.channelId || "",
+          "Welcome Channel",
+          "Channel where welcome messages are sent."
+        ));
+        secW.appendChild(rowW);
+
+        secW.appendChild(
+          createTextarea(
+            "greet_welcome_message",
+            g.welcome.message || "",
+            "Welcome Message",
+            "Placeholders: {mention}, {user}, {server}, {membercount}"
+          )
+        );
+        secW.appendChild(
+          createTextarea(
+            "greet_welcome_dm",
+            g.welcome.dm || "",
+            "Welcome DM (optional)",
+            "Sent to users in DM when they join. Leave blank to disable."
+          )
+        );
+        secW.appendChild(
+          createInput(
+            "greet_welcome_background",
+            g.welcome.background || "",
+            "Welcome Card Background URL",
+            "Used by your image generator for welcome cards."
+          )
+        );
+
+        const secG = document.createElement("div");
+        secG.className = "modal-section";
+        const hg = document.createElement("h3");
+        hg.textContent = "Goodbye Configuration";
+        secG.appendChild(hg);
+
+        secG.appendChild(createCheckbox("greet_goodbye_enabled", g.goodbye.enabled, "Enable goodbye messages"));
+
+        const rowG = document.createElement("div");
+        rowG.className = "field-row";
+        rowG.appendChild(createSelect(
+          "greet_goodbye_channelId",
+          textChannels,
+          g.goodbye.channelId || "",
+          "Goodbye Channel",
+          "Channel where goodbye messages are sent."
+        ));
+        secG.appendChild(rowG);
+
+        secG.appendChild(
+          createTextarea(
+            "greet_goodbye_message",
+            g.goodbye.message || "",
+            "Goodbye Message",
+            "Placeholders: {mention}, {user}, {server}, {membercount}"
+          )
+        );
+        secG.appendChild(
+          createTextarea(
+            "greet_goodbye_dm",
+            g.goodbye.dm || "",
+            "Goodbye DM (optional)",
+            "Sent to users in DM when they leave. Leave blank to disable."
+          )
+        );
+        secG.appendChild(
+          createInput(
+            "greet_goodbye_background",
+            g.goodbye.background || "",
+            "Goodbye Card Background URL",
+            "Used by your image generator for goodbye cards."
+          )
+        );
+
+        const secA = document.createElement("div");
+        secA.className = "modal-section";
+        const ha = document.createElement("h3");
+        ha.textContent = "Autoroles";
+        secA.appendChild(ha);
+
+        const delayRow = document.createElement("div");
+        delayRow.className = "field-row";
+        delayRow.appendChild(
+          createInput(
+            "greet_autoroleDelayMs",
+            g.autoroleDelayMs || 0,
+            "Autorole Delay (ms)",
+            "1000ms = 1 second. Delay before applying autoroles.",
+            "number"
+          )
+        );
+        secA.appendChild(delayRow);
+
+        const roleWrap = document.createElement("div");
+        roleWrap.className = "field";
+        const rl = document.createElement("label");
+        rl.textContent = "Autorole Roles";
+        roleWrap.appendChild(rl);
+
+        const rolesContainer = document.createElement("div");
+        rolesContainer.className = "tag-list";
+        roles.forEach(r => {
+          const span = document.createElement("span");
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.value = r.id;
+          cb.checked = g.autoroles.includes(r.id);
+          cb.id = "greet_autoroles_" + r.id;
+          span.appendChild(cb);
+          const txt = document.createTextNode(" " + r.name);
+          span.appendChild(txt);
+          rolesContainer.appendChild(span);
+        });
+        roleWrap.appendChild(rolesContainer);
+        secA.appendChild(roleWrap);
+
+        modalBody.appendChild(secW);
+        modalBody.appendChild(secG);
+        modalBody.appendChild(secA);
+      }
+
+      // ===== verify =====
+      if (mod.id === "verify") {
+        const v = {
+          enabled: s.enabled !== undefined ? s.enabled : true,
+          panelChannelId: s.panelChannelId || "",
+          logChannelId: s.logChannelId || "",
+          roles: s.roles || [],
+          message: s.message || "Click Verify to prove you're human.",
+          difficulty: s.difficulty || {
+            mode: "medium",
+            length: 5,
+            decoys: 10,
+            trace: true
+          },
+          staffRoleId: s.staffRoleId || ""
+        };
+
+        const secMain = document.createElement("div");
+        secMain.className = "modal-section";
+        const h = document.createElement("h3");
+        h.textContent = "Verification Settings";
+        secMain.appendChild(h);
+
+        secMain.appendChild(createCheckbox("verify_enabled", v.enabled, "Enable verification system"));
+
+        const row1 = document.createElement("div");
+        row1.className = "field-row";
+        row1.appendChild(createSelect(
+          "verify_panelChannelId",
+          textChannels,
+          v.panelChannelId,
+          "Verification Panel Channel",
+          "Channel where the verification panel is posted."
+        ));
+        row1.appendChild(createSelect(
+          "verify_logChannelId",
+          textChannels,
+          v.logChannelId,
+          "Log Channel",
+          "Channel for verification logs / actions."
+        ));
+        secMain.appendChild(row1);
+
+        const row2 = document.createElement("div");
+        row2.className = "field-row";
+        row2.appendChild(createSelect(
+          "verify_staffRoleId",
+          roles,
+          v.staffRoleId,
+          "Staff Role",
+          "Role required to manage verification & clear attempts."
+        ));
+        secMain.appendChild(row2);
+
+        secMain.appendChild(
+          createTextarea(
+            "verify_message",
+            v.message,
+            "Verification Panel Message",
+            "Shown in the embed above the Verify button."
+          )
+        );
+
+        const secRoles = document.createElement("div");
+        secRoles.className = "modal-section";
+        const hr = document.createElement("h3");
+        hr.textContent = "Verification Roles";
+        secRoles.appendChild(hr);
+
+        const list = document.createElement("div");
+        list.className = "tag-list";
+        roles.forEach(r => {
+          const span = document.createElement("span");
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.value = r.id;
+          cb.checked = v.roles.includes(r.id);
+          cb.id = "verify_role_" + r.id;
+          span.appendChild(cb);
+          span.appendChild(document.createTextNode(" " + r.name));
+          list.appendChild(span);
+        });
+        secRoles.appendChild(list);
+
+        const secDiff = document.createElement("div");
+        secDiff.className = "modal-section";
+        const hd = document.createElement("h3");
+        hd.textContent = "Captcha Difficulty";
+        secDiff.appendChild(hd);
+
+        const rowD = document.createElement("div");
+        rowD.className = "field-row";
+
+        const modeWrap = document.createElement("div");
+        modeWrap.className = "field";
+        const modeLabel = document.createElement("label");
+        modeLabel.htmlFor = "verify_diff_mode";
+        modeLabel.textContent = "Mode";
+        modeWrap.appendChild(modeLabel);
+        const modeSel = document.createElement("select");
+        modeSel.id = "verify_diff_mode";
+        ["easy", "medium", "hard", "manual"].forEach(m => {
+          const o = document.createElement("option");
+          o.value = m;
+          o.textContent = m;
+          if (v.difficulty.mode === m) o.selected = true;
+          modeSel.appendChild(o);
+        });
+        modeWrap.appendChild(modeSel);
+        const sm = document.createElement("small");
+        sm.textContent = "Matches /verify difficulty preset modes.";
+        modeWrap.appendChild(sm);
+
+        rowD.appendChild(modeWrap);
+        rowD.appendChild(
+          createInput(
+            "verify_diff_length",
+            v.difficulty.length || 5,
+            "Captcha Length",
+            "Manual mode: override preset length.",
+            "number"
+          )
+        );
+        rowD.appendChild(
+          createInput(
+            "verify_diff_decoys",
+            v.difficulty.decoys || 10,
+            "Decoy Count",
+            "Noise characters/points around the captcha.",
+            "number"
+          )
+        );
+        secDiff.appendChild(rowD);
+        secDiff.appendChild(createCheckbox("verify_diff_trace", v.difficulty.trace, "Enable trace lines"));
+
+        modalBody.appendChild(secMain);
+        modalBody.appendChild(secRoles);
+        modalBody.appendChild(secDiff);
+      }
+
+      // ===== level =====
+      if (mod.id === "level") {
+        const lv = {
+          enabled: s.enabled !== undefined ? s.enabled : true,
+          xpPerMessage: s.xpPerMessage || 10,
+          levelChannelId: s.levelChannelId || "",
+          roleRewards: s.roleRewards || []
+        };
+
+        const secMain = document.createElement("div");
+        secMain.className = "modal-section";
+        const h = document.createElement("h3");
+        h.textContent = "Leveling Settings";
+        secMain.appendChild(h);
+
+        secMain.appendChild(createCheckbox("level_enabled", lv.enabled, "Enable leveling system"));
+
+        const row1 = document.createElement("div");
+        row1.className = "field-row";
+        row1.appendChild(
+          createInput(
+            "level_xpPerMessage",
+            lv.xpPerMessage,
+            "XP Per Message",
+            "Matches /level setxp.",
+            "number"
+          )
+        );
+        row1.appendChild(
+          createSelect(
+            "level_levelChannelId",
+            textChannels,
+            lv.levelChannelId,
+            "Level-Up Channel",
+            "Optional. Where level-up messages go."
+          )
+        );
+        secMain.appendChild(row1);
+
+        const secRoles = document.createElement("div");
+        secRoles.className = "modal-section";
+        const hr = document.createElement("h3");
+        hr.textContent = "Role Rewards";
+        secRoles.appendChild(hr);
+
+        const desc = document.createElement("p");
+        desc.style.fontSize = "0.78rem";
+        desc.style.color = "var(--text-soft)";
+        desc.style.marginBottom = "6px";
+        desc.textContent = "Configure which roles are given at each level.";
+        secRoles.appendChild(desc);
+
+        const table = document.createElement("div");
+        table.id = "level_roles_table";
+        table.style.display = "flex";
+        table.style.flexDirection = "column";
+        table.style.gap = "6px";
+
+        function addRoleRow(levelValue, roleId) {
+          const row = document.createElement("div");
+          row.className = "field-row";
+
+          const levelField = createInput("", levelValue || "", "Level", "", "number");
+          levelField.querySelector("label").style.fontSize = "0.75rem";
+          const levelInput = levelField.querySelector("input");
+          levelInput.classList.add("level-role-level");
+
+          const roleField = document.createElement("div");
+          roleField.className = "field";
+          const rLabel = document.createElement("label");
+          rLabel.textContent = "Role";
+          rLabel.style.fontSize = "0.75rem";
+          roleField.appendChild(rLabel);
+          const sel = document.createElement("select");
+          sel.classList.add("level-role-roleId");
+          const optNone = document.createElement("option");
+          optNone.value = "";
+          optNone.textContent = "— None —";
+          sel.appendChild(optNone);
+          roles.forEach(r => {
+            const o = document.createElement("option");
+            o.value = r.id;
+            o.textContent = r.name;
+            if (r.id === roleId) o.selected = true;
+            sel.appendChild(o);
+          });
+          roleField.appendChild(sel);
+
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "btn btn-ghost";
+          removeBtn.textContent = "Remove";
+          removeBtn.onclick = () => row.remove();
+
+          row.appendChild(levelField);
+          row.appendChild(roleField);
+          row.appendChild(removeBtn);
+          table.appendChild(row);
+        }
+
+        (lv.roleRewards || []).forEach(rr => addRoleRow(rr.level, rr.roleId));
+
+        const addBtn = document.createElement("button");
+        addBtn.type = "button";
+        addBtn.className = "btn btn-ghost";
+        addBtn.textContent = "Add Role Reward";
+        addBtn.onclick = () => addRoleRow("", "");
+
+        secRoles.appendChild(table);
+        secRoles.appendChild(addBtn);
+
+        modalBody.appendChild(secMain);
+        modalBody.appendChild(secRoles);
+      }
+
+      // ===== moderation =====
+      if (mod.id === "moderation") {
+        const m = {
+          enabled: s.enabled !== undefined ? s.enabled : true,
+          modLogChannelId: s.modLogChannelId || "",
+          auditLogChannelId: s.auditLogChannelId || "",
+          vcLogChannelId: s.vcLogChannelId || "",
+          muteRoleId: s.muteRoleId || ""
+        };
+
+        const secMain = document.createElement("div");
+        secMain.className = "modal-section";
+
+        const h = document.createElement("h3");
+        h.textContent = "Logging & Mute Settings";
+        secMain.appendChild(h);
+
+        secMain.appendChild(createCheckbox("mod_enabled", m.enabled, "Enable moderation logging features"));
+
+        const row1 = document.createElement("div");
+        row1.className = "field-row";
+        row1.appendChild(createSelect(
+          "mod_modLogChannelId",
+          textChannels,
+          m.modLogChannelId,
+          "Mod Logs Channel",
+          "For moderation actions (warns, bans, kicks, etc.)."
+        ));
+        row1.appendChild(createSelect(
+          "mod_auditLogChannelId",
+          textChannels,
+          m.auditLogChannelId,
+          "Audit Logs Channel",
+          "For audit events configured by SafeGuard."
+        ));
+        secMain.appendChild(row1);
+
+        const row2 = document.createElement("div");
+        row2.className = "field-row";
+        row2.appendChild(createSelect(
+          "mod_vcLogChannelId",
+          textChannels,
+          m.vcLogChannelId,
+          "VC Logs Channel",
+          "For voice join/leave/move logs."
+        ));
+        row2.appendChild(createSelect(
+          "mod_muteRoleId",
+          roles,
+          m.muteRoleId,
+          "Mute Role",
+          "The role used when muting users."
+        ));
+        secMain.appendChild(row2);
+
+        modalBody.appendChild(secMain);
+      }
+
+      if (!modalBody.innerHTML.trim()) {
+        const p = document.createElement("p");
+        p.style.fontSize = "0.85rem";
+        p.style.color = "var(--text-soft)";
+        p.textContent = "No editor UI defined for this module yet.";
+        modalBody.appendChild(p);
+      }
+    }
+
+    // ==========================
+    // COLLECT FORM VALUES
+    // ==========================
+    function collectSettingsFromForm(mod) {
+      const s = mod.settings || {};
+
+      if (mod.id === "tickets") {
+        return {
+          logChannelId: document.getElementById("tickets_logChannelId").value || "",
+          supportRoleId: document.getElementById("tickets_supportRoleId").value || "",
+          ticketCategoryId: document.getElementById("tickets_ticketCategoryId").value || "",
+          allowClaim: document.getElementById("tickets_allowClaim").checked,
+          transcriptToFile: document.getElementById("tickets_transcriptToFile").checked,
+          transcriptToChannel: document.getElementById("tickets_transcriptToChannel").checked
+        };
+      }
+
+      if (mod.id === "greet") {
+        const autoroles = [];
+        guildMeta.roles.forEach(r => {
+          const cb = document.getElementById("greet_autoroles_" + r.id);
+          if (cb && cb.checked) autoroles.push(r.id);
+        });
+        return {
+          welcome: {
+            enabled: document.getElementById("greet_welcome_enabled").checked,
+            channelId: document.getElementById("greet_welcome_channelId").value || "",
+            message: document.getElementById("greet_welcome_message").value || "",
+            dm: document.getElementById("greet_welcome_dm").value || "",
+            background: document.getElementById("greet_welcome_background").value || ""
+          },
+          goodbye: {
+            enabled: document.getElementById("greet_goodbye_enabled").checked,
+            channelId: document.getElementById("greet_goodbye_channelId").value || "",
+            message: document.getElementById("greet_goodbye_message").value || "",
+            dm: document.getElementById("greet_goodbye_dm").value || "",
+            background: document.getElementById("greet_goodbye_background").value || ""
+          },
+          autoroles,
+          autoroleDelayMs: parseInt(document.getElementById("greet_autoroleDelayMs").value || "0", 10)
+        };
+      }
+
+      if (mod.id === "verify") {
+        const roles = [];
+        guildMeta.roles.forEach(r => {
+          const cb = document.getElementById("verify_role_" + r.id);
+          if (cb && cb.checked) roles.push(r.id);
+        });
+        return {
+          enabled: document.getElementById("verify_enabled").checked,
+          panelChannelId: document.getElementById("verify_panelChannelId").value || "",
+          logChannelId: document.getElementById("verify_logChannelId").value || "",
+          roles,
+          message: document.getElementById("verify_message").value || "",
+          difficulty: {
+            mode: document.getElementById("verify_diff_mode").value || "medium",
+            length: parseInt(document.getElementById("verify_diff_length").value || "5", 10),
+            decoys: parseInt(document.getElementById("verify_diff_decoys").value || "10", 10),
+            trace: document.getElementById("verify_diff_trace").checked
+          },
+          staffRoleId: document.getElementById("verify_staffRoleId").value || ""
+        };
+      }
+
+      if (mod.id === "level") {
+        const enabled = document.getElementById("level_enabled").checked;
+        const xpPerMessage = parseInt(document.getElementById("level_xpPerMessage").value || "10", 10);
+        const levelChannelId = document.getElementById("level_levelChannelId").value || "";
+        const roleRewards = [];
+        const table = document.getElementById("level_roles_table");
+        if (table) {
+          const rows = table.querySelectorAll(".field-row");
+          rows.forEach(row => {
+            const levelInput = row.querySelector(".level-role-level");
+            const roleSelect = row.querySelector(".level-role-roleId");
+            if (!levelInput || !roleSelect) return;
+            const lvl = parseInt(levelInput.value || "0", 10);
+            const roleId = roleSelect.value;
+            if (!isNaN(lvl) && lvl > 0 && roleId) {
+              roleRewards.push({ level: lvl, roleId });
+            }
+          });
+        }
+        return {
+          enabled,
+          xpPerMessage,
+          levelChannelId,
+          roleRewards
+        };
+      }
+
+      if (mod.id === "moderation") {
+        return {
+          enabled: document.getElementById("mod_enabled").checked,
+          modLogChannelId: document.getElementById("mod_modLogChannelId").value || "",
+          auditLogChannelId: document.getElementById("mod_auditLogChannelId").value || "",
+          vcLogChannelId: document.getElementById("mod_vcLogChannelId").value || "",
+          muteRoleId: document.getElementById("mod_muteRoleId").value || ""
+        };
+      }
+
+      // fallback: return existing settings unchanged
+      return s;
+    }
+
+    // ==========================
+    // INITIAL LOAD
+    // ==========================
+    (async () => {
+      try {
+        // Current user
+        const userInfo = await api("/api/user");
+        if (userInfo.loggedIn && userInfo.user) {
+          userBadge.textContent = `${userInfo.user.username}#${userInfo.user.discriminator}`;
+        }
+
+        // Guild list to show name
+        const guilds = await api("/api/guilds");
+        const g = guilds.find(x => x.id === guildId);
+        if (g) {
+          guildNameLabel.textContent = `Managing: ${g.name}`;
+        } else {
+          guildNameLabel.textContent = `Guild ID: ${guildId}`;
+        }
+
+        //
