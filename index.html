@@ -6,9 +6,6 @@
   <title>OpsLink Safeguard – Next-Gen Discord Security</title>
 
   <style>
-    /* =====================================
-       OPSLINK SAFEGUARD — OFFICIAL LANDING
-       ===================================== */
     :root {
       --bg-main: #04060d;
       --bg-card: #0b1220;
@@ -19,12 +16,7 @@
       --radius-lg: 18px;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Segoe UI", sans-serif;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
 
     body {
       background: radial-gradient(circle at 20% 20%, #0b1220, #050816 70%);
@@ -33,17 +25,61 @@
     }
 
     /* =====================================
+       NAVIGATION BAR
+       ===================================== */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 60px;
+      background: rgba(10,15,25,0.7);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-left img {
+      width: 36px;
+      height: 36px;
+      filter: drop-shadow(0 0 6px rgba(255,102,0,0.4));
+    }
+
+    .nav-left span {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+    }
+
+    .nav-links a {
+      color: var(--text-soft);
+      text-decoration: none;
+      margin-left: 28px;
+      font-weight: 500;
+      transition: 0.2s ease;
+    }
+
+    .nav-links a:hover { color: var(--accent2); }
+
+    /* =====================================
        HERO SECTION
        ===================================== */
-    header {
+    .hero {
       text-align: center;
-      padding: 100px 20px 70px;
+      padding: 120px 20px 100px;
       position: relative;
       overflow: hidden;
     }
 
-    /* Animated gradient glow behind logo */
-    header::before {
+    .hero::before {
       content: "";
       position: absolute;
       top: -200px;
@@ -61,15 +97,15 @@
       100% { transform: translate(120px,80px) scale(1.1); opacity: 0.8; }
     }
 
-    header img {
+    .hero img {
       width: 140px;
       height: 140px;
+      filter: drop-shadow(0 0 16px rgba(255,102,0,0.5));
       z-index: 1;
       position: relative;
-      filter: drop-shadow(0 0 16px rgba(255,102,0,0.5));
     }
 
-    header h1 {
+    .hero h1 {
       font-size: 3rem;
       color: var(--accent);
       margin-top: 20px;
@@ -79,12 +115,95 @@
       text-shadow: 0 0 12px rgba(255,102,0,0.4);
     }
 
-    header p {
+    .hero p {
       color: var(--text-soft);
-      margin-top: 10px;
+      margin-top: 12px;
       font-size: 1.1rem;
       z-index: 1;
       position: relative;
+    }
+
+    .hero-buttons {
+      margin-top: 40px;
+      z-index: 1;
+      position: relative;
+    }
+
+    .hero-buttons a {
+      display: inline-block;
+      padding: 14px 34px;
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      font-size: 1.05rem;
+      text-decoration: none;
+      transition: 0.25s ease;
+      margin: 0 10px;
+    }
+
+    .hero-buttons .primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 18px rgba(255,102,0,0.3);
+    }
+
+    .hero-buttons .primary:hover {
+      background: var(--accent2);
+      transform: translateY(-3px);
+      box-shadow: 0 0 26px rgba(255,102,0,0.5);
+    }
+
+    .hero-buttons .secondary {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+
+    .hero-buttons .secondary:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* =====================================
+       PANEL PREVIEW SECTION
+       ===================================== */
+    .panel-preview {
+      max-width: 1100px;
+      margin: 80px auto;
+      padding: 0 40px;
+      text-align: center;
+    }
+
+    .panel-preview h2 {
+      color: var(--accent);
+      font-size: 2rem;
+      margin-bottom: 14px;
+    }
+
+    .panel-preview p {
+      color: var(--text-soft);
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    .preview-box {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(255,255,255,0.05);
+      box-shadow: 0 0 25px rgba(255,102,0,0.05);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-top {
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      height: 6px;
+    }
+
+    .preview-content {
+      padding: 40px 20px;
+      color: var(--text-soft);
+      font-style: italic;
     }
 
     /* =====================================
@@ -95,7 +214,7 @@
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 28px;
       max-width: 1100px;
-      margin: 60px auto;
+      margin: 80px auto;
       padding: 0 40px;
     }
 
@@ -104,22 +223,9 @@
       border-radius: var(--radius-lg);
       border: 1px solid rgba(255,255,255,0.05);
       padding: 30px 24px;
-      text-align: left;
       transition: 0.3s ease;
       position: relative;
-      overflow: hidden;
     }
-
-    .feature::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(145deg, rgba(255,102,0,0.07), transparent 70%);
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    .feature:hover::before { opacity: 1; }
 
     .feature:hover {
       transform: translateY(-4px);
@@ -139,67 +245,6 @@
     }
 
     /* =====================================
-       INTEGRATION / NETWORK SECTION
-       ===================================== */
-    .integration {
-      text-align: center;
-      max-width: 900px;
-      margin: 90px auto;
-      padding: 0 40px;
-    }
-
-    .integration h2 {
-      color: var(--accent);
-      font-size: 2rem;
-      margin-bottom: 14px;
-    }
-
-    .integration p {
-      color: var(--text-soft);
-      line-height: 1.7;
-      font-size: 1.1rem;
-    }
-
-    /* =====================================
-       CTA BUTTONS
-       ===================================== */
-    .cta {
-      text-align: center;
-      margin: 80px 0;
-    }
-
-    .cta a {
-      display: inline-block;
-      padding: 14px 34px;
-      background: var(--accent);
-      color: #fff;
-      text-decoration: none;
-      border-radius: var(--radius-lg);
-      font-weight: 600;
-      font-size: 1.05rem;
-      transition: 0.25s ease;
-      box-shadow: 0 0 18px rgba(255,102,0,0.3);
-    }
-
-    .cta a:hover {
-      background: var(--accent2);
-      box-shadow: 0 0 26px rgba(255,102,0,0.5);
-      transform: translateY(-3px);
-    }
-
-    .cta .secondary {
-      background: transparent;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      margin-left: 20px;
-    }
-
-    .cta .secondary:hover {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    /* =====================================
        FOOTER
        ===================================== */
     footer {
@@ -207,7 +252,7 @@
       background: #070b15;
       color: var(--text-soft);
       text-align: center;
-      padding: 25px 10px 40px;
+      padding: 40px 10px;
       font-size: 0.9rem;
     }
 
@@ -219,63 +264,76 @@
 
     footer a:hover { text-decoration: underline; }
 
-    /* =====================================
-       ANIMATIONS
-       ===================================== */
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
   </style>
 </head>
 <body>
 
-  <header>
+  <nav>
+    <div class="nav-left">
+      <img src="/assets/Safeguard-Bot.png" alt="Safeguard Logo">
+      <span>OpsLink Safeguard</span>
+    </div>
+    <div class="nav-links">
+      <a href="#">Home</a>
+      <a href="#">Features</a>
+      <a href="#">Docs</a>
+      <a href="#">Support</a>
+      <a href="#">Login</a>
+    </div>
+  </nav>
+
+  <section class="hero">
     <img src="/assets/Safeguard-Bot.png" alt="OpsLink Safeguard Logo">
-    <h1>OpsLink Safeguard</h1>
+    <h1>Safeguard Panel</h1>
     <p>Keeping Communities Safe — Powered by OpsLink Systems.</p>
-  </header>
+    <div class="hero-buttons">
+      <a href="#" class="primary">Manage Your Server</a>
+      <a href="#" class="secondary">Invite Bot</a>
+    </div>
+  </section>
+
+  <section class="panel-preview">
+    <h2>Control Everything from One Secure Dashboard</h2>
+    <p>Monitor server activity, configure protection modules, review logs, and manage permissions — all from an intuitive web interface designed for speed and reliability.</p>
+
+    <div class="preview-box">
+      <div class="preview-top"></div>
+      <div class="preview-content">
+        [ Panel Preview Placeholder — soon shows Safeguard dashboard UI mockup ]
+      </div>
+    </div>
+  </section>
 
   <section class="features">
     <div class="feature">
-      <h3>🛡️ Advanced Anti-Raid Defense</h3>
-      <p>Safeguard’s adaptive protection instantly detects mass joins, spam attacks, and suspicious behavior before it harms your community. It reacts within seconds — automatically neutralizing threats.</p>
+      <h3>🛡️ Advanced Anti-Raid</h3>
+      <p>Real-time detection and instant response to mass join or spam events. Protect your community automatically, with customizable thresholds.</p>
     </div>
     <div class="feature">
-      <h3>🤖 Intelligent Moderation</h3>
-      <p>AI-assisted moderation that analyzes context, message frequency, and behavior patterns — ensuring fair, efficient enforcement of server rules without over-moderation.</p>
+      <h3>🤖 Smart Moderation</h3>
+      <p>AI-assisted moderation for toxicity, spam, and policy breaches. Tailor rules to fit your community's tone and standards.</p>
     </div>
     <div class="feature">
-      <h3>📜 Event Logging</h3>
-      <p>Every action is logged — messages, bans, edits, joins, and role updates. Safeguard provides real-time logs to keep you in full control and transparency of your server’s activity.</p>
+      <h3>📜 Audit Logs</h3>
+      <p>All events tracked in a clean timeline — message edits, kicks, bans, role changes, and more — with instant search and filtering.</p>
     </div>
     <div class="feature">
-      <h3>✅ Secure Verification</h3>
-      <p>Authenticate new members via advanced verification flows. Connects seamlessly with OpsLink accounts and your own verification policies to maintain trust and identity security.</p>
+      <h3>✅ Verification System</h3>
+      <p>Authenticate users with OpsLink verification or server-based PINs. Enforce identity control seamlessly across your ecosystem.</p>
     </div>
     <div class="feature">
-      <h3>⚙️ Automated Role & Rule Enforcement</h3>
-      <p>Customizable rulesets with automated enforcement keep moderation consistent and reduce manual work. Define hierarchies and allow Safeguard to do the heavy lifting.</p>
+      <h3>⚙️ Configurable Modules</h3>
+      <p>Enable or disable systems per server — moderation, logs, verification, alerts — all adjustable from your Safeguard dashboard.</p>
     </div>
     <div class="feature">
-      <h3>🌐 OpsLink Systems Integration</h3>
-      <p>Safeguard is part of the OpsLink Systems network, ensuring centralized management, shared configurations, and unified uptime security across all OpsLink services.</p>
+      <h3>🌐 OpsLink Network Integration</h3>
+      <p>Built natively into the OpsLink ecosystem, ensuring unified performance, shared data layers, and enterprise uptime security.</p>
     </div>
   </section>
-
-  <section class="integration">
-    <h2>Security. Reliability. Control.</h2>
-    <p>OpsLink Safeguard was engineered for Discord communities that demand enterprise-grade protection. Whether you manage a small team or a massive network, Safeguard evolves with your needs — powered by the same infrastructure behind OpsLinkCAD.</p>
-  </section>
-
-  <div class="cta">
-    <a href="#">Invite Safeguard</a>
-    <a href="#" class="secondary">View Documentation</a>
-  </div>
 
   <footer>
-    © 2025 OpsLink Systems Network — All Rights Reserved.  
-    <br>Visit <a href="https://opslinkcad.com">OpsLinkCAD</a> for more.
+    © 2025 OpsLink Systems Network — All Rights Reserved.<br>
+    Visit <a href="https://opslinkcad.com">OpsLinkCAD</a> for more.
   </footer>
 
 </body>
