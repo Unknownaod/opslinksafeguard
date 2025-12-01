@@ -11,7 +11,10 @@ header{display:flex;justify-content:space-between;align-items:center;padding:20p
 .logo{display:flex;align-items:center;gap:10px;}
 .logo img{width:36px;height:36px;}
 .logo span{color:#ff6600;font-weight:600;font-size:1.3rem;}
-#logoutBtn{background:transparent;border:1px solid #ff6600;color:#ff6600;padding:10px 22px;border-radius:8px;cursor:pointer;transition:0.3s;}
+.actions{display:flex;gap:15px;}
+button{background:#ff6600;border:none;color:#fff;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;transition:0.3s;}
+button:hover{background:#ff944d;}
+#logoutBtn{background:transparent;border:1px solid #ff6600;color:#ff6600;}
 #logoutBtn:hover{background:#ff6600;color:#fff;}
 h1{text-align:center;margin-top:40px;color:#ff6600;font-size:2.3rem;}
 .guilds{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:25px;max-width:1100px;margin:50px auto;padding:0 30px;}
@@ -30,7 +33,10 @@ h1{text-align:center;margin-top:40px;color:#ff6600;font-size:2.3rem;}
     <img src="/assets/Safeguard-Bot.png" alt="Logo" />
     <span>Safeguard Panel</span>
   </div>
-  <button id="logoutBtn">Logout</button>
+  <div class="actions">
+    <button onclick="window.open('https://discord.com/oauth2/authorize?client_id=1423662080778567721&permissions=8&integration_type=0&scope=bot','_blank')">Invite Bot</button>
+    <button id="logoutBtn">Logout</button>
+  </div>
 </header>
 
 <h1>Your Discord Servers</h1>
@@ -43,10 +49,6 @@ const token = localStorage.getItem("safeguard_token");
 const container = document.getElementById("guildContainer");
 const logoutBtn = document.getElementById("logoutBtn");
 if(!token) window.location="/";
-const CLIENT_ID="1423662080778567721"; // Replace with your bot's ID
-const PERMISSIONS="8";
-const SCOPES="bot%20applications.commands";
-const REDIRECT=encodeURIComponent("https://safeguard.opslinkcad.com/dashboard");
 
 async function loadGuilds(){
   try{
@@ -54,22 +56,16 @@ async function loadGuilds(){
     const data=await res.json();
     if(!Array.isArray(data)){container.innerHTML=`<p style='text-align:center;color:#ff944d;'>${data.error}</p>`;return;}
     const installed=data.filter(g=>g.installed);
-    const notInstalled=data.filter(g=>!g.installed);
     container.innerHTML="";
     if(installed.length){container.innerHTML+=`<h2 style="color:#ff6600;text-align:center;">✅ Installed Servers</h2>`;}
     installed.forEach(g=>{
       const icon=g.icon?`https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`:"/assets/Safeguard-Bot.png";
       container.innerHTML+=`<div class="guild"><img src="${icon}" alt="Server"/><h3>${g.name}</h3><p>ID: ${g.id}</p><button onclick="manageGuild('${g.id}')">Manage</button></div>`;
     });
-    if(notInstalled.length){container.innerHTML+=`<h2 style="color:#ff6600;text-align:center;margin-top:50px;">➕ Add Safeguard to Your Servers</h2>`;}
-    notInstalled.forEach(g=>{
-      const icon=g.icon?`https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`:"/assets/Safeguard-Bot.png";
-      const invite=`https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&scope=${SCOPES}&permissions=${PERMISSIONS}&guild_id=${g.id}&redirect_uri=${REDIRECT}&response_type=code`;
-      container.innerHTML+=`<div class="guild"><img src="${icon}" alt="Server"/><h3>${g.name}</h3><p>ID: ${g.id}</p><button onclick="window.location='${invite}'">Add Safeguard</button></div>`;
-    });
-    if(!installed.length&&!notInstalled.length){container.innerHTML="<p style='text-align:center;'>You don’t have any manageable servers.</p>";}
+    if(!installed.length){container.innerHTML="<p style='text-align:center;'>No servers found where you can manage Safeguard.</p>";}
   }catch(e){console.error(e);container.innerHTML="<p style='text-align:center;color:#ff944d;'>Failed to load servers.</p>";}
 }
+
 function manageGuild(id){window.location="/dashboard/"+id;}
 logoutBtn.onclick=()=>{localStorage.removeItem("safeguard_token");window.location="/";};
 loadGuilds();
