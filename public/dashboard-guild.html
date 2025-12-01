@@ -1,61 +1,267 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport"content="width=device-width,initial-scale=1.0"/>
-<title>Manage Guild – Safeguard</title>
-<link rel="icon" href="/assets/Safeguard-Bot.png"/>
-<style>
-body{background:#050816;color:#e5e7eb;font-family:"Segoe UI",sans-serif;margin:0;}
-header{display:flex;justify-content:space-between;align-items:center;padding:20px 50px;background:rgba(10,15,25,0.7);border-bottom:1px solid rgba(255,255,255,0.05);}
-header span{color:#ff6600;font-weight:600;font-size:1.3rem;}
-.module{background:#0b1220;border-radius:12px;padding:20px;margin:20px auto;max-width:600px;border:1px solid rgba(255,255,255,0.05);}
-.module h3{color:#ff6600;margin-bottom:10px;}
-.toggle{display:flex;justify-content:space-between;align-items:center;}
-button{background:#ff6600;border:none;color:#fff;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;}
-button:hover{background:#ff944d;}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safeguard Panel – Manage Server</title>
+
+  <style>
+    :root {
+      --bg-main: #060910;
+      --bg-card: #0c121c;
+      --accent: #ff6600;
+      --accent2: #ff944d;
+      --text-main: #e5e7eb;
+      --text-soft: #a1a1aa;
+      --radius: 14px;
+      --transition: 0.25s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #0c1019;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 32px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--accent);
+    }
+
+    .logo img {
+      width: 32px;
+      height: 32px;
+    }
+
+    .actions button {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .actions button:hover {
+      background: var(--accent2);
+      transform: translateY(-2px);
+    }
+
+    main {
+      flex: 1;
+      padding: 40px 60px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .server-id {
+      color: var(--text-soft);
+      font-size: 0.9rem;
+      margin-bottom: 30px;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 22px;
+    }
+
+    .module-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .module-card:hover {
+      border-color: rgba(255,102,0,0.3);
+      box-shadow: 0 0 20px rgba(255,102,0,0.1);
+      transform: translateY(-3px);
+    }
+
+    .module-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .module-header h3 {
+      color: var(--accent);
+      font-size: 1.1rem;
+    }
+
+    .status {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .status.enabled {
+      color: #16a34a;
+    }
+
+    .status.disabled {
+      color: #ef4444;
+    }
+
+    .module-card p {
+      color: var(--text-soft);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .toggle-btn {
+      display: inline-block;
+      padding: 10px 18px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .toggle-btn:hover {
+      background: var(--accent2);
+      transform: translateY(-2px);
+    }
+
+    footer {
+      text-align: center;
+      padding: 25px 10px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      color: var(--text-soft);
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
+
 <body>
-<header>
-  <span id="guildName">Loading...</span>
-  <button onclick="window.location='/dashboard'">Back</button>
-</header>
+  <header>
+    <div class="logo">
+      <img src="/assets/Safeguard-Bot.png" alt="Safeguard Logo">
+      <span>Safeguard Panel</span>
+    </div>
+    <div class="actions">
+      <button onclick="window.location.href='/dashboard'">Back</button>
+    </div>
+  </header>
 
-<div id="modulesContainer" style="max-width:700px;margin:auto;margin-top:30px;text-align:center;">
-  <p>Loading modules...</p>
-</div>
+  <main>
+    <h1>Server Modules</h1>
+    <div id="serverId" class="server-id"></div>
 
-<script>
-const guildId = window.location.pathname.split("/").pop();
-document.getElementById("guildName").textContent = `Server: ${guildId}`;
-const container = document.getElementById("modulesContainer");
+    <div id="modulesContainer" class="module-grid">
+      <p>Loading modules...</p>
+    </div>
+  </main>
 
-async function loadModules(){
-  const res = await fetch(`/api/modules/${guildId}`);
-  const mods = await res.json();
-  if(!Array.isArray(mods)){container.innerHTML="<p>Failed to load modules.</p>";return;}
-  container.innerHTML="";
-  mods.forEach(m=>{
-    container.innerHTML += `
-      <div class="module">
-        <h3>${m.name}</h3>
-        <div class="toggle">
-          <p>${m.description}</p>
-          <button onclick="toggleModule('${m.id}', this)">${m.enabled ? "Disable" : "Enable"}</button>
-        </div>
-      </div>`;
-  });
-}
+  <footer>
+    © 2025 OpsLink Systems Network — Safeguard Division
+  </footer>
 
-async function toggleModule(id, btn){
-  btn.disabled = true;
-  const res = await fetch(`/api/modules/${guildId}/toggle/${id}`, {method:"POST"});
-  const data = await res.json();
-  if(data.success) btn.textContent = data.newState ? "Disable" : "Enable";
-  btn.disabled = false;
-}
+  <script>
+    const guildId = new URLSearchParams(window.location.search).get("guild") || window.location.pathname.split("/").pop();
+    document.getElementById("serverId").innerText = `Server ID: ${guildId}`;
 
-loadModules();
-</script>
+    async function loadModules() {
+      const container = document.getElementById("modulesContainer");
+      try {
+        const res = await fetch(`/api/modules/${guildId}`);
+        const modules = await res.json();
+
+        container.innerHTML = "";
+
+        if (!modules || !modules.length) {
+          container.innerHTML = `<p style="color:#999">No modules found for this server.</p>`;
+          return;
+        }
+
+        modules.forEach(mod => {
+          const card = document.createElement("div");
+          card.className = "module-card";
+          card.innerHTML = `
+            <div class="module-header">
+              <h3>${mod.name}</h3>
+              <span class="status ${mod.enabled ? "enabled" : "disabled"}">
+                ${mod.enabled ? "🟢 Enabled" : "🔴 Disabled"}
+              </span>
+            </div>
+            <p>${mod.description}</p>
+            <button class="toggle-btn" onclick="toggleModule('${mod._id}', ${mod.enabled})">
+              ${mod.enabled ? "Disable" : "Enable"}
+            </button>
+          `;
+          card.style.animation = "fadeInUp 0.4s ease";
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `<p style="color:#f87171;">Failed to load modules.</p>`;
+      }
+    }
+
+    async function toggleModule(moduleId, currentState) {
+      const newState = !currentState;
+      const res = await fetch(`/api/modules/toggle/${moduleId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: newState }),
+      });
+
+      if (res.ok) loadModules();
+      else alert("Failed to toggle module.");
+    }
+
+    loadModules();
+  </script>
 </body>
 </html>
