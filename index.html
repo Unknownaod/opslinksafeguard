@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpsLink Safeguard – Next-Gen Discord Security</title>
+  <title>OpsLink Safeguard – Secure Discord Management</title>
 
   <style>
     :root {
@@ -24,9 +24,7 @@
       overflow-x: hidden;
     }
 
-    /* =====================================
-       NAVIGATION BAR
-       ===================================== */
+    /* NAVIGATION */
     nav {
       display: flex;
       justify-content: space-between;
@@ -69,9 +67,7 @@
 
     .nav-links a:hover { color: var(--accent2); }
 
-    /* =====================================
-       HERO SECTION
-       ===================================== */
+    /* HERO */
     .hero {
       text-align: center;
       padding: 120px 20px 100px;
@@ -140,32 +136,31 @@
       margin: 0 10px;
     }
 
-    .hero-buttons .primary {
+    .hero-buttons .discord-login {
+      background: #5865f2;
+      color: #fff;
+      box-shadow: 0 0 18px rgba(88,101,242,0.4);
+    }
+
+    .hero-buttons .discord-login:hover {
+      background: #4a57e3;
+      transform: translateY(-3px);
+      box-shadow: 0 0 26px rgba(88,101,242,0.6);
+    }
+
+    .hero-buttons .manage {
       background: var(--accent);
       color: #fff;
       box-shadow: 0 0 18px rgba(255,102,0,0.3);
     }
 
-    .hero-buttons .primary:hover {
+    .hero-buttons .manage:hover {
       background: var(--accent2);
       transform: translateY(-3px);
       box-shadow: 0 0 26px rgba(255,102,0,0.5);
     }
 
-    .hero-buttons .secondary {
-      background: transparent;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-    }
-
-    .hero-buttons .secondary:hover {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    /* =====================================
-       PANEL PREVIEW SECTION
-       ===================================== */
+    /* PANEL PREVIEW */
     .panel-preview {
       max-width: 1100px;
       margin: 80px auto;
@@ -191,8 +186,6 @@
       border: 1px solid rgba(255,255,255,0.05);
       box-shadow: 0 0 25px rgba(255,102,0,0.05);
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
     }
 
     .preview-top {
@@ -206,47 +199,7 @@
       font-style: italic;
     }
 
-    /* =====================================
-       FEATURE GRID
-       ===================================== */
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 28px;
-      max-width: 1100px;
-      margin: 80px auto;
-      padding: 0 40px;
-    }
-
-    .feature {
-      background: var(--bg-card);
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(255,255,255,0.05);
-      padding: 30px 24px;
-      transition: 0.3s ease;
-      position: relative;
-    }
-
-    .feature:hover {
-      transform: translateY(-4px);
-      border-color: rgba(255,102,0,0.3);
-      box-shadow: 0 0 25px rgba(255,102,0,0.08);
-    }
-
-    .feature h3 {
-      color: var(--accent);
-      font-size: 1.25rem;
-      margin-bottom: 10px;
-    }
-
-    .feature p {
-      color: var(--text-soft);
-      line-height: 1.6;
-    }
-
-    /* =====================================
-       FOOTER
-       ===================================== */
+    /* FOOTER */
     footer {
       border-top: 1px solid rgba(255,255,255,0.05);
       background: #070b15;
@@ -264,6 +217,13 @@
 
     footer a:hover { text-decoration: underline; }
 
+    .fade-in {
+      animation: fadeIn 0.6s ease forwards;
+      opacity: 0;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -275,10 +235,8 @@
     </div>
     <div class="nav-links">
       <a href="#">Home</a>
-      <a href="#">Features</a>
       <a href="#">Docs</a>
       <a href="#">Support</a>
-      <a href="#">Login</a>
     </div>
   </nav>
 
@@ -287,8 +245,8 @@
     <h1>Safeguard Panel</h1>
     <p>Keeping Communities Safe — Powered by OpsLink Systems.</p>
     <div class="hero-buttons">
-      <a href="#" class="primary">Manage Your Server</a>
-      <a href="#" class="secondary">Invite Bot</a>
+      <a href="#" id="loginBtn" class="discord-login">Login with Discord</a>
+      <a href="#" id="manageBtn" class="manage" style="display:none;">Manage Your Servers</a>
     </div>
   </section>
 
@@ -299,35 +257,8 @@
     <div class="preview-box">
       <div class="preview-top"></div>
       <div class="preview-content">
-        [ Panel Preview Placeholder — soon shows Safeguard dashboard UI mockup ]
+        [ Safeguard Dashboard Preview Placeholder ]
       </div>
-    </div>
-  </section>
-
-  <section class="features">
-    <div class="feature">
-      <h3>🛡️ Advanced Anti-Raid</h3>
-      <p>Real-time detection and instant response to mass join or spam events. Protect your community automatically, with customizable thresholds.</p>
-    </div>
-    <div class="feature">
-      <h3>🤖 Smart Moderation</h3>
-      <p>AI-assisted moderation for toxicity, spam, and policy breaches. Tailor rules to fit your community's tone and standards.</p>
-    </div>
-    <div class="feature">
-      <h3>📜 Audit Logs</h3>
-      <p>All events tracked in a clean timeline — message edits, kicks, bans, role changes, and more — with instant search and filtering.</p>
-    </div>
-    <div class="feature">
-      <h3>✅ Verification System</h3>
-      <p>Authenticate users with OpsLink verification or server-based PINs. Enforce identity control seamlessly across your ecosystem.</p>
-    </div>
-    <div class="feature">
-      <h3>⚙️ Configurable Modules</h3>
-      <p>Enable or disable systems per server — moderation, logs, verification, alerts — all adjustable from your Safeguard dashboard.</p>
-    </div>
-    <div class="feature">
-      <h3>🌐 OpsLink Network Integration</h3>
-      <p>Built natively into the OpsLink ecosystem, ensuring unified performance, shared data layers, and enterprise uptime security.</p>
     </div>
   </section>
 
@@ -335,6 +266,31 @@
     © 2025 OpsLink Systems Network — All Rights Reserved.<br>
     Visit <a href="https://opslinkcad.com">OpsLinkCAD</a> for more.
   </footer>
+
+  <script>
+    // ===== Mock Discord Login Logic =====
+    const loginBtn = document.getElementById("loginBtn");
+    const manageBtn = document.getElementById("manageBtn");
+
+    // simulate user login using localStorage (replace with real Discord OAuth)
+    const isLoggedIn = localStorage.getItem("discordUser");
+
+    function showManage() {
+      loginBtn.style.display = "none";
+      manageBtn.style.display = "inline-block";
+      manageBtn.classList.add("fade-in");
+    }
+
+    if (isLoggedIn) showManage();
+
+    loginBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      // Redirect to your real Discord OAuth endpoint here:
+      // window.location.href = "https://discord.com/oauth2/authorize?client_id=...";
+      localStorage.setItem("discordUser", "true");
+      showManage();
+    });
+  </script>
 
 </body>
 </html>
