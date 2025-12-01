@@ -121,27 +121,42 @@
     if (!token) window.location.href = "/";
 
     async function loadGuilds() {
-      const res = await fetch("/api/guilds", { headers: { Authorization: "Bearer " + token } });
-      if (!res.ok) {
-        container.innerHTML = "<p style='text-align:center;'>Failed to load servers.</p>";
-        return;
-      }
-      const guilds = await res.json();
-      container.innerHTML = "";
-      guilds.forEach(g => {
-        const icon = g.icon
-          ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`
-          : "/assets/Safeguard-Bot.png";
-        container.innerHTML += `
-          <div class="guild">
-            <img src="${icon}" alt="Server Icon" />
-            <h3>${g.name}</h3>
-            <p>ID: ${g.id}</p>
-            <button onclick="alert('Manage ${g.name}')">Manage</button>
-          </div>
-        `;
-      });
+  try {
+    const res = await fetch("/api/guilds", { headers: { Authorization: "Bearer " + token } });
+    const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      container.innerHTML = `<p style="text-align:center;color:#ff944d;">
+        ${data.error ? data.error : "Unexpected response from API."}
+      </p>`;
+      console.warn("API Error:", data);
+      return;
     }
+
+    container.innerHTML = "";
+    if (data.length === 0) {
+      container.innerHTML = "<p style='text-align:center;'>You don’t have any servers you can manage.</p>";
+      return;
+    }
+
+    data.forEach(g => {
+      const icon = g.icon
+        ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`
+        : "/assets/Safeguard-Bot.png";
+      container.innerHTML += `
+        <div class="guild">
+          <img src="${icon}" alt="Server Icon" />
+          <h3>${g.name}</h3>
+          <p>ID: ${g.id}</p>
+          <button onclick="alert('Manage ${g.name}')">Manage</button>
+        </div>
+      `;
+    });
+  } catch (err) {
+    console.error("loadGuilds() failed:", err);
+    container.innerHTML = "<p style='text-align:center;color:#ff944d;'>Failed to load servers.</p>";
+  }
+}
 
     logoutBtn.addEventListener("click", () => {
       localStorage.removeItem("safeguard_token");
