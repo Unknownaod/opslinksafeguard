@@ -6,164 +6,73 @@
 <title>Safeguard Dashboard – OpsLink Systems</title>
 <link rel="icon" href="/assets/Safeguard-Bot.png" />
 <style>
-  body {
-    background: #050816;
-    color: #e5e7eb;
-    font-family: "Segoe UI", sans-serif;
-    margin: 0;
-  }
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 50px;
-    background: rgba(10,15,25,0.7);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .logo img { width: 36px; height: 36px; }
-  .logo span { color: #ff6600; font-weight: 600; font-size: 1.3rem; }
-  #logoutBtn {
-    background: transparent;
-    border: 1px solid #ff6600;
-    color: #ff6600;
-    padding: 10px 22px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-  #logoutBtn:hover {
-    background: #ff6600;
-    color: #fff;
-  }
-  h1 {
-    text-align: center;
-    margin-top: 40px;
-    color: #ff6600;
-    font-size: 2.3rem;
-  }
-  .guilds {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 25px;
-    max-width: 1100px;
-    margin: 50px auto;
-    padding: 0 30px;
-  }
-  .guild {
-    background: #0b1220;
-    border-radius: 16px;
-    padding: 20px;
-    border: 1px solid rgba(255,255,255,0.05);
-    transition: 0.3s;
-  }
-  .guild:hover {
-    transform: translateY(-4px);
-    border-color: rgba(255,102,0,0.3);
-    box-shadow: 0 0 15px rgba(255,102,0,0.2);
-  }
-  .guild img {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    display: block;
-    margin: 0 auto 10px;
-  }
-  .guild h3 {
-    text-align: center;
-    color: #ff6600;
-    margin-bottom: 8px;
-  }
-  .guild p {
-    text-align: center;
-    color: #a1a1aa;
-    font-size: 0.9rem;
-    margin-bottom: 15px;
-  }
-  .guild button {
-    display: block;
-    margin: 0 auto;
-    background: #ff6600;
-    color: #fff;
-    border: none;
-    padding: 10px 22px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.3s;
-  }
-  .guild button:hover { background: #ff944d; }
+body{background:#050816;color:#e5e7eb;font-family:"Segoe UI",sans-serif;margin:0;}
+header{display:flex;justify-content:space-between;align-items:center;padding:20px 50px;background:rgba(10,15,25,0.7);border-bottom:1px solid rgba(255,255,255,0.05);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo img{width:36px;height:36px;}
+.logo span{color:#ff6600;font-weight:600;font-size:1.3rem;}
+#logoutBtn{background:transparent;border:1px solid #ff6600;color:#ff6600;padding:10px 22px;border-radius:8px;cursor:pointer;transition:0.3s;}
+#logoutBtn:hover{background:#ff6600;color:#fff;}
+h1{text-align:center;margin-top:40px;color:#ff6600;font-size:2.3rem;}
+.guilds{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:25px;max-width:1100px;margin:50px auto;padding:0 30px;}
+.guild{background:#0b1220;border-radius:16px;padding:20px;border:1px solid rgba(255,255,255,0.05);transition:0.3s;}
+.guild:hover{transform:translateY(-4px);border-color:rgba(255,102,0,0.3);box-shadow:0 0 15px rgba(255,102,0,0.2);}
+.guild img{width:64px;height:64px;border-radius:50%;display:block;margin:0 auto 10px;}
+.guild h3{text-align:center;color:#ff6600;margin-bottom:8px;}
+.guild p{text-align:center;color:#a1a1aa;font-size:0.9rem;margin-bottom:15px;}
+.guild button{display:block;margin:0 auto;background:#ff6600;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;transition:0.3s;}
+.guild button:hover{background:#ff944d;}
 </style>
 </head>
 <body>
-  <header>
-    <div class="logo">
-      <img src="/assets/Safeguard-Bot.png" alt="Logo" />
-      <span>Safeguard Panel</span>
-    </div>
-    <button id="logoutBtn">Logout</button>
-  </header>
-
-  <h1>Your Discord Servers</h1>
-  <div class="guilds" id="guildContainer">
-    <p style="grid-column: 1/-1; text-align:center;">Loading your servers...</p>
+<header>
+  <div class="logo">
+    <img src="/assets/Safeguard-Bot.png" alt="Logo" />
+    <span>Safeguard Panel</span>
   </div>
+  <button id="logoutBtn">Logout</button>
+</header>
 
-  <script>
-    const token = localStorage.getItem("safeguard_token");
-    const container = document.getElementById("guildContainer");
-    const logoutBtn = document.getElementById("logoutBtn");
+<h1>Your Discord Servers</h1>
+<div class="guilds" id="guildContainer">
+  <p style="grid-column:1/-1;text-align:center;">Loading your servers...</p>
+</div>
 
-    if (!token) window.location.href = "/";
+<script>
+const token = localStorage.getItem("safeguard_token");
+const container = document.getElementById("guildContainer");
+const logoutBtn = document.getElementById("logoutBtn");
+if(!token) window.location="/";
+const CLIENT_ID="1423662080778567721"; // Replace with your bot's ID
+const PERMISSIONS="8";
+const SCOPES="bot%20applications.commands";
+const REDIRECT=encodeURIComponent("https://safeguard.opslinkcad.com/dashboard");
 
-    async function loadGuilds() {
-  try {
-    const res = await fetch("/api/guilds", { headers: { Authorization: "Bearer " + token } });
-    const data = await res.json();
-
-    if (!Array.isArray(data)) {
-      container.innerHTML = `<p style="text-align:center;color:#ff944d;">
-        ${data.error ? data.error : "Unexpected response from API."}
-      </p>`;
-      console.warn("API Error:", data);
-      return;
-    }
-
-    container.innerHTML = "";
-    if (data.length === 0) {
-      container.innerHTML = "<p style='text-align:center;'>You don’t have any servers you can manage.</p>";
-      return;
-    }
-
-    data.forEach(g => {
-      const icon = g.icon
-        ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`
-        : "/assets/Safeguard-Bot.png";
-      container.innerHTML += `
-        <div class="guild">
-          <img src="${icon}" alt="Server Icon" />
-          <h3>${g.name}</h3>
-          <p>ID: ${g.id}</p>
-          <button onclick="alert('Manage ${g.name}')">Manage</button>
-        </div>
-      `;
+async function loadGuilds(){
+  try{
+    const res=await fetch("/api/guilds",{headers:{Authorization:"Bearer "+token}});
+    const data=await res.json();
+    if(!Array.isArray(data)){container.innerHTML=`<p style='text-align:center;color:#ff944d;'>${data.error}</p>`;return;}
+    const installed=data.filter(g=>g.installed);
+    const notInstalled=data.filter(g=>!g.installed);
+    container.innerHTML="";
+    if(installed.length){container.innerHTML+=`<h2 style="color:#ff6600;text-align:center;">✅ Installed Servers</h2>`;}
+    installed.forEach(g=>{
+      const icon=g.icon?`https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`:"/assets/Safeguard-Bot.png";
+      container.innerHTML+=`<div class="guild"><img src="${icon}" alt="Server"/><h3>${g.name}</h3><p>ID: ${g.id}</p><button onclick="manageGuild('${g.id}')">Manage</button></div>`;
     });
-  } catch (err) {
-    console.error("loadGuilds() failed:", err);
-    container.innerHTML = "<p style='text-align:center;color:#ff944d;'>Failed to load servers.</p>";
-  }
+    if(notInstalled.length){container.innerHTML+=`<h2 style="color:#ff6600;text-align:center;margin-top:50px;">➕ Add Safeguard to Your Servers</h2>`;}
+    notInstalled.forEach(g=>{
+      const icon=g.icon?`https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`:"/assets/Safeguard-Bot.png";
+      const invite=`https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&scope=${SCOPES}&permissions=${PERMISSIONS}&guild_id=${g.id}&redirect_uri=${REDIRECT}&response_type=code`;
+      container.innerHTML+=`<div class="guild"><img src="${icon}" alt="Server"/><h3>${g.name}</h3><p>ID: ${g.id}</p><button onclick="window.location='${invite}'">Add Safeguard</button></div>`;
+    });
+    if(!installed.length&&!notInstalled.length){container.innerHTML="<p style='text-align:center;'>You don’t have any manageable servers.</p>";}
+  }catch(e){console.error(e);container.innerHTML="<p style='text-align:center;color:#ff944d;'>Failed to load servers.</p>";}
 }
-
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("safeguard_token");
-      window.location.href = "/";
-    });
-
-    loadGuilds();
-  </script>
+function manageGuild(id){window.location="/dashboard/"+id;}
+logoutBtn.onclick=()=>{localStorage.removeItem("safeguard_token");window.location="/";};
+loadGuilds();
+</script>
 </body>
 </html>
