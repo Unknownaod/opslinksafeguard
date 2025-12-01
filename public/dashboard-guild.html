@@ -1414,24 +1414,59 @@
       return s;
     }
 
-    // ==========================
-    // INITIAL LOAD
-    // ==========================
-    (async () => {
-      try {
-        // Current user
-        const userInfo = await api("/api/user");
-        if (userInfo.loggedIn && userInfo.user) {
-          userBadge.textContent = `${userInfo.user.username}#${userInfo.user.discriminator}`;
-        }
+// ==========================
+// INITIAL LOAD
+// ==========================
+(async () => {
+  try {
+    // Fetch current user information
+    const userInfo = await api("/api/user");
+    if (userInfo.loggedIn && userInfo.user) {
+      userBadge.textContent = `${userInfo.user.username}#${userInfo.user.discriminator}`;
+    } else {
+      userBadge.textContent = "Not Logged In";
+    }
 
-        // Guild list to show name
-        const guilds = await api("/api/guilds");
-        const g = guilds.find(x => x.id === guildId);
-        if (g) {
-          guildNameLabel.textContent = `Managing: ${g.name}`;
-        } else {
-          guildNameLabel.textContent = `Guild ID: ${guildId}`;
-        }
+    // Fetch guild list and set name label
+    const guilds = await api("/api/guilds");
+    const g = guilds.find(x => x.id === guildId);
 
-        //
+    if (g) {
+      guildNameLabel.textContent = `Managing: ${g.name}`;
+    } else {
+      guildNameLabel.textContent = `Guild ID: ${guildId}`;
+    }
+
+    // ==========================
+    // LOAD GUILD SETTINGS
+    // ==========================
+    const settings = await api(`/api/guilds/${guildId}/settings`);
+    if (!settings || typeof settings !== "object") {
+      console.warn("No settings returned for this guild.");
+    } else {
+      // Example UI loads
+      prefixInput.value = settings.prefix || "!";
+      logChannelSelect.value = settings.logChannel || "";
+      adminRolesSelect.value = settings.adminRoles?.join(",") || "";
+    }
+
+    // ==========================
+    // ROLE CHECK FOR ACCESS
+    // ==========================
+    const perms = await api(`/api/guilds/${guildId}/permissions`);
+    if (!perms.manageServer) {
+      document.body.innerHTML = `
+        <div style="padding:40px;font-size:20px;color:#fff;text-align:center;">
+          ❌ You do not have permission to manage this server.
+        </div>
+      `;
+      return;
+    }
+
+    console.log("UI Loaded Successfully");
+
+  } catch (err) {
+    console.error("Initialization failed:", err);
+    alert("❌ Failed to load dashboard. Check the console for details.");
+  }
+})();
