@@ -2,144 +2,205 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Safeguard Panel – Guild Modules</title>
+  <title>SafeGuard Panel – Server Modules</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <style>
     :root {
-      --bg-main: #05060b;
-      --bg-card: #0b0f18;
-      --bg-elevated: #111827;
-      --accent: #ff7b00;
-      --accent-soft: #ff9d4d;
-      --accent-fade: rgba(255, 123, 0, 0.2);
-      --border-subtle: rgba(255, 255, 255, 0.04);
-      --text-main: #e5e7eb;
+      --bg-main: #050711;
+      --bg-elevated: #0b0f1e;
+      --bg-card: #101524;
+      --bg-card-soft: #141a2b;
+      --accent: #ff7a1a;
+      --accent-soft: rgba(255, 122, 26, 0.18);
+      --accent-strong: #ff9b3d;
+      --text-main: #f9fafb;
       --text-soft: #9ca3af;
       --text-muted: #6b7280;
-      --danger: #ef4444;
-      --success: #22c55e;
+      --border-subtle: rgba(148, 163, 184, 0.18);
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.65);
       --radius-lg: 18px;
-      --radius-md: 12px;
-      --shadow-soft: 0 18px 45px rgba(0,0,0,0.65);
+      --radius-xl: 26px;
+      --transition-fast: 150ms ease-out;
     }
 
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     body {
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at 0% 0%, rgba(255, 123, 0, 0.12), transparent 55%),
-        radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.12), transparent 55%),
-        linear-gradient(135deg, #020617, #020915 55%, #050816);
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
       color: var(--text-main);
+      background: radial-gradient(circle at top left, #111827 0, #020617 50%);
+      min-height: 100vh;
     }
 
-    main {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 24px 20px 48px;
-    }
-
+    /* Top bar */
     header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 26px;
-      gap: 16px;
+      padding: 16px 32px;
+      backdrop-filter: blur(18px);
+      background: linear-gradient(
+        to right,
+        rgba(15, 23, 42, 0.94),
+        rgba(15, 23, 42, 0.8),
+        rgba(15, 23, 42, 0.7)
+      );
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
     }
 
-    .logo-block {
+    .header-left {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
 
-    .logo-block img {
+    .logo-circle {
       width: 40px;
       height: 40px;
-      border-radius: 12px;
-      box-shadow: 0 0 18px rgba(255, 123, 0, 0.4);
-    }
-
-    .logo-text {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .logo-text span:first-child {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .logo-text span:last-child {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-    }
-
-    .header-right {
+      border-radius: 999px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: center;
+      background: radial-gradient(circle at 30% 0%, #ffb26b 0, #ff7a1a 40%, #111827 100%);
+      box-shadow: 0 0 18px rgba(255, 122, 26, 0.65);
+      font-size: 22px;
     }
 
-    .pill {
-      font-size: 0.78rem;
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.35);
+    .header-title {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-title span:first-child {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .header-title span:last-child {
+      font-size: 12px;
       color: var(--text-soft);
     }
 
-    .back-link {
-      font-size: 0.8rem;
-      padding: 5px 11px;
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chip {
+      padding: 6px 10px;
       border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      color: var(--text-soft);
+    }
+
+    .chip strong {
+      color: var(--accent-strong);
+    }
+
+    .btn {
+      border: none;
+      outline: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-soft);
       border: 1px solid rgba(148, 163, 184, 0.4);
-      background: rgba(15, 23, 42, 0.8);
-      color: var(--text-soft);
-      text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      transition: background var(--transition-fast),
+        border-color var(--transition-fast), transform var(--transition-fast),
+        box-shadow var(--transition-fast), color var(--transition-fast);
     }
 
-    .back-link:hover {
-      border-color: var(--accent-soft);
-      color: var(--accent-soft);
+    .btn:hover {
+      background: rgba(15, 23, 42, 0.9);
+      border-color: rgba(226, 232, 240, 0.75);
+      color: #e5e7eb;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     }
 
-    h1 {
-      font-size: 1.8rem;
-      margin-bottom: 6px;
+    .btn-primary {
+      background: linear-gradient(135deg, #ff7a1a, #ff9b3d);
+      border-color: transparent;
+      color: #020617;
+      font-weight: 500;
+      box-shadow: 0 8px 30px rgba(248, 133, 31, 0.55);
     }
 
-    .subtitle {
-      font-size: 0.95rem;
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #ffa94d, #ff7a1a);
+      transform: translateY(-1px) translateX(0);
+    }
+
+    .user-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      font-size: 12px;
       color: var(--text-soft);
-      margin-bottom: 20px;
     }
 
-    /* MODULE GRID */
-    .modules-grid {
+    .user-pill img {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      object-fit: cover;
+    }
+
+    /* Main layout */
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+    }
+
+    .page-header {
+      margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+      font-size: 30px;
+      margin: 0 0 6px;
+      letter-spacing: 0.01em;
+    }
+
+    .page-header p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-soft);
+    }
+
+    .module-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 18px;
+      margin-top: 18px;
     }
 
     .module-card {
-      position: relative;
-      background: radial-gradient(circle at 0% 0%, rgba(255, 123, 0, 0.12), transparent 65%), var(--bg-card);
+      background: radial-gradient(circle at top left, #1f2937 0, #020617 60%);
       border-radius: var(--radius-lg);
-      border: 1px solid var(--border-subtle);
       padding: 16px 16px 14px;
+      border: 1px solid rgba(15, 23, 42, 0.9);
       box-shadow: var(--shadow-soft);
+      position: relative;
       overflow: hidden;
     }
 
@@ -147,1326 +208,985 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.12), transparent 55%);
-      opacity: 0;
-      transition: opacity 0.25s ease;
+      background: radial-gradient(circle at top left, var(--accent-soft), transparent 55%);
+      opacity: 0.6;
       pointer-events: none;
     }
 
-    .module-card:hover::before {
-      opacity: 1;
+    .module-card-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    .module-header {
+    .module-chip-row {
       display: flex;
       justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 8px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-soft);
     }
 
-    .module-title {
+    .module-name {
       font-weight: 600;
-      font-size: 1rem;
-    }
-
-    .module-id {
-      font-size: 0.78rem;
-      color: var(--text-muted);
+      font-size: 16px;
     }
 
     .module-desc {
-      font-size: 0.9rem;
-      color: var(--text-soft);
-      min-height: 38px;
-      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      min-height: 40px;
     }
 
     .module-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-top: 6px;
       gap: 8px;
     }
 
-    .status-pill {
-      font-size: 0.78rem;
-      padding: 3px 9px;
+    .badge {
+      padding: 3px 8px;
       border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      font-size: 11px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text-soft);
+      background: rgba(15, 23, 42, 0.75);
     }
 
-    .status-pill.enabled {
-      background: rgba(34, 197, 94, 0.12);
-      border: 1px solid rgba(34, 197, 94, 0.6);
-      color: #4ade80;
-    }
-
-    .status-pill.disabled {
-      background: rgba(148, 163, 184, 0.09);
-      border: 1px solid rgba(148, 163, 184, 0.6);
-      color: #e5e7eb;
-    }
-
-    /* Buttons */
-    .btn {
-      border: none;
-      outline: none;
-      cursor: pointer;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      padding: 6px 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: background 0.2s, transform 0.12s, box-shadow 0.2s, border-color 0.2s;
-      white-space: nowrap;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-soft));
-      color: #fff;
-      box-shadow: 0 0 18px rgba(255, 123, 0, 0.5);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 0 24px rgba(255, 123, 0, 0.75);
+    .badge-on {
+      border-color: rgba(34, 197, 94, 0.55);
+      color: #bbf7d0;
+      background: rgba(22, 163, 74, 0.16);
     }
 
     .btn-ghost {
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--text-soft);
+      padding: 6px 10px;
+      border-radius: 999px;
       border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.9);
+      color: #e5e7eb;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: background var(--transition-fast),
+        border-color var(--transition-fast), transform var(--transition-fast),
+        box-shadow var(--transition-fast);
     }
 
     .btn-ghost:hover {
-      border-color: var(--accent-soft);
-      color: var(--accent-soft);
+      background: rgba(15, 23, 42, 1);
+      border-color: rgba(248, 113, 113, 0.9);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      transform: translateY(-1px);
     }
 
-    .toggle-btn {
-      padding: 4px 10px;
-      font-size: 0.78rem;
+    /* Toggle */
+    .toggle {
+      position: relative;
+      width: 40px;
+      height: 20px;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(15, 23, 42, 0.9);
+      transition: 0.2s;
       border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.55);
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--text-soft);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
     }
 
-    .toggle-btn.on {
-      border-color: rgba(34, 197, 94, 0.7);
-      background: rgba(22, 101, 52, 0.35);
-      color: #4ade80;
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 1px;
+      background-color: #e5e7eb;
+      transition: 0.2s;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    }
+
+    input:checked + .slider {
+      background: linear-gradient(135deg, #22c55e, #4ade80);
+      border-color: transparent;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(18px);
+      background-color: #020617;
+    }
+
+    /* Status bar */
+    .status-bar {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.7);
     }
 
     /* Modal */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(14px);
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(16px);
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 30;
+      z-index: 40;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
     }
 
     .modal {
-      max-width: 720px;
-      width: 100%;
-      background: radial-gradient(circle at 0% 0%, rgba(255, 123, 0, 0.16), transparent 60%), #020617;
-      border-radius: 18px;
-      border: 1px solid rgba(148, 163, 184, 0.45);
-      box-shadow: var(--shadow-soft);
-      padding: 18px 20px 16px;
+      width: min(820px, 100% - 32px);
       max-height: 90vh;
-      overflow-y: auto;
+      background: radial-gradient(circle at top left, #1e293b 0, #020617 55%);
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.85);
+      padding: 20px 22px 18px;
+      display: flex;
+      flex-direction: column;
     }
 
     .modal-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .modal-title-block {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    .modal-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .modal-subtitle {
-      font-size: 0.85rem;
-      color: var(--text-soft);
-    }
-
-    .modal-section {
-      border-radius: 12px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      background: rgba(15, 23, 42, 0.9);
-      padding: 10px 12px 12px;
-      margin-bottom: 12px;
-    }
-
-    .modal-section h3 {
-      font-size: 0.9rem;
-      margin-bottom: 6px;
-    }
-
-    .field-row {
-      display: flex;
-      flex-wrap: wrap;
+      align-items: center;
       gap: 10px;
       margin-bottom: 8px;
     }
 
-    .field {
-      flex: 1 1 160px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
+    .modal-header h2 {
+      margin: 0;
+      font-size: 20px;
     }
 
-    .field label {
-      font-size: 0.78rem;
+    .modal-header span {
+      font-size: 12px;
       color: var(--text-soft);
     }
 
-    .field small {
-      font-size: 0.7rem;
-      color: var(--text-muted);
+    .modal-body {
+      padding-top: 6px;
+      padding-bottom: 8px;
+      overflow: auto;
+      border-top: 1px solid rgba(148, 163, 184, 0.3);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+      margin-top: 8px;
+      margin-bottom: 10px;
     }
 
-    select,
+    .modal-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .modal-section-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .field-group {
+      margin-bottom: 10px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      margin-bottom: 3px;
+      color: #e5e7eb;
+    }
+
+    .field-description {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
     input[type="text"],
     input[type="number"],
     textarea {
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 9px;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-      color: var(--text-main);
-      padding: 6px 8px;
-      font-size: 0.8rem;
-      outline: none;
       width: 100%;
-    }
-
-    select:focus,
-    input:focus,
-    textarea:focus {
-      border-color: var(--accent-soft);
-      box-shadow: 0 0 0 1px rgba(255, 123, 0, 0.35);
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      padding: 7px 9px;
+      font-size: 13px;
+      background: rgba(15, 23, 42, 0.95);
+      color: #f9fafb;
+      outline: none;
+      resize: vertical;
+      min-height: 34px;
     }
 
     textarea {
-      min-height: 60px;
-      resize: vertical;
+      min-height: 70px;
     }
 
-    .checkbox-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 4px;
-      font-size: 0.8rem;
+    input:focus,
+    textarea:focus {
+      border-color: var(--accent-strong);
+      box-shadow: 0 0 0 1px rgba(248, 163, 54, 0.7);
+    }
+
+    .modal-aside {
+      font-size: 12px;
       color: var(--text-soft);
-    }
-
-    .checkbox-row input {
-      width: auto;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.8);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .modal-footer {
       display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 10px;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
     }
 
-    .badge {
+    .save-status {
+      font-size: 12px;
+      color: var(--text-soft);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .save-status span.icon {
+      font-size: 14px;
+    }
+
+    .btn-secondary {
+      border-radius: 999px;
+      padding: 7px 12px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background: rgba(15, 23, 42, 0.9);
+      color: #e5e7eb;
+      font-size: 13px;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      font-size: 0.75rem;
-      padding: 3px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      color: var(--text-soft);
-    }
-
-    .tag-list {
-      display: flex;
-      flex-wrap: wrap;
       gap: 6px;
-      margin-top: 4px;
-      font-size: 0.78rem;
+      transition: background var(--transition-fast), border-color var(--transition-fast),
+        transform var(--transition-fast), box-shadow var(--transition-fast);
     }
 
-    .tag-list span {
-      padding: 3px 7px;
+    .btn-secondary:hover {
+      background: rgba(15, 23, 42, 1);
+      border-color: rgba(248, 163, 54, 0.9);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.7);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.5);
-    }
-
-    .error-banner {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(248, 113, 113, 0.7);
+      padding: 7px 12px;
+      border: 1px solid rgba(248, 113, 113, 0.9);
+      background: rgba(127, 29, 29, 0.5);
       color: #fecaca;
-      font-size: 0.8rem;
-      border-radius: 10px;
-      padding: 6px 10px;
-      margin-bottom: 10px;
-      display: none;
+      font-size: 13px;
+      cursor: pointer;
     }
 
-    .success-badge {
-      color: #bbf7d0;
-      font-size: 0.78rem;
-    }
-
-    @media (max-width: 640px) {
-      header {
-        flex-direction: column;
-        align-items: flex-start;
+    @media (max-width: 820px) {
+      .modal-grid {
+        grid-template-columns: minmax(0, 1fr);
       }
-      .header-right {
-        align-self: stretch;
-        justify-content: space-between;
+      header {
+        padding-inline: 16px;
+      }
+      .page {
+        padding-inline: 16px;
       }
     }
   </style>
 </head>
 <body>
-  <main>
-    <header>
-      <div class="logo-block">
-        <img src="/assets/Safeguard-Bot.png" alt="SafeGuard Logo" />
-        <div class="logo-text">
-          <span>Safeguard Panel</span>
-          <span id="guildNameLabel">Loading guild…</span>
-        </div>
+  <header>
+    <div class="header-left">
+      <div class="logo-circle">🛡️</div>
+      <div class="header-title">
+        <span>SafeGuard Panel</span>
+        <span id="guildLabel">Loading guild…</span>
       </div>
-      <div class="header-right">
-        <span class="pill" id="userBadge">Not signed in</span>
-        <a href="/dashboard" class="back-link">
-          <span>←</span> Servers
-        </a>
-      </div>
-    </header>
-
-    <h1>Server Modules</h1>
-    <p class="subtitle">
-      Enable and configure SafeGuard’s systems for this server. Changes are saved live to MongoDB and mirrored by the bot.
-    </p>
-
-    <div id="modulesContainer" class="modules-grid">
-      <!-- Filled by JS -->
     </div>
+
+    <div class="header-actions">
+      <button class="btn" id="backBtn">← Servers</button>
+      <div id="userPill" class="user-pill">
+        <img id="userAvatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="User" />
+        <span id="userName">Not signed in</span>
+      </div>
+      <button class="btn" id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="page-header">
+      <h1>Server Modules</h1>
+      <p>
+        Enable and configure SafeGuard’s systems for this server. Changes are saved
+        live to MongoDB and mirrored by the bot.
+      </p>
+      <div class="status-bar">
+        <div class="status-dot"></div>
+        <span id="statusText">Connected to Safeguard Panel API.</span>
+      </div>
+    </section>
+
+    <section id="modulesSection">
+      <div id="modulesGrid" class="module-grid"></div>
+    </section>
   </main>
 
   <!-- Modal -->
-  <div id="modalBackdrop" class="modal-backdrop">
+  <div id="moduleModalBackdrop" class="modal-backdrop">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title-block">
-          <div class="modal-title" id="modalTitle">Module</div>
-          <div class="modal-subtitle" id="modalSubtitle"></div>
+        <div>
+          <h2 id="modalTitle">Module</h2>
+          <span id="modalSubtitle">Edit configuration for this module.</span>
         </div>
-        <button class="btn-ghost btn" type="button" id="modalCloseBtn">Close</button>
+        <button class="btn-secondary" id="closeModalBtn">✕ Close</button>
       </div>
 
-      <div id="modalError" class="error-banner"></div>
-
-      <div id="modalBody">
-        <!-- Dynamic content -->
+      <div class="modal-body">
+        <form id="moduleForm">
+          <div class="modal-grid">
+            <div>
+              <div class="modal-section-title">Configuration</div>
+              <div id="modalFields"></div>
+            </div>
+            <aside class="modal-aside">
+              <div class="modal-section-title">Hints</div>
+              <div id="modalHints">
+                Use placeholders like <code>{mention}</code>, <code>{user}</code>, <code>{server}</code>,
+                <code>{membercount}</code> in messages. They will be replaced by live data.
+              </div>
+            </aside>
+          </div>
+        </form>
       </div>
 
       <div class="modal-footer">
-        <span id="modalStatus" class="success-badge"></span>
-        <button class="btn btn-ghost" type="button" id="modalCancelBtn">Cancel</button>
-        <button class="btn btn-primary" type="button" id="modalSaveBtn">Save Changes</button>
+        <div class="save-status" id="saveStatus">
+          <span class="icon">💾</span>
+          <span>Waiting for changes…</span>
+        </div>
+        <div>
+          <button class="btn-secondary" id="resetFormBtn" type="button">Reset</button>
+          <button class="btn-primary" id="saveFormBtn" type="button">Save changes</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    const token = localStorage.getItem("safeguard_token");
+    // ========= UTIL / GLOBALS =========
+    const guildId = window.location.pathname.split("/").pop();
+    const token =
+      localStorage.getItem("safeguard_token") ||
+      localStorage.getItem("sg_token") ||
+      localStorage.getItem("token");
+
     if (!token) {
-      window.location.href = "/";
+      // Not logged in at all
+      window.location.href = "/auth/discord";
     }
 
-    const guildId = window.location.pathname.split("/").pop();
-    let guildMeta = { channels: [], roles: [] };
-    let modules = [];
-    let currentModule = null;
+    const authHeader = { Authorization: "Bearer " + token };
 
-    const modulesContainer = document.getElementById("modulesContainer");
-    const userBadge = document.getElementById("userBadge");
-    const guildNameLabel = document.getElementById("guildNameLabel");
+    const modulesGrid = document.getElementById("modulesGrid");
+    const guildLabel = document.getElementById("guildLabel");
+    const userNameEl = document.getElementById("userName");
+    const userAvatarEl = document.getElementById("userAvatar");
+    const statusText = document.getElementById("statusText");
 
-    const modalBackdrop = document.getElementById("modalBackdrop");
+    const modalBackdrop = document.getElementById("moduleModalBackdrop");
     const modalTitle = document.getElementById("modalTitle");
     const modalSubtitle = document.getElementById("modalSubtitle");
-    const modalBody = document.getElementById("modalBody");
-    const modalError = document.getElementById("modalError");
-    const modalStatus = document.getElementById("modalStatus");
-    const modalCloseBtn = document.getElementById("modalCloseBtn");
-    const modalCancelBtn = document.getElementById("modalCancelBtn");
-    const modalSaveBtn = document.getElementById("modalSaveBtn");
+    const modalFields = document.getElementById("modalFields");
+    const saveStatus = document.getElementById("saveStatus");
+    const moduleForm = document.getElementById("moduleForm");
 
-    // Helper: fetch with auth
-    async function api(path, options = {}) {
-      const res = await fetch(path, {
-        ...options,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-          ...(options.headers || {})
-        }
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`HTTP ${res.status}: ${text}`);
-      }
-      return res.json();
-    }
+    let currentModule = null;
+    let currentModules = [];
 
-    function setError(msg) {
-      if (!msg) {
-        modalError.style.display = "none";
-        modalError.textContent = "";
-      } else {
-        modalError.style.display = "block";
-        modalError.textContent = msg;
-      }
-    }
-
-    function setStatus(msg) {
-      modalStatus.textContent = msg || "";
-    }
-
-    function openModal(mod) {
-      currentModule = mod;
-      setError("");
-      setStatus("");
-      modalTitle.textContent = mod.name;
-      modalSubtitle.textContent = mod.description;
-      buildModuleForm(mod);
-      modalBackdrop.style.display = "flex";
-    }
-
-    function closeModal() {
-      modalBackdrop.style.display = "none";
-      currentModule = null;
-    }
-
-    modalCloseBtn.onclick = closeModal;
-    modalCancelBtn.onclick = closeModal;
-
-    modalSaveBtn.onclick = async () => {
-      if (!currentModule) return;
-      try {
-        setError("");
-        setStatus("Saving…");
-        const newSettings = collectSettingsFromForm(currentModule);
-        const res = await fetch(`/api/modules/update/${currentModule._id}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
+    // Module-specific field definitions
+    const MODULE_DEFINITIONS = {
+      tickets: {
+        subtitle: "Ticket panels, claims, transcripts and logging.",
+        hints:
+          "Panels are created with /ticket panel create inside Discord. Here you can toggle the system and adjust default behaviour for your bot if you store extra options in Module.settings.",
+        fields: [
+          {
+            key: "defaultPanelId",
+            label: "Default Panel ID",
+            type: "text",
+            description: "Optional: panel ID to use when the panel isn't specified."
+          }
+        ]
+      },
+      welcome: {
+        subtitle: "Welcome & goodbye messages, DMs, cards and autoroles.",
+        hints:
+          "Messages can use {mention}, {user}, {server}, {membercount}. Autoroles are comma-separated role IDs.",
+        fields: [
+          {
+            key: "welcomeChannelId",
+            label: "Welcome Channel ID",
+            type: "text",
+            description: "Text channel where welcome messages are sent."
           },
-          body: JSON.stringify({
-            settings: newSettings,
-            enabled: currentModule.enabled
-          })
-        });
-        if (!res.ok) {
-          const t = await res.text();
-          throw new Error(t);
-        }
-        const data = await res.json();
-        // Update local copy
-        const idx = modules.findIndex(m => m._id === currentModule._id);
-        if (idx !== -1) modules[idx] = data.module;
-        currentModule = data.module;
-        renderModules();
-        setStatus("Saved.");
-        setTimeout(closeModal, 700);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to save changes. Check console/logs for details.");
-        setStatus("");
+          {
+            key: "welcomeMessage",
+            label: "Welcome Message",
+            type: "textarea",
+            description:
+              "Main welcome message. Supports {mention}, {user}, {server}, {membercount} and \\n for new lines."
+          },
+          {
+            key: "welcomeDm",
+            label: "Welcome DM Message",
+            type: "textarea",
+            description:
+              "Optional DM message sent when a member joins. Supports the same placeholders."
+          },
+          {
+            key: "goodbyeChannelId",
+            label: "Goodbye Channel ID",
+            type: "text",
+            description: "Channel where goodbye messages are sent."
+          },
+          {
+            key: "goodbyeMessage",
+            label: "Goodbye Message",
+            type: "textarea",
+            description:
+              "Message used when a member leaves the server. Supports the same placeholders."
+          },
+          {
+            key: "goodbyeDm",
+            label: "Goodbye DM Message",
+            type: "textarea",
+            description: "Optional DM sent when a member leaves."
+          },
+          {
+            key: "autoroles",
+            label: "Autoroles",
+            type: "text",
+            description: "Comma-separated role IDs that should be auto-assigned on join."
+          },
+          {
+            key: "autoroleDelayMs",
+            label: "Autorole Delay (ms)",
+            type: "number",
+            description: "Number of milliseconds to wait before giving autoroles (1000 = 1 second)."
+          }
+        ]
+      },
+      verification: {
+        subtitle: "Captcha verification, roles, difficulty and logging.",
+        hints:
+          "Matches your /verify command. Difficulty presets: easy, medium, hard, manual.",
+        fields: [
+          {
+            key: "panelChannelId",
+            label: "Verification Panel Channel ID",
+            type: "text",
+            description: "Channel where the verification panel is sent."
+          },
+          {
+            key: "logChannelId",
+            label: "Verification Log Channel ID",
+            type: "text",
+            description: "Channel where verification logs are sent."
+          },
+          {
+            key: "roles",
+            label: "Verification Roles",
+            type: "text",
+            description: "Comma-separated role IDs assigned once a user passes verification."
+          },
+          {
+            key: "staffRoleId",
+            label: "Staff Role ID",
+            type: "text",
+            description:
+              "Role ID allowed to manage verification, clear attempts and see logs."
+          },
+          {
+            key: "message",
+            label: "Panel Message",
+            type: "textarea",
+            description:
+              "Message shown above the Verify button. Supports \\n for new lines."
+          },
+          {
+            key: "difficultyMode",
+            label: "Difficulty Mode",
+            type: "text",
+            description: "easy, medium, hard or manual."
+          },
+          {
+            key: "difficultyLength",
+            label: "Captcha Length (manual)",
+            type: "number",
+            description:
+              "Number of characters when difficulty is manual. Leave blank to keep current."
+          },
+          {
+            key: "difficultyDecoys",
+            label: "Decoy Characters (manual)",
+            type: "number",
+            description:
+              "Number of decoy characters when difficulty is manual. Leave blank to keep current."
+          },
+          {
+            key: "difficultyTrace",
+            label: "Trace Lines (manual; true/false)",
+            type: "text",
+            description:
+              "Set to true or false when using manual mode to control trace lines."
+          }
+        ]
+      },
+      leveling: {
+        subtitle: "XP system, level-up messages and role rewards.",
+        hints:
+          "Your /level command controls the same settings. Roles can be configured here as a quick overview.",
+        fields: [
+          {
+            key: "xpPerMessage",
+            label: "XP per Message",
+            type: "number",
+            description:
+              "Base XP given per message (same as /level setxp)."
+          },
+          {
+            key: "levelUpChannelId",
+            label: "Level-Up Channel ID",
+            type: "text",
+            description:
+              "Channel where level-up messages should be sent (same as /level setlevelchannel)."
+          },
+          {
+            key: "roleRewards",
+            label: "Role Rewards",
+            type: "textarea",
+            description:
+              "Each line: level:ROLE_ID (e.g. 5:123456789012345678). The bot can parse this from Module.settings."
+          }
+        ]
+      },
+      logging: {
+        subtitle: "Moderation log channel.",
+        hints:
+          "This mirrors your /set modlogs command. The bot can map this to GuildConfig.modLogChannelId.",
+        fields: [
+          {
+            key: "modLogChannelId",
+            label: "Moderation Log Channel ID",
+            type: "text",
+            description: "Channel used for warns, kicks, bans, etc."
+          }
+        ]
+      },
+      auditlogs: {
+        subtitle: "Audit log channel.",
+        hints:
+          "Mirrors /set auditlogs. The bot can copy this to AuditGuildConfig.modLogChannelId.",
+        fields: [
+          {
+            key: "auditLogChannelId",
+            label: "Audit Log Channel ID",
+            type: "text",
+            description:
+              "Channel for server join/leave and configuration change logs."
+          }
+        ]
+      },
+      vclogs: {
+        subtitle: "Voice channel logging.",
+        hints:
+          "Mirrors /set vclogs, used by your VC logging model.",
+        fields: [
+          {
+            key: "vcLogChannelId",
+            label: "VC Log Channel ID",
+            type: "text",
+            description:
+              "Channel where voice state updates (join/leave/move) are logged."
+          }
+        ]
+      },
+      muterole: {
+        subtitle: "Global mute role configuration.",
+        hints:
+          "Mirrors /set muterole and is stored in your MuteRole model.",
+        fields: [
+          {
+            key: "muteRoleId",
+            label: "Mute Role ID",
+            type: "text",
+            description:
+              "Role ID used when a user is muted by the moderation commands."
+          }
+        ]
+      },
+      lockown: {}, // typo guard
+      lockdown: {
+        subtitle: "Lockdown configuration.",
+        hints:
+          "This module is tied to your lockdown commands. You can store any extra settings you want here.",
+        fields: [
+          {
+            key: "allowedRoles",
+            label: "Roles allowed to run lockdown",
+            type: "text",
+            description: "Comma-separated role IDs that can manage lockdown."
+          }
+        ]
+      },
+      antiraid: {
+        subtitle: "Anti-raid thresholds.",
+        hints:
+          "Exact thresholds are up to you inside the bot; this is just a configuration store.",
+        fields: [
+          {
+            key: "joinThreshold",
+            label: "Join Threshold",
+            type: "number",
+            description:
+              "Approx. number of joins per minute that should trigger the anti-raid system."
+          },
+          {
+            key: "timeWindowSec",
+            label: "Time Window (seconds)",
+            type: "number",
+            description:
+              "How many seconds to observe joins before declaring a raid."
+          }
+        ]
+      },
+      automod: {
+        subtitle: "Automatic filter settings.",
+        hints:
+          "Use booleans like true/false or comma-separated lists. The bot can read from Module.settings when handling messages.",
+        fields: [
+          {
+            key: "blockLinks",
+            label: "Block Links (true/false)",
+            type: "text",
+            description: "Whether to silently block links sent by members."
+          },
+          {
+            key: "blockInvites",
+            label: "Block Discord Invites (true/false)",
+            type: "text",
+            description: "Whether to block Discord invite links."
+          },
+          {
+            key: "blacklistedWords",
+            label: "Blacklisted Words",
+            type: "textarea",
+            description: "One word or phrase per line to block."
+          }
+        ]
       }
     };
 
-    // ==========================
-    // RENDER MODULE CARDS
-    // ==========================
-    function renderModules() {
-      modulesContainer.innerHTML = "";
-      modules.forEach(mod => {
-        const card = document.createElement("div");
+    // ========= LOAD USER & GUILD =========
+    async function loadUser() {
+      try {
+        const res = await fetch("/api/user", { headers: authHeader });
+        const data = await res.json();
+        if (!data.loggedIn) {
+          localStorage.removeItem("safeguard_token");
+          localStorage.removeItem("sg_token");
+          localStorage.removeItem("token");
+          window.location.href = "/auth/discord";
+          return;
+        }
+
+        const u = data.user;
+        userNameEl.textContent = `${u.username}#${u.discriminator}`;
+        if (u.avatar) {
+          userAvatarEl.src = `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=64`;
+        }
+      } catch (err) {
+        console.error("User load error:", err);
+      }
+    }
+
+    async function loadModules() {
+      try {
+        statusText.textContent = "Loading modules…";
+        const res = await fetch(`/api/modules/${guildId}`, { headers: authHeader });
+        const modules = await res.json();
+        currentModules = modules;
+        renderModules(modules);
+        guildLabel.textContent = modules[0]
+          ? `Configuring guild ID ${guildId}`
+          : `Guild ID ${guildId}`;
+        statusText.textContent = "Modules loaded. Changes save instantly.";
+      } catch (err) {
+        console.error("Modules load error:", err);
+        statusText.textContent = "Failed to load modules from API.";
+      }
+    }
+
+    function renderModules(mods) {
+      modulesGrid.innerHTML = "";
+      if (!Array.isArray(mods) || !mods.length) {
+        modulesGrid.innerHTML =
+          '<p style="color: var(--text-muted); font-size: 14px;">No modules found for this guild.</p>';
+        return;
+      }
+
+      for (const mod of mods) {
+        const card = document.createElement("article");
         card.className = "module-card";
 
-        const header = document.createElement("div");
-        header.className = "module-header";
+        const def = MODULE_DEFINITIONS[mod.id] || {};
+        const subtitle = def.subtitle || "";
+        const description = mod.description || subtitle || "No description provided.";
 
-        const left = document.createElement("div");
-        const titleEl = document.createElement("div");
-        titleEl.className = "module-title";
-        titleEl.textContent = mod.name;
-        const idEl = document.createElement("div");
-        idEl.className = "module-id";
-        idEl.textContent = mod.id;
-        left.appendChild(titleEl);
-        left.appendChild(idEl);
+        card.innerHTML = `
+          <div class="module-card-inner">
+            <div class="module-chip-row">
+              <div class="module-name">${mod.name}</div>
+              <label class="toggle">
+                <input type="checkbox" ${mod.enabled ? "checked" : ""} data-module-id="${mod._id}">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="module-desc">${description}</div>
+            <div class="module-footer">
+              <span class="badge ${mod.enabled ? "badge-on" : ""}">
+                ${mod.enabled ? "Enabled" : "Disabled"}
+              </span>
+              <button class="btn-ghost" data-configure-id="${mod._id}">
+                ⚙ Configure
+              </button>
+            </div>
+          </div>
+        `;
 
-        const toggleBtn = document.createElement("button");
-        toggleBtn.className = "toggle-btn" + (mod.enabled ? " on" : "");
-        toggleBtn.textContent = mod.enabled ? "Enabled" : "Disabled";
-        toggleBtn.onclick = () => toggleModule(mod);
+        modulesGrid.appendChild(card);
+      }
 
-        header.appendChild(left);
-        header.appendChild(toggleBtn);
+      // Attach listeners
+      modulesGrid.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        input.addEventListener("change", onToggleModule);
+      });
 
-        const desc = document.createElement("div");
-        desc.className = "module-desc";
-        desc.textContent = mod.description || "";
-
-        const footer = document.createElement("div");
-        footer.className = "module-footer";
-
-        const status = document.createElement("span");
-        status.className = "status-pill " + (mod.enabled ? "enabled" : "disabled");
-        status.textContent = mod.enabled ? "Active" : "Disabled";
-
-        const manageBtn = document.createElement("button");
-        manageBtn.className = "btn btn-primary";
-        manageBtn.type = "button";
-        manageBtn.textContent = "Manage Module";
-        manageBtn.onclick = () => openModal(mod);
-
-        footer.appendChild(status);
-        footer.appendChild(manageBtn);
-
-        card.appendChild(header);
-        card.appendChild(desc);
-        card.appendChild(footer);
-
-        modulesContainer.appendChild(card);
+      modulesGrid.querySelectorAll("[data-configure-id]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-configure-id");
+          const mod = currentModules.find(m => m._id === id);
+          if (mod) openModuleModal(mod);
+        });
       });
     }
 
-    async function toggleModule(mod) {
+    async function onToggleModule(e) {
+      const moduleId = e.target.getAttribute("data-module-id");
+      const enabled = e.target.checked;
+      // Optimistic UI: update badge immediately
+      const card = e.target.closest(".module-card");
+      const badge = card.querySelector(".badge");
+      badge.textContent = enabled ? "Enabled" : "Disabled";
+      badge.classList.toggle("badge-on", enabled);
+
       try {
-        const res = await fetch(`/api/modules/toggle/${mod._id}`, {
-          method: "POST"
+        const res = await fetch(`/api/modules/toggle/${moduleId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
         });
-        if (!res.ok) {
-          const t = await res.text();
-          throw new Error(t);
-        }
-        const data = await res.json();
-        mod.enabled = data.newState;
-        const idx = modules.findIndex(m => m._id === mod._id);
-        if (idx !== -1) modules[idx].enabled = data.newState;
-        renderModules();
+        if (!res.ok) throw new Error("Toggle failed");
       } catch (err) {
         console.error("Toggle error:", err);
-        alert("Failed to toggle module. Check console/logs.");
+        e.target.checked = !enabled; // revert
+        badge.textContent = !enabled ? "Enabled" : "Disabled";
+        badge.classList.toggle("badge-on", !enabled);
+        alert("Failed to toggle module. Check API logs.");
       }
     }
 
-    // ==========================
-    // BUILD FORMS PER MODULE
-    // ==========================
-    function buildModuleForm(mod) {
-      const s = mod.settings || {};
-      modalBody.innerHTML = "";
-
-      // Utility: options from channels/roles
-      const textChannels = guildMeta.channels.filter(c => c.type === 0 || c.type === 5);
-      const categories = guildMeta.channels.filter(c => c.type === 4);
-      const voiceChannels = guildMeta.channels.filter(c => c.type === 2);
-      const roles = guildMeta.roles.filter(r => !r.managed);
-
-      function createSelect(id, options, value, label, helper) {
-        const wrap = document.createElement("div");
-        wrap.className = "field";
-        if (label) {
-          const l = document.createElement("label");
-          l.htmlFor = id;
-          l.textContent = label;
-          wrap.appendChild(l);
-        }
-        const sel = document.createElement("select");
-        sel.id = id;
-
-        const optNone = document.createElement("option");
-        optNone.value = "";
-        optNone.textContent = "— Not set —";
-        sel.appendChild(optNone);
-
-        options.forEach(o => {
-          const opt = document.createElement("option");
-          opt.value = o.id;
-          opt.textContent = o.name;
-          if (o.id === value) opt.selected = true;
-          sel.appendChild(opt);
-        });
-        wrap.appendChild(sel);
-
-        if (helper) {
-          const small = document.createElement("small");
-          small.textContent = helper;
-          wrap.appendChild(small);
-        }
-        return wrap;
-      }
-
-      function createInput(id, value, label, helper, type = "text") {
-        const wrap = document.createElement("div");
-        wrap.className = "field";
-        if (label) {
-          const l = document.createElement("label");
-          l.htmlFor = id;
-          l.textContent = label;
-          wrap.appendChild(l);
-        }
-        const inp = document.createElement("input");
-        inp.id = id;
-        inp.type = type;
-        inp.value = value || "";
-        wrap.appendChild(inp);
-
-        if (helper) {
-          const small = document.createElement("small");
-          small.textContent = helper;
-          wrap.appendChild(small);
-        }
-        return wrap;
-      }
-
-      function createTextarea(id, value, label, helper) {
-        const wrap = document.createElement("div");
-        wrap.className = "field";
-        if (label) {
-          const l = document.createElement("label");
-          l.htmlFor = id;
-          l.textContent = label;
-          wrap.appendChild(l);
-        }
-        const ta = document.createElement("textarea");
-        ta.id = id;
-        ta.value = value || "";
-        wrap.appendChild(ta);
-
-        if (helper) {
-          const small = document.createElement("small");
-          small.textContent = helper;
-          wrap.appendChild(small);
-        }
-        return wrap;
-      }
-
-      function createCheckbox(id, checked, label) {
-        const row = document.createElement("label");
-        row.className = "checkbox-row";
-        const inp = document.createElement("input");
-        inp.type = "checkbox";
-        inp.id = id;
-        inp.checked = !!checked;
-        row.appendChild(inp);
-        const span = document.createElement("span");
-        span.textContent = label;
-        row.appendChild(span);
-        return row;
-      }
-
-      // ===== tickets =====
-      if (mod.id === "tickets") {
-        const sec1 = document.createElement("div");
-        sec1.className = "modal-section";
-        const h = document.createElement("h3");
-        h.textContent = "Ticket Routing";
-        sec1.appendChild(h);
-
-        const row1 = document.createElement("div");
-        row1.className = "field-row";
-        row1.appendChild(createSelect(
-          "tickets_ticketCategoryId",
-          categories,
-          s.ticketCategoryId || "",
-          "Ticket Category",
-          "Category where ticket channels will be created."
-        ));
-        row1.appendChild(createSelect(
-          "tickets_logChannelId",
-          textChannels,
-          s.logChannelId || "",
-          "Log Channel",
-          "Channel where ticket actions & transcripts are logged."
-        ));
-        row1.appendChild(createSelect(
-          "tickets_supportRoleId",
-          roles,
-          s.supportRoleId || "",
-          "Support Role",
-          "Role that can manage / claim tickets."
-        ));
-        sec1.appendChild(row1);
-
-        const sec2 = document.createElement("div");
-        sec2.className = "modal-section";
-        const h2 = document.createElement("h3");
-        h2.textContent = "Ticket Behavior";
-        sec2.appendChild(h2);
-
-        sec2.appendChild(createCheckbox("tickets_allowClaim", s.allowClaim, "Enable claim button"));
-        sec2.appendChild(createCheckbox("tickets_transcriptToFile", s.transcriptToFile, "Save transcript as file"));
-        sec2.appendChild(createCheckbox("tickets_transcriptToChannel", s.transcriptToChannel, "Send transcript to log channel"));
-
-        modalBody.appendChild(sec1);
-        modalBody.appendChild(sec2);
-      }
-
-      // ===== greet (welcome & goodbye) =====
-      if (mod.id === "greet") {
-        const g = {
-          welcome: s.welcome || {},
-          goodbye: s.goodbye || {},
-          autoroles: s.autoroles || [],
-          autoroleDelayMs: s.autoroleDelayMs || 0
-        };
-
-        const secW = document.createElement("div");
-        secW.className = "modal-section";
-        const hw = document.createElement("h3");
-        hw.textContent = "Welcome Configuration";
-        secW.appendChild(hw);
-
-        secW.appendChild(createCheckbox("greet_welcome_enabled", g.welcome.enabled, "Enable welcome messages"));
-
-        const rowW = document.createElement("div");
-        rowW.className = "field-row";
-        rowW.appendChild(createSelect(
-          "greet_welcome_channelId",
-          textChannels,
-          g.welcome.channelId || "",
-          "Welcome Channel",
-          "Channel where welcome messages are sent."
-        ));
-        secW.appendChild(rowW);
-
-        secW.appendChild(
-          createTextarea(
-            "greet_welcome_message",
-            g.welcome.message || "",
-            "Welcome Message",
-            "Placeholders: {mention}, {user}, {server}, {membercount}"
-          )
-        );
-        secW.appendChild(
-          createTextarea(
-            "greet_welcome_dm",
-            g.welcome.dm || "",
-            "Welcome DM (optional)",
-            "Sent to users in DM when they join. Leave blank to disable."
-          )
-        );
-        secW.appendChild(
-          createInput(
-            "greet_welcome_background",
-            g.welcome.background || "",
-            "Welcome Card Background URL",
-            "Used by your image generator for welcome cards."
-          )
-        );
-
-        const secG = document.createElement("div");
-        secG.className = "modal-section";
-        const hg = document.createElement("h3");
-        hg.textContent = "Goodbye Configuration";
-        secG.appendChild(hg);
-
-        secG.appendChild(createCheckbox("greet_goodbye_enabled", g.goodbye.enabled, "Enable goodbye messages"));
-
-        const rowG = document.createElement("div");
-        rowG.className = "field-row";
-        rowG.appendChild(createSelect(
-          "greet_goodbye_channelId",
-          textChannels,
-          g.goodbye.channelId || "",
-          "Goodbye Channel",
-          "Channel where goodbye messages are sent."
-        ));
-        secG.appendChild(rowG);
-
-        secG.appendChild(
-          createTextarea(
-            "greet_goodbye_message",
-            g.goodbye.message || "",
-            "Goodbye Message",
-            "Placeholders: {mention}, {user}, {server}, {membercount}"
-          )
-        );
-        secG.appendChild(
-          createTextarea(
-            "greet_goodbye_dm",
-            g.goodbye.dm || "",
-            "Goodbye DM (optional)",
-            "Sent to users in DM when they leave. Leave blank to disable."
-          )
-        );
-        secG.appendChild(
-          createInput(
-            "greet_goodbye_background",
-            g.goodbye.background || "",
-            "Goodbye Card Background URL",
-            "Used by your image generator for goodbye cards."
-          )
-        );
-
-        const secA = document.createElement("div");
-        secA.className = "modal-section";
-        const ha = document.createElement("h3");
-        ha.textContent = "Autoroles";
-        secA.appendChild(ha);
-
-        const delayRow = document.createElement("div");
-        delayRow.className = "field-row";
-        delayRow.appendChild(
-          createInput(
-            "greet_autoroleDelayMs",
-            g.autoroleDelayMs || 0,
-            "Autorole Delay (ms)",
-            "1000ms = 1 second. Delay before applying autoroles.",
-            "number"
-          )
-        );
-        secA.appendChild(delayRow);
-
-        const roleWrap = document.createElement("div");
-        roleWrap.className = "field";
-        const rl = document.createElement("label");
-        rl.textContent = "Autorole Roles";
-        roleWrap.appendChild(rl);
-
-        const rolesContainer = document.createElement("div");
-        rolesContainer.className = "tag-list";
-        roles.forEach(r => {
-          const span = document.createElement("span");
-          const cb = document.createElement("input");
-          cb.type = "checkbox";
-          cb.value = r.id;
-          cb.checked = g.autoroles.includes(r.id);
-          cb.id = "greet_autoroles_" + r.id;
-          span.appendChild(cb);
-          const txt = document.createTextNode(" " + r.name);
-          span.appendChild(txt);
-          rolesContainer.appendChild(span);
-        });
-        roleWrap.appendChild(rolesContainer);
-        secA.appendChild(roleWrap);
-
-        modalBody.appendChild(secW);
-        modalBody.appendChild(secG);
-        modalBody.appendChild(secA);
-      }
-
-      // ===== verify =====
-      if (mod.id === "verify") {
-        const v = {
-          enabled: s.enabled !== undefined ? s.enabled : true,
-          panelChannelId: s.panelChannelId || "",
-          logChannelId: s.logChannelId || "",
-          roles: s.roles || [],
-          message: s.message || "Click Verify to prove you're human.",
-          difficulty: s.difficulty || {
-            mode: "medium",
-            length: 5,
-            decoys: 10,
-            trace: true
-          },
-          staffRoleId: s.staffRoleId || ""
-        };
-
-        const secMain = document.createElement("div");
-        secMain.className = "modal-section";
-        const h = document.createElement("h3");
-        h.textContent = "Verification Settings";
-        secMain.appendChild(h);
-
-        secMain.appendChild(createCheckbox("verify_enabled", v.enabled, "Enable verification system"));
-
-        const row1 = document.createElement("div");
-        row1.className = "field-row";
-        row1.appendChild(createSelect(
-          "verify_panelChannelId",
-          textChannels,
-          v.panelChannelId,
-          "Verification Panel Channel",
-          "Channel where the verification panel is posted."
-        ));
-        row1.appendChild(createSelect(
-          "verify_logChannelId",
-          textChannels,
-          v.logChannelId,
-          "Log Channel",
-          "Channel for verification logs / actions."
-        ));
-        secMain.appendChild(row1);
-
-        const row2 = document.createElement("div");
-        row2.className = "field-row";
-        row2.appendChild(createSelect(
-          "verify_staffRoleId",
-          roles,
-          v.staffRoleId,
-          "Staff Role",
-          "Role required to manage verification & clear attempts."
-        ));
-        secMain.appendChild(row2);
-
-        secMain.appendChild(
-          createTextarea(
-            "verify_message",
-            v.message,
-            "Verification Panel Message",
-            "Shown in the embed above the Verify button."
-          )
-        );
-
-        const secRoles = document.createElement("div");
-        secRoles.className = "modal-section";
-        const hr = document.createElement("h3");
-        hr.textContent = "Verification Roles";
-        secRoles.appendChild(hr);
-
-        const list = document.createElement("div");
-        list.className = "tag-list";
-        roles.forEach(r => {
-          const span = document.createElement("span");
-          const cb = document.createElement("input");
-          cb.type = "checkbox";
-          cb.value = r.id;
-          cb.checked = v.roles.includes(r.id);
-          cb.id = "verify_role_" + r.id;
-          span.appendChild(cb);
-          span.appendChild(document.createTextNode(" " + r.name));
-          list.appendChild(span);
-        });
-        secRoles.appendChild(list);
-
-        const secDiff = document.createElement("div");
-        secDiff.className = "modal-section";
-        const hd = document.createElement("h3");
-        hd.textContent = "Captcha Difficulty";
-        secDiff.appendChild(hd);
-
-        const rowD = document.createElement("div");
-        rowD.className = "field-row";
-
-        const modeWrap = document.createElement("div");
-        modeWrap.className = "field";
-        const modeLabel = document.createElement("label");
-        modeLabel.htmlFor = "verify_diff_mode";
-        modeLabel.textContent = "Mode";
-        modeWrap.appendChild(modeLabel);
-        const modeSel = document.createElement("select");
-        modeSel.id = "verify_diff_mode";
-        ["easy", "medium", "hard", "manual"].forEach(m => {
-          const o = document.createElement("option");
-          o.value = m;
-          o.textContent = m;
-          if (v.difficulty.mode === m) o.selected = true;
-          modeSel.appendChild(o);
-        });
-        modeWrap.appendChild(modeSel);
-        const sm = document.createElement("small");
-        sm.textContent = "Matches /verify difficulty preset modes.";
-        modeWrap.appendChild(sm);
-
-        rowD.appendChild(modeWrap);
-        rowD.appendChild(
-          createInput(
-            "verify_diff_length",
-            v.difficulty.length || 5,
-            "Captcha Length",
-            "Manual mode: override preset length.",
-            "number"
-          )
-        );
-        rowD.appendChild(
-          createInput(
-            "verify_diff_decoys",
-            v.difficulty.decoys || 10,
-            "Decoy Count",
-            "Noise characters/points around the captcha.",
-            "number"
-          )
-        );
-        secDiff.appendChild(rowD);
-        secDiff.appendChild(createCheckbox("verify_diff_trace", v.difficulty.trace, "Enable trace lines"));
-
-        modalBody.appendChild(secMain);
-        modalBody.appendChild(secRoles);
-        modalBody.appendChild(secDiff);
-      }
-
-      // ===== level =====
-      if (mod.id === "level") {
-        const lv = {
-          enabled: s.enabled !== undefined ? s.enabled : true,
-          xpPerMessage: s.xpPerMessage || 10,
-          levelChannelId: s.levelChannelId || "",
-          roleRewards: s.roleRewards || []
-        };
-
-        const secMain = document.createElement("div");
-        secMain.className = "modal-section";
-        const h = document.createElement("h3");
-        h.textContent = "Leveling Settings";
-        secMain.appendChild(h);
-
-        secMain.appendChild(createCheckbox("level_enabled", lv.enabled, "Enable leveling system"));
-
-        const row1 = document.createElement("div");
-        row1.className = "field-row";
-        row1.appendChild(
-          createInput(
-            "level_xpPerMessage",
-            lv.xpPerMessage,
-            "XP Per Message",
-            "Matches /level setxp.",
-            "number"
-          )
-        );
-        row1.appendChild(
-          createSelect(
-            "level_levelChannelId",
-            textChannels,
-            lv.levelChannelId,
-            "Level-Up Channel",
-            "Optional. Where level-up messages go."
-          )
-        );
-        secMain.appendChild(row1);
-
-        const secRoles = document.createElement("div");
-        secRoles.className = "modal-section";
-        const hr = document.createElement("h3");
-        hr.textContent = "Role Rewards";
-        secRoles.appendChild(hr);
-
-        const desc = document.createElement("p");
-        desc.style.fontSize = "0.78rem";
-        desc.style.color = "var(--text-soft)";
-        desc.style.marginBottom = "6px";
-        desc.textContent = "Configure which roles are given at each level.";
-        secRoles.appendChild(desc);
-
-        const table = document.createElement("div");
-        table.id = "level_roles_table";
-        table.style.display = "flex";
-        table.style.flexDirection = "column";
-        table.style.gap = "6px";
-
-        function addRoleRow(levelValue, roleId) {
-          const row = document.createElement("div");
-          row.className = "field-row";
-
-          const levelField = createInput("", levelValue || "", "Level", "", "number");
-          levelField.querySelector("label").style.fontSize = "0.75rem";
-          const levelInput = levelField.querySelector("input");
-          levelInput.classList.add("level-role-level");
-
-          const roleField = document.createElement("div");
-          roleField.className = "field";
-          const rLabel = document.createElement("label");
-          rLabel.textContent = "Role";
-          rLabel.style.fontSize = "0.75rem";
-          roleField.appendChild(rLabel);
-          const sel = document.createElement("select");
-          sel.classList.add("level-role-roleId");
-          const optNone = document.createElement("option");
-          optNone.value = "";
-          optNone.textContent = "— None —";
-          sel.appendChild(optNone);
-          roles.forEach(r => {
-            const o = document.createElement("option");
-            o.value = r.id;
-            o.textContent = r.name;
-            if (r.id === roleId) o.selected = true;
-            sel.appendChild(o);
-          });
-          roleField.appendChild(sel);
-
-          const removeBtn = document.createElement("button");
-          removeBtn.type = "button";
-          removeBtn.className = "btn btn-ghost";
-          removeBtn.textContent = "Remove";
-          removeBtn.onclick = () => row.remove();
-
-          row.appendChild(levelField);
-          row.appendChild(roleField);
-          row.appendChild(removeBtn);
-          table.appendChild(row);
-        }
-
-        (lv.roleRewards || []).forEach(rr => addRoleRow(rr.level, rr.roleId));
-
-        const addBtn = document.createElement("button");
-        addBtn.type = "button";
-        addBtn.className = "btn btn-ghost";
-        addBtn.textContent = "Add Role Reward";
-        addBtn.onclick = () => addRoleRow("", "");
-
-        secRoles.appendChild(table);
-        secRoles.appendChild(addBtn);
-
-        modalBody.appendChild(secMain);
-        modalBody.appendChild(secRoles);
-      }
-
-      // ===== moderation =====
-      if (mod.id === "moderation") {
-        const m = {
-          enabled: s.enabled !== undefined ? s.enabled : true,
-          modLogChannelId: s.modLogChannelId || "",
-          auditLogChannelId: s.auditLogChannelId || "",
-          vcLogChannelId: s.vcLogChannelId || "",
-          muteRoleId: s.muteRoleId || ""
-        };
-
-        const secMain = document.createElement("div");
-        secMain.className = "modal-section";
-
-        const h = document.createElement("h3");
-        h.textContent = "Logging & Mute Settings";
-        secMain.appendChild(h);
-
-        secMain.appendChild(createCheckbox("mod_enabled", m.enabled, "Enable moderation logging features"));
-
-        const row1 = document.createElement("div");
-        row1.className = "field-row";
-        row1.appendChild(createSelect(
-          "mod_modLogChannelId",
-          textChannels,
-          m.modLogChannelId,
-          "Mod Logs Channel",
-          "For moderation actions (warns, bans, kicks, etc.)."
-        ));
-        row1.appendChild(createSelect(
-          "mod_auditLogChannelId",
-          textChannels,
-          m.auditLogChannelId,
-          "Audit Logs Channel",
-          "For audit events configured by SafeGuard."
-        ));
-        secMain.appendChild(row1);
-
-        const row2 = document.createElement("div");
-        row2.className = "field-row";
-        row2.appendChild(createSelect(
-          "mod_vcLogChannelId",
-          textChannels,
-          m.vcLogChannelId,
-          "VC Logs Channel",
-          "For voice join/leave/move logs."
-        ));
-        row2.appendChild(createSelect(
-          "mod_muteRoleId",
-          roles,
-          m.muteRoleId,
-          "Mute Role",
-          "The role used when muting users."
-        ));
-        secMain.appendChild(row2);
-
-        modalBody.appendChild(secMain);
-      }
-
-      if (!modalBody.innerHTML.trim()) {
+    // ========= MODAL LOGIC =========
+    function openModuleModal(mod) {
+      currentModule = mod;
+
+      const def = MODULE_DEFINITIONS[mod.id] || { fields: [] };
+      modalTitle.textContent = mod.name;
+      modalSubtitle.textContent =
+        def.subtitle || "Edit configuration for this module.";
+      document.getElementById("modalHints").textContent =
+        def.hints ||
+        "Values here are stored in Module.settings in MongoDB. Your bot can read them and sync to its own models.";
+
+      // Build fields
+      modalFields.innerHTML = "";
+      const settings = mod.settings || {};
+
+      const fields = def.fields || [];
+      if (!fields.length) {
         const p = document.createElement("p");
-        p.style.fontSize = "0.85rem";
-        p.style.color = "var(--text-soft)";
-        p.textContent = "No editor UI defined for this module yet.";
-        modalBody.appendChild(p);
-      }
-    }
+        p.textContent =
+          "This module currently has no specific editor. You can still toggle it on/off from the main view.";
+        p.style.fontSize = "13px";
+        p.style.color = "var(--text-muted)";
+        modalFields.appendChild(p);
+      } else {
+        for (const field of fields) {
+          const wrapper = document.createElement("div");
+          wrapper.className = "field-group";
 
-    // ==========================
-    // COLLECT FORM VALUES
-    // ==========================
-    function collectSettingsFromForm(mod) {
-      const s = mod.settings || {};
+          const label = document.createElement("div");
+          label.className = "field-label";
+          label.textContent = field.label;
 
-      if (mod.id === "tickets") {
-        return {
-          logChannelId: document.getElementById("tickets_logChannelId").value || "",
-          supportRoleId: document.getElementById("tickets_supportRoleId").value || "",
-          ticketCategoryId: document.getElementById("tickets_ticketCategoryId").value || "",
-          allowClaim: document.getElementById("tickets_allowClaim").checked,
-          transcriptToFile: document.getElementById("tickets_transcriptToFile").checked,
-          transcriptToChannel: document.getElementById("tickets_transcriptToChannel").checked
-        };
-      }
+          const desc = document.createElement("div");
+          desc.className = "field-description";
+          desc.textContent = field.description || "";
 
-      if (mod.id === "greet") {
-        const autoroles = [];
-        guildMeta.roles.forEach(r => {
-          const cb = document.getElementById("greet_autoroles_" + r.id);
-          if (cb && cb.checked) autoroles.push(r.id);
-        });
-        return {
-          welcome: {
-            enabled: document.getElementById("greet_welcome_enabled").checked,
-            channelId: document.getElementById("greet_welcome_channelId").value || "",
-            message: document.getElementById("greet_welcome_message").value || "",
-            dm: document.getElementById("greet_welcome_dm").value || "",
-            background: document.getElementById("greet_welcome_background").value || ""
-          },
-          goodbye: {
-            enabled: document.getElementById("greet_goodbye_enabled").checked,
-            channelId: document.getElementById("greet_goodbye_channelId").value || "",
-            message: document.getElementById("greet_goodbye_message").value || "",
-            dm: document.getElementById("greet_goodbye_dm").value || "",
-            background: document.getElementById("greet_goodbye_background").value || ""
-          },
-          autoroles,
-          autoroleDelayMs: parseInt(document.getElementById("greet_autoroleDelayMs").value || "0", 10)
-        };
-      }
+          let input;
+          if (field.type === "textarea") {
+            input = document.createElement("textarea");
+          } else {
+            input = document.createElement("input");
+            input.type = field.type || "text";
+          }
+          input.name = field.key;
+          if (settings[field.key] !== undefined && settings[field.key] !== null) {
+            input.value = String(settings[field.key]);
+          }
 
-      if (mod.id === "verify") {
-        const roles = [];
-        guildMeta.roles.forEach(r => {
-          const cb = document.getElementById("verify_role_" + r.id);
-          if (cb && cb.checked) roles.push(r.id);
-        });
-        return {
-          enabled: document.getElementById("verify_enabled").checked,
-          panelChannelId: document.getElementById("verify_panelChannelId").value || "",
-          logChannelId: document.getElementById("verify_logChannelId").value || "",
-          roles,
-          message: document.getElementById("verify_message").value || "",
-          difficulty: {
-            mode: document.getElementById("verify_diff_mode").value || "medium",
-            length: parseInt(document.getElementById("verify_diff_length").value || "5", 10),
-            decoys: parseInt(document.getElementById("verify_diff_decoys").value || "10", 10),
-            trace: document.getElementById("verify_diff_trace").checked
-          },
-          staffRoleId: document.getElementById("verify_staffRoleId").value || ""
-        };
-      }
-
-      if (mod.id === "level") {
-        const enabled = document.getElementById("level_enabled").checked;
-        const xpPerMessage = parseInt(document.getElementById("level_xpPerMessage").value || "10", 10);
-        const levelChannelId = document.getElementById("level_levelChannelId").value || "";
-        const roleRewards = [];
-        const table = document.getElementById("level_roles_table");
-        if (table) {
-          const rows = table.querySelectorAll(".field-row");
-          rows.forEach(row => {
-            const levelInput = row.querySelector(".level-role-level");
-            const roleSelect = row.querySelector(".level-role-roleId");
-            if (!levelInput || !roleSelect) return;
-            const lvl = parseInt(levelInput.value || "0", 10);
-            const roleId = roleSelect.value;
-            if (!isNaN(lvl) && lvl > 0 && roleId) {
-              roleRewards.push({ level: lvl, roleId });
-            }
-          });
+          wrapper.appendChild(label);
+          if (field.description) wrapper.appendChild(desc);
+          wrapper.appendChild(input);
+          modalFields.appendChild(wrapper);
         }
-        return {
-          enabled,
-          xpPerMessage,
-          levelChannelId,
-          roleRewards
-        };
       }
 
-      if (mod.id === "moderation") {
-        return {
-          enabled: document.getElementById("mod_enabled").checked,
-          modLogChannelId: document.getElementById("mod_modLogChannelId").value || "",
-          auditLogChannelId: document.getElementById("mod_auditLogChannelId").value || "",
-          vcLogChannelId: document.getElementById("mod_vcLogChannelId").value || "",
-          muteRoleId: document.getElementById("mod_muteRoleId").value || ""
-        };
+      saveStatus.innerHTML =
+        '<span class="icon">💾</span><span>Waiting for changes…</span>';
+      modalBackdrop.classList.add("show");
+    }
+
+    function closeModuleModal() {
+      modalBackdrop.classList.remove("show");
+      currentModule = null;
+    }
+
+    async function saveModuleSettings() {
+      if (!currentModule) return;
+
+      const formData = new FormData(moduleForm);
+      const settings = {};
+      for (const [key, value] of formData.entries()) {
+        if (value.trim() === "") continue;
+        settings[key] = value.trim();
       }
 
-      // fallback: return existing settings unchanged
-      return s;
+      saveStatus.innerHTML =
+        '<span class="icon">⏳</span><span>Saving to MongoDB…</span>';
+
+      try {
+        const res = await fetch(`/api/modules/update/${currentModule._id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ settings })
+        });
+        if (!res.ok) throw new Error("Save failed");
+        const data = await res.json();
+
+        // Update in-memory copy
+        currentModule.settings = data.settings;
+        const idx = currentModules.findIndex(m => m._id === currentModule._id);
+        if (idx !== -1) currentModules[idx] = currentModule;
+
+        saveStatus.innerHTML =
+          '<span class="icon">✅</span><span>Saved. Bot will pick up changes via Mongo.</span>';
+      } catch (err) {
+        console.error("Save settings error:", err);
+        saveStatus.innerHTML =
+          '<span class="icon">❌</span><span>Failed to save. Check API logs.</span>';
+      }
     }
 
-// ==========================
-// INITIAL LOAD
-// ==========================
-(async () => {
-  try {
-    // Fetch current user information
-    const userInfo = await api("/api/user");
-    if (userInfo.loggedIn && userInfo.user) {
-      userBadge.textContent = `${userInfo.user.username}#${userInfo.user.discriminator}`;
-    } else {
-      userBadge.textContent = "Not Logged In";
+    function resetModuleForm() {
+      if (!currentModule) return;
+      openModuleModal(currentModule); // simply re-open with original data
+      saveStatus.innerHTML =
+        '<span class="icon">💾</span><span>Form reset to last saved values.</span>';
     }
 
-    // Fetch guild list and set name label
-    const guilds = await api("/api/guilds");
-    const g = guilds.find(x => x.id === guildId);
+    // ========= NAV + EVENTS =========
+    document.getElementById("backBtn").addEventListener("click", () => {
+      window.location.href = "/dashboard";
+    });
 
-    if (g) {
-      guildNameLabel.textContent = `Managing: ${g.name}`;
-    } else {
-      guildNameLabel.textContent = `Guild ID: ${guildId}`;
-    }
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("safeguard_token");
+      localStorage.removeItem("sg_token");
+      localStorage.removeItem("token");
+      window.location.href = "/";
+    });
 
-    // ==========================
-    // LOAD GUILD SETTINGS
-    // ==========================
-    const settings = await api(`/api/guilds/${guildId}/settings`);
-    if (!settings || typeof settings !== "object") {
-      console.warn("No settings returned for this guild.");
-    } else {
-      // Example UI loads
-      prefixInput.value = settings.prefix || "!";
-      logChannelSelect.value = settings.logChannel || "";
-      adminRolesSelect.value = settings.adminRoles?.join(",") || "";
-    }
+    document.getElementById("closeModalBtn").addEventListener("click", closeModuleModal);
+    document.getElementById("saveFormBtn").addEventListener("click", saveModuleSettings);
+    document.getElementById("resetFormBtn").addEventListener("click", resetModuleForm);
 
-    // ==========================
-    // ROLE CHECK FOR ACCESS
-    // ==========================
-    const perms = await api(`/api/guilds/${guildId}/permissions`);
-    if (!perms.manageServer) {
-      document.body.innerHTML = `
-        <div style="padding:40px;font-size:20px;color:#fff;text-align:center;">
-          ❌ You do not have permission to manage this server.
-        </div>
-      `;
-      return;
-    }
+    modalBackdrop.addEventListener("click", (e) => {
+      if (e.target === modalBackdrop) closeModuleModal();
+    });
 
-    console.log("UI Loaded Successfully");
-
-  } catch (err) {
-    console.error("Initialization failed:", err);
-    alert("❌ Failed to load dashboard. Check the console for details.");
-  }
-})();
+    // ========= INIT =========
+    (async function init() {
+      await loadUser();
+      await loadModules();
+    })();
+  </script>
+</body>
+</html>
