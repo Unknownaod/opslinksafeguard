@@ -1,12 +1,11 @@
+// server.js
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const path = require("path");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
-
-// node-fetch v3 is ESM-only, so use a dynamic import wrapper:
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+// node-fetch v3 in CommonJS:
+const fetch = (...args) => import("node-fetch").then(({ default: f }) => f(...args));
 
 dotenv.config();
 
@@ -34,27 +33,130 @@ app.use(express.static(publicPath));
 // =====================================
 // CONNECT TO MONGODB
 // =====================================
-if (!MONGODB_URI) {
-  console.error("❌ MONGODB_URI is not set in environment variables");
-} else {
-  mongoose
-    .connect(MONGODB_URI)
-    .then(() => console.log("✅ MongoDB connected"))
-    .catch(err => console.error("❌ MongoDB connection failed:", err));
-}
+mongoose
+  .connect(MONGODB_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error("❌ MongoDB connection failed:", err));
 
 // =====================================
 // MONGOOSE MODELS
 // =====================================
 const moduleSchema = new mongoose.Schema({
   guildId: String,
-  id: String, // module id (e.g. antiraid)
+  id: String,            // module key (e.g. "tickets", "greet")
   name: String,
   description: String,
   enabled: Boolean,
   settings: Object
 });
+
 const Module = mongoose.model("Module", moduleSchema);
+
+// Default module templates — applied per guild on first load
+const DEFAULT_MODULES = [
+  {
+    id: "tickets",
+    name: "Ticket System",
+    description: "Advanced multi-panel ticket system with logging and transcripts.",
+    enabled: true,
+    settings: {
+      logChannelId: "",
+      supportRoleId: "",
+      ticketCategoryId: "",
+      allowClaim: true,
+      transcriptToFile: true,
+      transcriptToChannel: true
+    }
+  },
+  {
+    id: "greet",
+    name: "Welcome & Goodbye",
+    description: "Welcome new members, say goodbye, and assign autoroles.",
+    enabled: true,
+    settings: {
+      welcome: {
+        enabled: true,
+        channelId: "",
+        message: "Welcome {mention} to {server}! You are member #{membercount}.",
+        dm: "",
+        background: ""
+      },
+      goodbye: {
+        enabled: true,
+        channelId: "",
+        message: "Goodbye {user}, thanks for being part of {server}.",
+        dm: "",
+        background: ""
+      },
+      autoroles: [],
+      autoroleDelayMs: 0
+    }
+  },
+  {
+    id: "verify",
+    name: "Captcha Verification",
+    description: "Protect your server with captcha-based verification.",
+    enabled: true,
+    settings: {
+      enabled: true,
+      panelChannelId: "",
+      logChannelId: "",
+      roles: [],
+      message: "Click Verify to prove you're human.",
+      difficulty: {
+        mode: "medium",
+        length: 5,
+        decoys: 10,
+        trace: true
+      },
+      staffRoleId: ""
+    }
+  },
+  {
+    id: "level",
+    name: "Leveling System",
+    description: "XP, ranking cards and level-based role rewards.",
+    enabled: true,
+    settings: {
+      enabled: true,
+      xpPerMessage: 10,
+      levelChannelId: "",
+      roleRewards: [] // [{ level: Number, roleId: String }]
+    }
+  },
+  {
+    id: "moderation",
+    name: "Moderation & Logging",
+    description: "Mod logs, audit logs, VC logs and mute role.",
+    enabled: true,
+    settings: {
+      modLogChannelId: "",
+      auditLogChannelId: "",
+      vcLogChannelId: "",
+      muteRoleId: ""
+    }
+  }
+];
+
+// Ensure module docs exist for a guild
+async function ensureGuildModules(guildId) {
+  const existing = await Module.find({ guildId });
+  if (existing.length) return existing;
+
+  const docs = DEFAULT_MODULES.map(mod => ({
+    guildId,
+    id: mod.id,
+    name: mod.name,
+    description: mod.description,
+    enabled: mod.enabled,
+    settings: mod.settings
+  }));
+
+  await Module.insertMany(docs);
+  const created = await Module.find({ guildId });
+  console.log(`✅ Seeded modules for guild ${guildId}`);
+  return created;
+}
 
 // =====================================
 // ROUTES — AUTH + USER
@@ -129,7 +231,7 @@ app.get("/api/user", (req, res) => {
 });
 
 // =====================================
-// GUILDS ENDPOINT
+// GUILDS ENDPOINT — LIST MANAGEABLE GUILDS
 // =====================================
 app.get("/api/guilds", async (req, res) => {
   const auth = req.headers.authorization;
@@ -145,20 +247,13 @@ app.get("/api/guilds", async (req, res) => {
     });
     const userGuilds = await userRes.json();
 
-    if (!Array.isArray(userGuilds)) {
-      console.error("Unexpected userGuilds:", userGuilds);
-      return res.status(500).json({ error: "Failed to load user guilds" });
-    }
-
     // Get bot guilds
     const botRes = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bot ${BOT_TOKEN}` }
     });
     const botGuilds = await botRes.json();
 
-    const botIds = new Set(
-      Array.isArray(botGuilds) ? botGuilds.map(g => g.id) : []
-    );
+    const botIds = new Set(Array.isArray(botGuilds) ? botGuilds.map(g => g.id) : []);
 
     // Filter only manageable guilds (user must have MANAGE_GUILD = 0x20)
     const manageable = userGuilds
@@ -173,16 +268,51 @@ app.get("/api/guilds", async (req, res) => {
 });
 
 // =====================================
+// GUILD META — CHANNELS & ROLES
+// =====================================
+app.get("/api/guilds/:guildId/meta", async (req, res) => {
+  const { guildId } = req.params;
+
+  try {
+    const [channelsRes, rolesRes] = await Promise.all([
+      fetch(`https://discord.com/api/guilds/${guildId}/channels`, {
+        headers: { Authorization: `Bot ${BOT_TOKEN}` }
+      }),
+      fetch(`https://discord.com/api/guilds/${guildId}/roles`, {
+        headers: { Authorization: `Bot ${BOT_TOKEN}` }
+      })
+    ]);
+
+    if (!channelsRes.ok || !rolesRes.ok) {
+      console.error("Failed to fetch guild meta:", await channelsRes.text(), await rolesRes.text());
+      return res.status(500).json({ error: "Failed to load guild metadata" });
+    }
+
+    const channels = await channelsRes.json();
+    const roles = await rolesRes.json();
+
+    res.json({
+      channels,
+      roles
+    });
+  } catch (err) {
+    console.error("Guild meta error:", err);
+    res.status(500).json({ error: "Failed to load guild metadata" });
+  }
+});
+
+// =====================================
 // SAFEGUARD MODULES API
 // =====================================
 
-// Get all modules for a guild
+// Get all modules for a guild (auto-seed defaults if missing)
 app.get("/api/modules/:guildId", async (req, res) => {
   try {
-    const modules = await Module.find({ guildId: req.params.guildId });
-    res.json(modules);
+    const { guildId } = req.params;
+    const mods = await ensureGuildModules(guildId);
+    res.json(mods);
   } catch (err) {
-    console.error("Module fetch error:", err);
+    console.error("Load modules error:", err);
     res.status(500).json({ error: "Failed to load modules" });
   }
 });
@@ -196,13 +326,34 @@ app.post("/api/modules/toggle/:moduleId", async (req, res) => {
     mod.enabled = !mod.enabled;
     await mod.save();
 
-    console.log(
-      `🔧 Module ${mod.name} in guild ${mod.guildId} toggled → ${mod.enabled}`
-    );
+    console.log(`🔧 Module ${mod.id} in guild ${mod.guildId} toggled → ${mod.enabled}`);
     res.json({ success: true, newState: mod.enabled });
   } catch (err) {
-    console.error("Module toggle error:", err);
+    console.error("Toggle module error:", err);
     res.status(500).json({ error: "Failed to toggle module" });
+  }
+});
+
+// Update module settings
+app.post("/api/modules/update/:moduleId", async (req, res) => {
+  try {
+    const { settings, enabled } = req.body;
+    const mod = await Module.findById(req.params.moduleId);
+    if (!mod) return res.status(404).json({ error: "Module not found" });
+
+    if (typeof enabled === "boolean") {
+      mod.enabled = enabled;
+    }
+    if (settings && typeof settings === "object") {
+      mod.settings = settings;
+    }
+
+    await mod.save();
+    console.log(`🛠 Settings updated for module ${mod.id} in guild ${mod.guildId}`);
+    res.json({ success: true, module: mod });
+  } catch (err) {
+    console.error("Update module error:", err);
+    res.status(500).json({ error: "Failed to update module settings" });
   }
 });
 
@@ -212,6 +363,7 @@ app.post("/api/modules/toggle/:moduleId", async (req, res) => {
 app.get("/dashboard", (_, res) =>
   res.sendFile(path.join(publicPath, "dashboard.html"))
 );
+
 app.get("/dashboard/:id", (_, res) =>
   res.sendFile(path.join(publicPath, "dashboard-guild.html"))
 );
@@ -220,8 +372,7 @@ app.get("/dashboard/:id", (_, res) =>
 // START SERVER
 // =====================================
 const PORT = process.env.PORT || 3000;
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL)
   app.listen(PORT, () => console.log("✅ Safeguard panel on port", PORT));
-}
 
 module.exports = app;
