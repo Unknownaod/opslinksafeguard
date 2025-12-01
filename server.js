@@ -3,11 +3,15 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
+const fetch = require("node-fetch");
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
+// =====================================
+// ENV VARIABLES
+// =====================================
 const {
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
@@ -17,34 +21,39 @@ const {
   MONGODB_URI
 } = process.env;
 
+// =====================================
+// STATIC PATH
+// =====================================
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
-/* =====================================
-   CONNECT TO MONGODB
-===================================== */
+// =====================================
+// CONNECT TO MONGODB
+// =====================================
 mongoose
   .connect(MONGODB_URI)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("MongoDB error:", err));
+  .catch(err => console.error("❌ MongoDB connection failed:", err));
 
-/* =====================================
-   MONGOOSE MODELS
-===================================== */
+// =====================================
+// MONGOOSE MODELS
+// =====================================
 const moduleSchema = new mongoose.Schema({
   guildId: String,
-  id: String,            // module id (e.g. antiraid)
+  id: String, // module id (e.g. antiraid)
   name: String,
   description: String,
-  enabled: Boolean
+  enabled: Boolean,
+  settings: Object
 });
 const Module = mongoose.model("Module", moduleSchema);
 
-/* =====================================
-   ROUTES — AUTH + USER
-===================================== */
+// =====================================
+// ROUTES — AUTH + USER
+// =====================================
 app.get("/", (_, res) => res.sendFile(path.join(publicPath, "index.html")));
 
+// Discord OAuth Login
 app.get("/auth/discord", (req, res) => {
   const scope = encodeURIComponent("identify guilds");
   const redirect = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(
@@ -53,9 +62,11 @@ app.get("/auth/discord", (req, res) => {
   res.redirect(redirect);
 });
 
+// Discord OAuth Callback
 app.get("/auth/discord/callback", async (req, res) => {
   const code = req.query.code;
   if (!code) return res.redirect("/?error=no_code");
+
   try {
     const params = new URLSearchParams({
       client_id: DISCORD_CLIENT_ID,
@@ -65,6 +76,7 @@ app.get("/auth/discord/callback", async (req, res) => {
       redirect_uri: DISCORD_REDIRECT_URI,
       scope: "identify guilds"
     });
+
     const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
       method: "POST",
       body: params,
@@ -82,6 +94,7 @@ app.get("/auth/discord/callback", async (req, res) => {
       SESSION_SECRET,
       { expiresIn: "1h" }
     );
+
     res.redirect("/?token=" + encodeURIComponent(token));
   } catch (err) {
     console.error("OAuth error:", err);
@@ -89,9 +102,11 @@ app.get("/auth/discord/callback", async (req, res) => {
   }
 });
 
+// Verify JWT and return user
 app.get("/api/user", (req, res) => {
   const auth = req.headers.authorization;
   if (!auth) return res.json({ loggedIn: false });
+
   try {
     const decoded = jwt.verify(auth.split(" ")[1], SESSION_SECRET);
     res.json({ loggedIn: true, user: decoded.user });
@@ -100,28 +115,36 @@ app.get("/api/user", (req, res) => {
   }
 });
 
-/* =====================================
-   GUILDS ENDPOINT
-===================================== */
+// =====================================
+// GUILDS ENDPOINT
+// =====================================
 app.get("/api/guilds", async (req, res) => {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: "Missing token" });
+
   try {
     const decoded = jwt.verify(auth.split(" ")[1], SESSION_SECRET);
     const access = decoded.access_token;
 
+    // Get user guilds
     const userRes = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bearer ${access}` }
     });
     const userGuilds = await userRes.json();
+
+    // Get bot guilds
     const botRes = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bot ${BOT_TOKEN}` }
     });
     const botGuilds = await botRes.json();
+
     const botIds = new Set(Array.isArray(botGuilds) ? botGuilds.map(g => g.id) : []);
+
+    // Filter only manageable guilds (user must have MANAGE_GUILD = 0x20)
     const manageable = userGuilds
       .filter(g => (BigInt(g.permissions || 0n) & 0x20n) === 0x20n)
       .map(g => ({ ...g, installed: botIds.has(g.id) }));
+
     res.json(manageable);
   } catch (err) {
     console.error("Guild fetch error:", err);
@@ -129,9 +152,10 @@ app.get("/api/guilds", async (req, res) => {
   }
 });
 
-/* =====================================
-   SAFEGUARD MODULES API
-===================================== */
+// =====================================
+// SAFEGUARD MODULES API
+// =====================================
+
 // Get all modules for a guild
 app.get("/api/modules/:guildId", async (req, res) => {
   try {
@@ -143,16 +167,16 @@ app.get("/api/modules/:guildId", async (req, res) => {
   }
 });
 
-// Toggle module enable/disable
-app.post("/api/modules/:guildId/toggle/:moduleId", async (req, res) => {
+// Toggle module enable/disable (fixed route)
+app.post("/api/modules/toggle/:moduleId", async (req, res) => {
   try {
-    const mod = await Module.findOne({
-      guildId: req.params.guildId,
-      id: req.params.moduleId
-    });
+    const mod = await Module.findById(req.params.moduleId);
     if (!mod) return res.status(404).json({ error: "Module not found" });
+
     mod.enabled = !mod.enabled;
     await mod.save();
+
+    console.log(`🔧 Module ${mod.name} in guild ${mod.guildId} toggled → ${mod.enabled}`);
     res.json({ success: true, newState: mod.enabled });
   } catch (err) {
     console.error(err);
@@ -160,12 +184,21 @@ app.post("/api/modules/:guildId/toggle/:moduleId", async (req, res) => {
   }
 });
 
-/* =====================================
-   STATIC ROUTES
-===================================== */
-app.get("/dashboard", (_, res) => res.sendFile(path.join(publicPath, "dashboard.html")));
-app.get("/dashboard/:id", (_, res) => res.sendFile(path.join(publicPath, "dashboard-guild.html")));
+// =====================================
+// STATIC ROUTES
+// =====================================
+app.get("/dashboard", (_, res) =>
+  res.sendFile(path.join(publicPath, "dashboard.html"))
+);
+app.get("/dashboard/:id", (_, res) =>
+  res.sendFile(path.join(publicPath, "dashboard-guild.html"))
+);
 
+// =====================================
+// START SERVER
+// =====================================
 const PORT = process.env.PORT || 3000;
-if (!process.env.VERCEL) app.listen(PORT, () => console.log("✅ Safeguard panel on port", PORT));
+if (!process.env.VERCEL)
+  app.listen(PORT, () => console.log("✅ Safeguard panel on port", PORT));
+
 module.exports = app;
