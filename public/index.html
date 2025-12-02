@@ -30,6 +30,34 @@
   }
 
   /* ================================
+     WARNING BANNER
+  ================================ */
+  .warning-banner {
+    background: #ffd60a;
+    color: #000;
+    text-align: center;
+    font-weight: 600;
+    padding: 14px 10px;
+    font-size: 0.95rem;
+    border-bottom: 2px solid #e6b800;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    animation: slideDown 0.6s ease;
+  }
+
+  .warning-banner a {
+    color: #000;
+    text-decoration: underline;
+    font-weight: 700;
+  }
+
+  @keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* ================================
      NAVIGATION
   ================================ */
   nav {
@@ -41,7 +69,7 @@
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255,255,255,0.05);
     position: sticky;
-    top: 0;
+    top: 48px; /* leave room for banner */
     z-index: 100;
   }
 
@@ -184,7 +212,7 @@
   }
 
   /* ================================
-     PANEL PREVIEW SECTION
+     PANEL PREVIEW
   ================================ */
   .panel-preview {
     max-width: 1100px;
@@ -230,8 +258,7 @@
 
   .preview-content img {
     width: 100%;
-    max-width: 700px; /* limits image width */
-    height: auto;
+    max-width: 700px;
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(255,102,0,0.15);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -242,15 +269,6 @@
     box-shadow: 0 0 35px rgba(255,102,0,0.25);
   }
 
-  @media (max-width: 768px) {
-    .preview-content img {
-      max-width: 90%;
-    }
-  }
-
-  /* ================================
-     FOOTER
-  ================================ */
   footer {
     border-top: 1px solid rgba(255,255,255,0.05);
     background: #070b15;
@@ -274,6 +292,12 @@
 </head>
 <body>
 
+  <div class="warning-banner">
+    ⚠️ <strong>Notice:</strong> The OpsLink Safeguard Dashboard is currently <strong>unoperational</strong>. Updates will be announced soon.  
+    The bot remains fully configurable through Discord commands.  
+    Join our community to stay updated: <a href="https://discord.gg/UF6Dt66phh" target="_blank">discord.gg/UF6Dt66phh</a> — Thank you for your continued support 💛
+  </div>
+
   <nav>
     <div class="nav-left">
       <img src="assets/Safeguard-Bot.png" alt="Safeguard Logo">
@@ -283,7 +307,7 @@
       <a href="#">Home</a>
       <a href="#panel">Panel</a>
       <a href="#">Docs</a>
-      <a href="discord.gg/UF6Dt66phh">Support</a>
+      <a href="https://discord.gg/UF6Dt66phh">Support</a>
     </div>
   </nav>
 
@@ -302,12 +326,12 @@
     <h2>Control Everything from One Secure Dashboard</h2>
     <p>Monitor server activity, configure protection modules, review logs, and manage permissions — all from an intuitive web interface designed for speed and reliability.</p>
 
- <div class="preview-box">
-  <div class="preview-top"></div>
-  <div class="preview-content">
-    <img src="/assets/Computer.png.png" alt="panel-preview">
-  </div>
-</div>
+    <div class="preview-box">
+      <div class="preview-top"></div>
+      <div class="preview-content">
+        <img src="/assets/Computer.png.png" alt="panel-preview">
+      </div>
+    </div>
   </section>
 
   <footer>
@@ -316,12 +340,10 @@
   </footer>
 
   <script>
-    // Grab token from URL on callback and store it
     const urlParams = new URLSearchParams(window.location.search);
     const tokenParam = urlParams.get("token");
     if (tokenParam) {
       localStorage.setItem("safeguard_token", tokenParam);
-      // Clean URL
       window.history.replaceState({}, document.title, "/");
     }
 
