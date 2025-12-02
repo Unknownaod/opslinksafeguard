@@ -155,6 +155,42 @@ async function ensureModulesForGuild(guildId) {
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fn }) => fn(...args));
 
+
+/* ================================
+   TRANSCRIPTS MODEL
+================================ */
+const transcriptMessageSchema = new mongoose.Schema({
+  id: String,
+  authorId: String,
+  authorTag: String,
+  authorAvatar: String,
+  createdAt: Date,
+  content: String,
+  attachments: [
+    {
+      url: String,
+      name: String,
+      contentType: String
+    }
+  ]
+}, { _id: false });
+
+const transcriptSchema = new mongoose.Schema({
+  shortId: { type: String, unique: true, index: true },
+  guildId: String,
+  guildName: String,
+  channelId: String,
+  channelName: String,
+  ticketId: String,
+  openedBy: Object,
+  closedBy: Object,
+  createdAt: Date,
+  closedAt: Date,
+  messages: [transcriptMessageSchema]
+}, { timestamps: true });
+
+const Transcript = mongoose.model("Transcript", transcriptSchema);
+
 /* ================================
    AUTH / USER ROUTES
 ================================ */
@@ -322,6 +358,92 @@ app.get("/dashboard", (_, res) =>
 app.get("/dashboard/:id", (_, res) =>
   res.sendFile(path.join(publicPath, "dashboard-guild.html"))
 );
+
+
+/* ================================
+   TRANSCRIPT API + VIEWER
+================================ */
+const crypto = require("crypto");
+
+function requireTranscriptKey(req, res, next) {
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (!process.env.SG_TRANSCRIPT_KEY || token !== process.env.SG_TRANSCRIPT_KEY)
+    return res.status(401).json({ error: "Unauthorized" });
+  next();
+}
+
+// POST /api/transcripts — called by the bot
+app.post("/api/transcripts", requireTranscriptKey, async (req, res) => {
+  try {
+    const shortId = crypto.randomBytes(4).toString("hex").toUpperCase();
+    const transcript = await Transcript.create({ shortId, ...req.body });
+    const url = `https://safeguard.opslinkcad.com/t/${shortId}`;
+    res.json({ id: transcript._id, shortId, url });
+  } catch (err) {
+    console.error("Transcript save failed:", err);
+    res.status(500).json({ error: "Failed to save transcript" });
+  }
+});
+
+// GET /t/:shortId — View transcript
+app.get("/t/:shortId", async (req, res) => {
+  try {
+    const t = await Transcript.findOne({ shortId: req.params.shortId }).lean();
+    if (!t) return res.status(404).send("Transcript not found");
+
+    const html = buildTranscriptHtml(t);
+    res.send(html);
+  } catch (err) {
+    console.error("Transcript view error:", err);
+    res.status(500).send("Internal error");
+  }
+});
+
+function buildTranscriptHtml(t) {
+  const msgs = t.messages.map(m => `
+    <div class="msg">
+      <div class="header">
+        <img src="${m.authorAvatar}" class="pfp"/>
+        <b>${m.authorTag}</b> <span class="time">${new Date(m.createdAt).toLocaleString()}</span>
+      </div>
+      <div class="content">${escapeHtml(m.content || "")}</div>
+      ${(m.attachments || []).map(a => `<a href="${a.url}" class="att">${a.name}</a>`).join("<br>")}
+    </div>
+  `).join("");
+
+  return `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Safeguard Transcript – ${t.ticketId}</title>
+    <style>
+      body { background:#04060d; color:#e5e7eb; font-family:Segoe UI, sans-serif; padding:30px; }
+      h1 { color:#ff6600; }
+      .msg { background:#0b1220; padding:12px; border-radius:12px; margin:10px 0; }
+      .pfp { width:32px; height:32px; border-radius:50%; vertical-align:middle; margin-right:6px; }
+      .time { font-size:11px; color:#9ca3af; margin-left:6px; }
+      .content { white-space:pre-wrap; margin-top:6px; }
+      .att { color:#ff944d; text-decoration:none; }
+      .att:hover { text-decoration:underline; }
+    </style>
+  </head>
+  <body>
+    <h1>Safeguard Transcript</h1>
+    <p>Ticket: ${t.ticketId} • Opened by ${t.openedBy?.tag || "Unknown"} • Closed by ${t.closedBy?.tag || "Unknown"}</p>
+    <hr/>
+    ${msgs}
+  </body>
+  </html>`;
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+  }[c]));
+}
+
 
 /* ================================
    START (local) / EXPORT (Vercel)
