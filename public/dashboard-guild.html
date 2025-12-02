@@ -316,7 +316,7 @@
       height: 16px;
       width: 16px;
       left: 2px;
-      bottom: 1px;
+      bottom: 2px; /* tiny tweak so it's visually centered */
       background-color: #e5e7eb;
       transition: 0.2s;
       border-radius: 50%;
@@ -569,7 +569,7 @@
       </p>
       <div class="status-bar">
         <div class="status-dot"></div>
-        <span id="statusText">Connected to Safeguard Panel API.</span>
+        <span id="statusText">Connecting to Safeguard Panel API…</span>
       </div>
     </section>
 
@@ -586,7 +586,7 @@
           <h2 id="modalTitle">Module</h2>
           <span id="modalSubtitle">Edit configuration for this module.</span>
         </div>
-        <button class="btn-secondary" id="closeModalBtn">✕ Close</button>
+        <button class="btn-secondary" id="closeModalBtn" type="button">✕ Close</button>
       </div>
 
       <div class="modal-body">
@@ -622,7 +622,9 @@
 
   <script>
     // ========= UTIL / GLOBALS =========
-    const guildId = window.location.pathname.split("/").pop();
+    const pathParts = window.location.pathname.split("/").filter(Boolean);
+    const guildId = pathParts[pathParts.length - 1];
+
     const token =
       localStorage.getItem("safeguard_token") ||
       localStorage.getItem("sg_token") ||
@@ -939,6 +941,7 @@
     async function loadUser() {
       try {
         const res = await fetch("/api/user", { headers: authHeader });
+        if (!res.ok) throw new Error("User fetch failed");
         const data = await res.json();
         if (!data.loggedIn) {
           localStorage.removeItem("safeguard_token");
@@ -962,12 +965,21 @@
       try {
         statusText.textContent = "Loading modules…";
         const res = await fetch(`/api/modules/${guildId}`, { headers: authHeader });
+        if (!res.ok) throw new Error("Module fetch failed");
         const modules = await res.json();
+
+        if (!Array.isArray(modules) || !modules.length) {
+          currentModules = [];
+          modulesGrid.innerHTML =
+            '<p style="color: var(--text-muted); font-size: 14px;">No modules found for this guild.</p>';
+          guildLabel.textContent = `Guild ID ${guildId}`;
+          statusText.textContent = "No modules available.";
+          return;
+        }
+
         currentModules = modules;
         renderModules(modules);
-        guildLabel.textContent = modules[0]
-          ? `Configuring guild ID ${guildId}`
-          : `Guild ID ${guildId}`;
+        guildLabel.textContent = `Configuring guild ID ${guildId}`;
         statusText.textContent = "Modules loaded. Changes save instantly.";
       } catch (err) {
         console.error("Modules load error:", err);
@@ -1041,7 +1053,10 @@
       try {
         const res = await fetch(`/api/modules/toggle/${moduleId}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" }
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeader
+          }
         });
         if (!res.ok) throw new Error("Toggle failed");
       } catch (err) {
@@ -1125,7 +1140,7 @@
       const formData = new FormData(moduleForm);
       const settings = {};
       for (const [key, value] of formData.entries()) {
-        if (value.trim() === "") continue;
+        // include empties so you can clear values
         settings[key] = value.trim();
       }
 
@@ -1135,7 +1150,10 @@
       try {
         const res = await fetch(`/api/modules/update/${currentModule._id}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeader
+          },
           body: JSON.stringify({ settings })
         });
         if (!res.ok) throw new Error("Save failed");
@@ -1157,7 +1175,7 @@
 
     function resetModuleForm() {
       if (!currentModule) return;
-      openModuleModal(currentModule); // simply re-open with original data
+      openModuleModal(currentModule); // simply re-open with current in-memory data
       saveStatus.innerHTML =
         '<span class="icon">💾</span><span>Form reset to last saved values.</span>';
     }
@@ -1171,7 +1189,7 @@
       localStorage.removeItem("safeguard_token");
       localStorage.removeItem("sg_token");
       localStorage.removeItem("token");
-      window.location.href = "/";
+      window.location.href = "/auth/discord";
     });
 
     document.getElementById("closeModalBtn").addEventListener("click", closeModuleModal);
