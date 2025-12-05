@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Billing – Safeguard Premier</title>
+  <link rel="icon" href="/assets/Safeguard-Bot.png" />
+  <style>
+    body { background:#050816; color:#e5e7eb; font-family:Segoe UI; text-align:center; padding:60px; }
+    .box { background:#0b1220; padding:40px; border-radius:20px; width:480px; margin:auto; }
+    h1 { color:#ff6600; }
+    button {
+      background:#ff6600; color:white; padding:12px 20px;
+      border:none; border-radius:10px; margin-top:20px;
+      cursor:pointer; font-size:1rem; transition:.2s;
+    }
+    button:hover { background:#ff944d; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Billing & Subscription</h1>
+    <p>Manage your Safeguard Premier license, view invoices, and update payment info.</p>
+
+    <button onclick="openPortal()">Open Billing Portal</button>
+    <p style="opacity:.6;font-size:.85rem;">Powered securely by Stripe</p>
+  </div>
+
+  <script>
+    async function openPortal() {
+      const customerId = localStorage.getItem("safeguard_customer");
+      if (!customerId) return alert("No billing profile found.");
+
+      const res = await fetch("/api/billing/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId })
+      });
+
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    }
+  </script>
+</body>
+</html>
