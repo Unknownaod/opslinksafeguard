@@ -1,15 +1,13 @@
 {
   "name": "safeguard-panel",
   "version": "1.0.0",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "build": "echo 'Vercel handles the build step'",
+    "start": "vercel dev"
   },
   "dependencies": {
-    "express": "^4.19.0",
-    "jsonwebtoken": "^9.0.2",
+    "stripe": "^14.0.0",
     "mongoose": "^8.19.0",
-    "dotenv": "^16.4.0",
-    "node-fetch": "^3.3.2"
+    "dotenv": "^16.4.0"
   }
 }
