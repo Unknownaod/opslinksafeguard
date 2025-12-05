@@ -6,7 +6,7 @@
   <title>Safeguard Premier Checkout – OpsLink Systems</title>
   <link rel="icon" href="/assets/Safeguard-Bot.png" />
   <script src="https://js.stripe.com/v3/"></script>
-  <script src="/env.js"></script> <!-- inject PUBLIC_STRIPE_KEY -->
+
   <style>
     :root {
       --bg-main: #04060d;
@@ -19,22 +19,28 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
     body { background: radial-gradient(circle at 20% 20%, #0b1220, #050816 70%); color: var(--text-main); overflow-x: hidden; }
+
     nav { display: flex; justify-content: space-between; align-items: center; padding: 18px 60px; background: rgba(10,15,25,0.7); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05); position: sticky; top: 0; z-index: 100; }
     .nav-left { display: flex; align-items: center; gap: 12px; }
     .nav-left img { width: 36px; height: 36px; filter: drop-shadow(0 0 6px rgba(255,102,0,0.4)); }
     .nav-left span { font-size: 1.3rem; font-weight: 600; color: var(--accent); }
+
     .checkout-container { max-width: 600px; margin: 80px auto; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-lg); box-shadow: 0 0 25px rgba(255,102,0,0.08); padding: 50px; }
     h1 { color: var(--accent); font-size: 2.3rem; text-align: center; margin-bottom: 15px; }
     p { color: var(--text-soft); text-align: center; margin-bottom: 30px; line-height: 1.5; }
+
     form { display: flex; flex-direction: column; gap: 20px; }
     #card-element { background: rgba(255,255,255,0.05); padding: 15px; border-radius: var(--radius-lg); }
     #submit-btn { background: var(--accent); color: #fff; padding: 14px; border: none; border-radius: var(--radius-lg); font-weight: 600; font-size: 1.1rem; cursor: pointer; transition: 0.3s ease; box-shadow: 0 0 25px rgba(255,102,0,0.25); }
     #submit-btn:hover { background: var(--accent2); transform: translateY(-3px); box-shadow: 0 0 35px rgba(255,102,0,0.4); }
     #payment-message { text-align: center; margin-top: 15px; color: var(--text-soft); font-size: 0.95rem; min-height: 1.2em; }
+
     footer { border-top: 1px solid rgba(255,255,255,0.05); background: #070b15; color: var(--text-soft); text-align: center; padding: 30px 10px 40px; font-size: 0.9rem; margin-top: 60px; }
     footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    footer a:hover { text-decoration: underline; }
   </style>
 </head>
+
 <body>
   <nav>
     <div class="nav-left">
@@ -46,7 +52,7 @@
   <div class="checkout-container">
     <h1>Safeguard Premier Checkout</h1>
     <p>
-      You're subscribing to <strong>Safeguard Premier</strong> for
+      You’re subscribing to <strong>Safeguard Premier</strong> for
       <strong>$7.99/month</strong>.<br>
       Enter your card details below to complete your purchase securely.
     </p>
@@ -63,39 +69,59 @@
     Visit <a href="https://opslinkcad.com">OpsLinkCAD</a> for more.
   </footer>
 
-<script>
-  const stripe = Stripe(window.ENV.PUBLIC_STRIPE_KEY);
+  <script>
+    // 👇 Add your public Stripe key here
+    const STRIPE_PUBLIC_KEY = "pk_live_51SVFpBLQjsrxMZMFiPh041fNL37kau7u4uITjjmKXkBabyHvx30Xl6scvSFDHBJDZlG6C71GFKltPWMEQwcU8z1R00j99wuaPd"; // replace with process.env.NEXT_PUBLIC_STRIPE_KEY if Vercel injects it
 
-  const elements = stripe.elements();
-  const cardElement = elements.create("card", {
-    style: { base: { color: "#ffffff", fontSize: "16px", "::placeholder": { color: "#9ca3af" } } }
-  });
-  cardElement.mount("#card-element");
-
-  const form = document.getElementById("payment-form");
-  const message = document.getElementById("payment-message");
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    message.textContent = "Processing payment...";
-
-    try {
-      const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" } });
-      const data = await res.json();
-      if (!data.clientSecret) throw new Error("Missing payment client secret.");
-
-      const result = await stripe.confirmCardPayment(data.clientSecret, { payment_method: { card: cardElement } });
-
-      if (result.error) message.textContent = "❌ " + result.error.message;
-      else if (result.paymentIntent.status === "succeeded") {
-        message.textContent = "✅ Payment successful! Redirecting...";
-        setTimeout(() => window.location.href = `/success/${result.paymentIntent.id}`, 1500);
+    const stripe = Stripe(STRIPE_PUBLIC_KEY);
+    const elements = stripe.elements({
+      appearance: {
+        theme: 'night',
+        variables: { colorPrimaryText: '#ffffff' }
       }
-    } catch (err) {
-      console.error(err);
-      message.textContent = "❌ " + err.message;
-    }
-  });
-</script>
+    });
+    const cardElement = elements.create("card", {
+      style: { base: { color: "#fff", fontSize: "16px", "::placeholder": { color: "#9ca3af" } } }
+    });
+    cardElement.mount("#card-element");
+
+    const form = document.getElementById("payment-form");
+    const message = document.getElementById("payment-message");
+    const submitBtn = document.getElementById("submit-btn");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      message.textContent = "Processing payment...";
+      submitBtn.disabled = true;
+
+      try {
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+
+        const data = await res.json();
+        if (!data.clientSecret) throw new Error("Missing client secret from server.");
+
+        const result = await stripe.confirmCardPayment(data.clientSecret, {
+          payment_method: { card: cardElement }
+        });
+
+        if (result.error) {
+          message.textContent = "❌ " + result.error.message;
+          submitBtn.disabled = false;
+        } else if (result.paymentIntent.status === "succeeded") {
+          message.textContent = "✅ Payment successful! Redirecting...";
+          setTimeout(() => {
+            window.location.href = `${window.location.origin}/success/${result.paymentIntent.id}`;
+          }, 1200);
+        }
+      } catch (err) {
+        console.error(err);
+        message.textContent = "❌ " + err.message;
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
