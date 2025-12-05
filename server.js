@@ -10,11 +10,23 @@ dotenv.config();
 const app = express();
 
 /* ======================================================
-   1️⃣ STRIPE WEBHOOK HANDLER (must be first)
+   1️⃣ STRIPE WEBHOOK HANDLER (Dedicated DB Connection)
    ====================================================== */
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const LicenseKey = require("./models/LicenseKey");
+const mongooseStripe = require("mongoose");
 
+/* Connect ONLY this webhook to the MONGO_URI database */
+const webhookDB = mongooseStripe.createConnection(process.env.MONGO_URI, {})
+  .on("connected", () => console.log("🔗 Stripe License DB connected (MONGO_URI)"))
+  .on("error", err => console.error("❌ Stripe License DB error:", err));
+
+/* Load LicenseKey model using THIS connection */
+const LicenseKey = webhookDB.model(
+  "LicenseKey",
+  require("./models/LicenseKey").schema
+);
+
+/* Generate Safeguard License */
 function generateLicenseKey() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let key = "SAFE-";
@@ -25,6 +37,7 @@ function generateLicenseKey() {
   return key;
 }
 
+/* Stripe Webhook */
 app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -46,15 +59,16 @@ app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async
         active: true
       });
 
-      console.log("✅ License saved to MongoDB.");
+      console.log("✅ License saved to Stripe License DB.");
     }
 
     res.status(200).send("Webhook received");
   } catch (err) {
     console.error("⚠️ Webhook signature verification failed:", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    res.status(400).send(`Webhook Error: ${err.message}`);
   }
 });
+
 
 /* ======================================================
    2️⃣ EXPRESS JSON PARSERS (after webhook)
