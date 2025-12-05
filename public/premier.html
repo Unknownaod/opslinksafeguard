@@ -16,12 +16,7 @@
       --radius-lg: 18px;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Segoe UI", sans-serif;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
 
     body {
       background: radial-gradient(circle at 20% 20%, #0b1220, #050816 70%);
@@ -68,9 +63,7 @@
       transition: 0.2s ease;
     }
 
-    .nav-links a:hover {
-      color: var(--accent2);
-    }
+    .nav-links a:hover { color: var(--accent2); }
 
     .hero {
       text-align: center;
@@ -113,17 +106,8 @@
       box-shadow: 0 0 25px rgba(255,102,0,0.08);
     }
 
-    .price h2 {
-      color: var(--accent);
-      font-size: 2rem;
-      margin-bottom: 10px;
-    }
-
-    .price h3 {
-      font-size: 2.5rem;
-      color: var(--accent2);
-      margin-bottom: 25px;
-    }
+    .price h2 { color: var(--accent); font-size: 2rem; margin-bottom: 10px; }
+    .price h3 { font-size: 2.5rem; color: var(--accent2); margin-bottom: 25px; }
 
     .price ul {
       text-align: left;
@@ -133,9 +117,7 @@
       line-height: 1.6;
     }
 
-    .price li {
-      margin-bottom: 10px;
-    }
+    .price li { margin-bottom: 10px; }
 
     .purchase-btn {
       display: inline-block;
@@ -165,21 +147,44 @@
       box-shadow: 0 0 20px rgba(255,102,0,0.05);
     }
 
-    .rules h2 {
-      color: var(--accent);
-      margin-bottom: 20px;
+    .rules h2 { color: var(--accent); margin-bottom: 20px; text-align: center; }
+    .rules ol { line-height: 1.7; color: var(--text-soft); padding-left: 24px; }
+    .rules li { margin-bottom: 12px; }
+
+    /* =====================
+       COMPARISON TABLE
+    ===================== */
+    .compare {
+      max-width: 950px;
+      margin: 80px auto 120px;
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+      box-shadow: 0 0 25px rgba(255,102,0,0.05);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--text-main);
+    }
+
+    th, td {
+      padding: 16px 20px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    th {
+      background: rgba(255,102,0,0.15);
+      color: var(--accent2);
+      font-size: 1.1rem;
       text-align: center;
     }
 
-    .rules ol {
-      line-height: 1.7;
-      color: var(--text-soft);
-      padding-left: 24px;
-    }
-
-    .rules li {
-      margin-bottom: 12px;
-    }
+    td:first-child { font-weight: 600; color: var(--accent); }
+    td { text-align: center; }
 
     footer {
       border-top: 1px solid rgba(255,255,255,0.05);
@@ -191,15 +196,8 @@
       margin-top: 60px;
     }
 
-    footer a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 500;
-    }
-
-    footer a:hover {
-      text-decoration: underline;
-    }
+    footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -235,24 +233,67 @@
         <li>✔ Customizable License Dashboard Access</li>
         <li>✔ Early Access to Beta Features</li>
       </ul>
-      <a href="https://opslinkcad.com/purchase" class="purchase-btn">Purchase Premier License</a>
+      <a href="/checkout.html" class="purchase-btn">Purchase Premier License</a>
     </div>
   </section>
 
   <section class="rules">
     <h2>Safeguard Premier Rules & Terms</h2>
     <ol>
-      <li>Each license key is unique and may only be used on one Discord server at a time.</li>
-      <li>License keys must not be shared, sold, or distributed without authorization from OpsLink Systems.</li>
-      <li>Refunds are only issued in the event of proven service failure within the first 7 days of purchase.</li>
-      <li>Misuse of Safeguard Premier or attempts to bypass its protection systems will result in license termination.</li>
-      <li>All Premier features are tied to active subscriptions; access is removed when the subscription lapses.</li>
-      <li>Prices are subject to change with prior notice through official OpsLink channels.</li>
-      <li>OpsLink Systems reserves the right to revoke access at any time if terms are violated or misuse is detected.</li>
-      <li>Use of Safeguard Premier constitutes acceptance of these terms and the OpsLink Systems End User License Agreement.</li>
-      <li>By purchasing, you agree that your Discord account may be verified for license ownership.</li>
-      <li>Unauthorized duplication or modification of Safeguard Premier services is strictly prohibited.</li>
+      <li>Each license key is unique and tied to one Discord server and one user.</li>
+      <li>Unauthorized key sharing, resale, or redistribution is strictly prohibited.</li>
+      <li>Subscription renews monthly; failure to renew disables Premier access.</li>
+      <li>Refunds may only be issued within 7 days under verified service failure.</li>
+      <li>Using Premier tools to harm, spam, or bypass Discord systems results in termination.</li>
+      <li>Premier features are limited to servers compliant with Discord TOS and OpsLink policies.</li>
+      <li>All billing is handled through OpsLink’s secure Stripe integration.</li>
+      <li>Violating these terms may result in loss of license without refund.</li>
+      <li>OpsLink Systems reserves the right to update these terms with notice.</li>
     </ol>
+  </section>
+
+  <section class="compare">
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Safeguard (Free)</th>
+          <th>Safeguard Premier ($7.99/mo)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Basic Anti-Raid</td>
+          <td>✅</td>
+          <td>✅ Enhanced AI</td>
+        </tr>
+        <tr>
+          <td>Audit Logging</td>
+          <td>⚠️ Limited</td>
+          <td>✅ Full detailed logs</td>
+        </tr>
+        <tr>
+          <td>Incident Detection</td>
+          <td>❌</td>
+          <td>✅ Real-time AI alerts</td>
+        </tr>
+        <tr>
+          <td>Dashboard Access</td>
+          <td>✅</td>
+          <td>✅ Premier Control Panel</td>
+        </tr>
+        <tr>
+          <td>Support Level</td>
+          <td>Community Only</td>
+          <td>Priority 24/7 Support</td>
+        </tr>
+        <tr>
+          <td>License Protection</td>
+          <td>Free Use</td>
+          <td>🔒 Licensed & Verified</td>
+        </tr>
+      </tbody>
+    </table>
   </section>
 
   <footer>
