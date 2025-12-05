@@ -459,6 +459,23 @@ app.get("/success/:paymentId", async (req, res) => {
   }
 });
 
+app.post("/api/billing/portal", async (req, res) => {
+  try {
+    const { customerId } = req.body; // store this when payment happens
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: "https://www.opslinksafeguard.xyz/billing"
+    });
+
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error("Billing Portal Error:", err);
+    res.status(500).json({ error: "Failed to create billing portal" });
+  }
+});
+
+
 /* ======================================================
    13️⃣ STATIC PAGES
    ====================================================== */
