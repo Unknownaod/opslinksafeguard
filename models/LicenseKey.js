@@ -4,6 +4,7 @@ const { Schema } = require("mongoose");
 const licenseKeySchema = new Schema({
   key: { type: String, required: true, unique: true },
   paymentId: { type: String, required: true },
+  paymentIntent.customer // ⬅️ Stripe Customer ID
   plan: { type: String, default: "Premier" },
   active: { type: Boolean, default: false },
   ownerId: { type: String, default: null },
