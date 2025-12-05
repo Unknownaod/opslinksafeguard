@@ -333,31 +333,45 @@ app.post("/api/checkout", async (req, res) => {
 });
 
 /* ======================================================
-   12️⃣ SUCCESS ROUTE
+   12️⃣ SUCCESS ROUTE (uses Stripe License DB)
    ====================================================== */
 app.get("/success/:paymentId", async (req, res) => {
   try {
     const paymentId = req.params.paymentId;
+
+    // 👇 MUST use the LicenseKey model from webhookDB
     const license = await LicenseKey.findOne({ paymentId });
 
     if (!license) {
-      return res.status(404).send(`<h1>❌ Access Denied</h1><p>No valid Safeguard license found for this payment.</p>`);
+      return res.status(404).send(`
+        <h1>❌ Access Denied</h1>
+        <p>No valid Safeguard license found for this payment.</p>
+      `);
     }
 
+    // Verify payment on Stripe
     const session = await stripe.paymentIntents.retrieve(paymentId);
     if (session.status !== "succeeded") {
-      return res.status(403).send(`<h1>❌ Payment Not Completed</h1><p>Your payment exists, but it was not marked as paid.</p>`);
+      return res.status(403).send(`
+        <h1>❌ Payment Not Completed</h1>
+        <p>Your payment exists, but it was not marked as paid.</p>
+      `);
     }
 
+    // If everything is valid — show license
     return res.send(`
       <h1>🎉 Thank you for your purchase!</h1>
       <p>Your Safeguard Premier license key:</p>
-      <code style="font-size:22px;">${license.key}</code>
+      <code style="font-size:22px; font-weight:bold;">${license.key}</code>
       <p>Store this key safely. You will need it to activate Safeguard.</p>
     `);
+
   } catch (err) {
     console.error("Success Route Error:", err);
-    res.status(500).send(`<h1>⚠️ Internal Error</h1><p>${err.message}</p>`);
+    return res.status(500).send(`
+      <h1>⚠️ Internal Error</h1>
+      <p>${err.message}</p>
+    `);
   }
 });
 
