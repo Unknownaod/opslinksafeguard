@@ -313,6 +313,39 @@ app.post("/api/modules/update/:moduleId", async (req, res) => {
 });
 
 /* ================================
+   STRIPE CHECKOUT
+================================ */
+const Stripe = require("stripe");
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+app.post("/api/checkout", async (req, res) => {
+  try {
+    const productName = "SafeGuard Premier";
+    const productDescription = "Monthly license subscription for OpsLink SafeGuard Premier";
+    const priceInCents = 799; // $7.99 CAD or USD
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: priceInCents,
+      currency: "cad", // or "usd"
+      description: `${productName} – ${productDescription}`,
+      automatic_payment_methods: { enabled: true },
+      metadata: {
+        product: productName,
+        plan: "Premier",
+        billing_cycle: "monthly",
+        type: "license",
+      },
+    });
+
+    res.status(200).json({ clientSecret: paymentIntent.client_secret });
+  } catch (err) {
+    console.error("❌ Stripe Checkout Error:", err);
+    res.status(500).json({ error: "Internal Server Error", message: err.message });
+  }
+});
+
+
+/* ================================
    STATIC ROUTES
 ================================ */
 app.get("/dashboard", (_, res) =>
