@@ -344,6 +344,66 @@ app.post("/api/checkout", async (req, res) => {
   }
 });
 
+/* ================================
+   STRIPE WEBHOOK HANDLER
+================================ */
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+app.post(
+  "/api/stripe-webhook",
+  express.raw({ type: "application/json" }), // required for Stripe signature validation
+  (req, res) => {
+    const sig = req.headers["stripe-signature"];
+
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    } catch (err) {
+      console.error("⚠️ Webhook signature verification failed:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // ✅ Handle successful payment
+    if (event.type === "payment_intent.succeeded") {
+      const paymentIntent = event.data.object;
+      const licenseKey = generateLicenseKey(); // function below
+      console.log(`💳 Payment succeeded for ${paymentIntent.metadata.product}`);
+      console.log(`🎟 Generated license: ${licenseKey}`);
+
+      // TODO: Store license in Mongo
+      const License = mongoose.model("License", new mongoose.Schema({
+        key: String,
+        product: String,
+        plan: String,
+        createdAt: { type: Date, default: Date.now }
+      }));
+
+      const newLicense = new License({
+        key: licenseKey,
+        product: paymentIntent.metadata.product,
+        plan: paymentIntent.metadata.plan
+      });
+
+      newLicense.save().then(() => {
+        console.log("✅ License stored in MongoDB.");
+      });
+    }
+
+    res.status(200).send("Received.");
+  }
+);
+
+// License key generator
+function generateLicenseKey() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let key = "";
+  for (let i = 0; i < 20; i++) {
+    key += chars.charAt(Math.floor(Math.random() * chars.length));
+    if ((i + 1) % 5 === 0 && i < 19) key += "-";
+  }
+  return key;
+}
+
 
 /* ================================
    STATIC ROUTES
