@@ -30,7 +30,6 @@
       flex-direction: column;
     }
 
-    /* Navigation */
     nav {
       display: flex;
       justify-content: space-between;
@@ -49,21 +48,20 @@
     .nav-left img { width: 40px; height: 40px; filter: drop-shadow(0 0 6px rgba(255,102,0,0.6)); }
     .nav-left span { font-size: 1.35rem; font-weight: 600; color: var(--accent); letter-spacing: 0.5px; }
 
-    /* Main Container */
     .checkout-wrapper {
       flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 80px 20px;
+      padding: 60px 20px;
     }
 
     .checkout-container {
       background: var(--card);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: var(--radius-lg);
-      padding: 50px;
-      max-width: 520px;
+      padding: 45px;
+      max-width: 620px;
       width: 100%;
       box-shadow: 0 0 35px rgba(255,102,0,0.1);
       backdrop-filter: blur(15px);
@@ -78,7 +76,7 @@
     h1 {
       font-size: 1.8rem;
       text-align: center;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       background: linear-gradient(90deg, var(--accent), var(--accent2));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -91,9 +89,16 @@
       font-size: 0.95rem;
     }
 
-    form { display: flex; flex-direction: column; gap: 18px; }
+    form { display: flex; flex-direction: column; gap: 20px; }
 
-    input, #card-element {
+    label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    input, select, .stripe-field {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: var(--radius-lg);
@@ -101,13 +106,33 @@
       font-size: 1rem;
       color: white;
       transition: var(--transition);
+      width: 100%;
     }
 
-    input:focus, #card-element:focus-within {
+    input:focus, select:focus, .stripe-field:focus-within {
       border-color: var(--accent);
       box-shadow: var(--shadow-accent);
       outline: none;
     }
+
+    .card-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .card-row .stripe-field { flex: 1; }
+
+    .summary-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      color: var(--text-soft);
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+
+    .summary-box strong { color: var(--text-main); }
 
     #submit-btn {
       margin-top: 8px;
@@ -162,7 +187,6 @@
       border-top: 1px solid rgba(255,255,255,0.05);
     }
 
-    /* Floating Accent Glow */
     .glow {
       position: fixed;
       top: -200px;
@@ -195,19 +219,51 @@
   <div class="checkout-wrapper">
     <div class="checkout-container">
       <h1>Safeguard Premier Checkout</h1>
-      <p>Securely complete your subscription. Your license will activate instantly after payment.</p>
+      <p>Securely complete your subscription. License activates instantly after payment.</p>
 
       <form id="payment-form">
+        <label>Email Address</label>
         <input id="email" type="email" placeholder="Email Address (Required)" required />
-        <div id="card-element"></div>
+
+        <label>Country</label>
+        <select id="country">
+          <option value="US" selected>United States</option>
+          <option value="CA">Canada</option>
+          <option value="GB">United Kingdom</option>
+          <option value="AU">Australia</option>
+          <option value="DE">Germany</option>
+          <option value="FR">France</option>
+          <option value="IN">India</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <label>Card Number</label>
+        <div id="card-number" class="stripe-field"></div>
+
+        <div class="card-row">
+          <div>
+            <label>Expiry</label>
+            <div id="card-expiry" class="stripe-field"></div>
+          </div>
+          <div>
+            <label>CVC</label>
+            <div id="card-cvc" class="stripe-field"></div>
+          </div>
+        </div>
+
+        <div class="summary-box" id="summary">
+          <div>Product: <strong>Safeguard Premier Subscription</strong></div>
+          <div>Base Price: $7.99 USD</div>
+          <div id="tax-line">Tax (US): $0.64</div>
+          <div><strong>Total: $8.63 USD</strong></div>
+        </div>
 
         <label class="agreement-box">
           <input type="checkbox" id="agree">
           <span>
-            I understand that I am purchasing a <strong>recurring monthly subscription</strong> for <strong>$7.99 USD</strong> (plus applicable taxes)
-            until cancelled. Refunds are unavailable once a key has been issued.
-            I agree to OpsLink Systems’
-            <a href="https://legal.opslinksystems.xyz" target="_blank">Terms of Service</a> and
+            I agree to recurring monthly billing of <strong>$7.99 USD</strong> (plus tax) until cancellation.
+            Refunds unavailable once license is issued.
+            I accept the <a href="https://legal.opslinksystems.xyz" target="_blank">Terms of Service</a> and
             <a href="https://legal.opslinksystems.xyz/billing.html" target="_blank">Billing Agreement</a>.
           </span>
         </label>
@@ -218,28 +274,54 @@
     </div>
   </div>
 
-  <footer>
-    © 2025 OpsLink Systems Network — All Rights Reserved.
-  </footer>
+  <footer>© 2025 OpsLink Systems Network — All Rights Reserved.</footer>
 
   <script>
     const stripe = Stripe("pk_live_51SVFpBLQjsrxMZMFiPh041fNL37kau7u4uITjjmKXkBabyHvx30Xl6scvSFDHBJDZlG6C71GFKltPWMEQwcU8z1R00j99wuaPd");
     const elements = stripe.elements({ appearance: { theme: "night" } });
-    const card = elements.create("card");
-    card.mount("#card-element");
+
+    const cardNumber = elements.create("cardNumber");
+    const cardExpiry = elements.create("cardExpiry");
+    const cardCvc = elements.create("cardCvc");
+
+    cardNumber.mount("#card-number");
+    cardExpiry.mount("#card-expiry");
+    cardCvc.mount("#card-cvc");
+
+    // Tax map (basic example)
+    const taxRates = {
+      US: 0.08, CA: 0.13, GB: 0.20, AU: 0.10, DE: 0.19, FR: 0.20, IN: 0.18, Other: 0.00
+    };
+
+    const basePrice = 7.99;
+    const countrySelect = document.getElementById("country");
+    const summary = document.getElementById("summary");
+
+    function updateTax() {
+      const country = countrySelect.value;
+      const rate = taxRates[country] || 0;
+      const tax = (basePrice * rate).toFixed(2);
+      const total = (basePrice + parseFloat(tax)).toFixed(2);
+      summary.innerHTML = `
+        <div>Product: <strong>Safeguard Premier Subscription</strong></div>
+        <div>Base Price: $${basePrice} USD</div>
+        <div id="tax-line">Tax (${country}): $${tax}</div>
+        <div><strong>Total: $${total} USD</strong></div>
+      `;
+    }
+    countrySelect.addEventListener("change", updateTax);
+    updateTax();
 
     document.getElementById("payment-form").addEventListener("submit", async (e) => {
       e.preventDefault();
-
       const agree = document.getElementById("agree");
       const email = document.getElementById("email").value.trim();
       const msg = document.getElementById("payment-message");
       const btn = document.getElementById("submit-btn");
+      const country = countrySelect.value;
 
-      if (!agree.checked)
-        return msg.textContent = "❌ You must agree to the billing terms before continuing.";
-      if (!email)
-        return msg.textContent = "❌ Email is required.";
+      if (!agree.checked) return msg.textContent = "❌ Please agree to billing terms.";
+      if (!email) return msg.textContent = "❌ Email required.";
 
       msg.textContent = "Processing...";
       btn.disabled = true;
@@ -248,21 +330,21 @@
         const res = await fetch("/api/checkout", {
           method:"POST",
           headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({ email })
+          body: JSON.stringify({ email, country })
         });
         const data = await res.json();
-        if (!data.clientSecret) throw new Error("Server error: Missing client secret.");
+        if (!data.clientSecret) throw new Error("Server error.");
 
         const result = await stripe.confirmCardPayment(data.clientSecret, {
-          payment_method:{ card, billing_details:{ email } }
+          payment_method:{ card: cardNumber, billing_details:{ email } }
         });
 
         if (result.error) {
           msg.textContent = "❌ " + result.error.message;
           btn.disabled = false;
         } else {
-          localStorage.setItem("safeguard_customer", data.customerId);
           msg.textContent = "✅ Subscription active! Redirecting...";
+          localStorage.setItem("safeguard_customer", data.customerId);
           setTimeout(() => window.location.href = `/success/${result.paymentIntent.id}`, 1000);
         }
 
@@ -272,6 +354,5 @@
       }
     });
   </script>
-
 </body>
 </html>
