@@ -311,7 +311,7 @@
 <script>
   const stripe = Stripe("pk_live_51SVFpBLQjsrxMZMFiPh041fNL37kau7u4uITjjmKXkBabyHvx30Xl6scvSFDHBJDZlG6C71GFKltPWMEQwcU8z1R00j99wuaPd");
 
-  /* Stripe Elements appearance fix */
+  /* Stripe Elements styling */
   const elements = stripe.elements({
     appearance: {
       theme: "night",
@@ -348,61 +348,72 @@
 
   /* ========= COUNTRY / CURRENCY / TAX ========= */
 
-  // Approx static exchange rates (you can replace with live API)
-  const exchangeRates = {
-    USD: 1.0,
-    CAD: 1.36,
-    GBP: 0.79,
-    EUR: 0.91,
-    AUD: 1.52,
-    INR: 83.0,
-    JPY: 150.0,
+  // CAD base pricing
+  const baseCAD = 7.99;
+
+  // Approx FX rates: 1 CAD = X in other currencies
+  const fxRates = {
+    CAD: 1.00,
+    USD: 0.74,
+    GBP: 0.58,
+    EUR: 0.67,
+    AUD: 1.09,
+    INR: 61.0,
+    JPY: 114.0,
   };
 
-  // Country to currency + tax map
   const countryData = {
-    US: { currency: "USD", tax: 0.08 },
     CA: { currency: "CAD", tax: 0.13 },
+    US: { currency: "USD", tax: 0.08 },
     GB: { currency: "GBP", tax: 0.20 },
     FR: { currency: "EUR", tax: 0.20 },
     DE: { currency: "EUR", tax: 0.19 },
     AU: { currency: "AUD", tax: 0.10 },
     IN: { currency: "INR", tax: 0.18 },
     JP: { currency: "JPY", tax: 0.10 },
-    Other: { currency: "USD", tax: 0.0 },
+    Other: { currency: "CAD", tax: 0.00 },
   };
 
-  const baseUSD = 7.99;
   const summary = document.getElementById("summary");
   const countrySelect = document.getElementById("country");
 
   function updateSummary() {
     const country = countrySelect.value;
     const { currency, tax } = countryData[country] || countryData["Other"];
-    const rate = exchangeRates[currency] || 1;
-    const localPrice = baseUSD * rate;
+    const rate = fxRates[currency] || 1;
+    const localPrice = baseCAD * rate;
     const taxAmt = localPrice * tax;
     const total = localPrice + taxAmt;
 
     summary.innerHTML = `
       <div>Product: <strong>Safeguard Premier Subscription</strong></div>
-      <div>Base Price: ${currencySymbol(currency)}${localPrice.toFixed(2)} ${currency}</div>
-      <div>Tax (${Math.round(tax * 100)}%): ${currencySymbol(currency)}${taxAmt.toFixed(2)} ${currency}</div>
-      <div><strong>Total: ${currencySymbol(currency)}${total.toFixed(2)} ${currency}</strong></div>
+      <div>Base Price: ${symbol(currency)}${localPrice.toFixed(2)} ${currency}</div>
+      <div>Tax (${Math.round(tax * 100)}%): ${symbol(currency)}${taxAmt.toFixed(2)} ${currency}</div>
+      <div><strong>Total: ${symbol(currency)}${total.toFixed(2)} ${currency}</strong></div>
+      <div style="margin-top:6px; font-size:0.8rem; color:#9ca3af;">
+        *Final billing occurs in CAD (C$7.99 CAD)
+      </div>
     `;
   }
 
-  function currencySymbol(code) {
-    const symbols = {
-      USD: "$", CAD: "C$", GBP: "£", EUR: "€", AUD: "A$", INR: "₹", JPY: "¥"
-    };
-    return symbols[code] || "$";
+  function symbol(code) {
+    return (
+      {
+        CAD: "C$",
+        USD: "$",
+        GBP: "£",
+        EUR: "€",
+        AUD: "A$",
+        INR: "₹",
+        JPY: "¥",
+      }[code] || "$"
+    );
   }
 
   countrySelect.addEventListener("change", updateSummary);
   updateSummary();
 
-  /* ========= STRIPE SUBMIT ========= */
+  /* ========= STRIPE PAYMENT ========= */
 
   document.getElementById("payment-form").addEventListener("submit", async (e) => {
     e.preventDefault();
