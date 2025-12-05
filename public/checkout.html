@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safeguard Premier Checkout – OpsLink Systems</title>
+  <link rel="icon" href="/assets/Safeguard-Bot.png" />
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    :root {
+      --bg-main: #04060d;
+      --bg-card: #0b1220;
+      --accent: #ff6600;
+      --accent2: #ff944d;
+      --text-main: #e5e7eb;
+      --text-soft: #a1a1aa;
+      --radius-lg: 18px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
+
+    body {
+      background: radial-gradient(circle at 20% 20%, #0b1220, #050816 70%);
+      color: var(--text-main);
+      overflow-x: hidden;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 60px;
+      background: rgba(10,15,25,0.7);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-left img {
+      width: 36px;
+      height: 36px;
+      filter: drop-shadow(0 0 6px rgba(255,102,0,0.4));
+    }
+
+    .nav-left span {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .checkout-container {
+      max-width: 600px;
+      margin: 80px auto;
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 0 25px rgba(255,102,0,0.08);
+      padding: 50px;
+    }
+
+    h1 {
+      color: var(--accent);
+      font-size: 2.3rem;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    p {
+      color: var(--text-soft);
+      text-align: center;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #card-element {
+      background: rgba(255,255,255,0.05);
+      padding: 15px;
+      border-radius: var(--radius-lg);
+    }
+
+    #submit-btn {
+      background: var(--accent);
+      color: #fff;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    #submit-btn:hover {
+      background: var(--accent2);
+      transform: translateY(-3px);
+      box-shadow: 0 0 25px rgba(255,102,0,0.3);
+    }
+
+    #payment-message {
+      text-align: center;
+      margin-top: 15px;
+      color: var(--text-soft);
+      font-size: 0.95rem;
+    }
+
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      background: #070b15;
+      color: var(--text-soft);
+      text-align: center;
+      padding: 30px 10px 40px;
+      font-size: 0.9rem;
+      margin-top: 60px;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-left">
+      <img src="/assets/Safeguard-Bot.png" alt="Safeguard Logo">
+      <span>OpsLink Safeguard</span>
+    </div>
+  </nav>
+
+  <div class="checkout-container">
+    <h1>Safeguard Premier Checkout</h1>
+    <p>You're about to subscribe to <strong>Safeguard Premier</strong> for <strong>$7.99/month</strong>.<br>Enter your card details below to complete your purchase securely.</p>
+
+    <form id="payment-form">
+      <div id="card-element"></div>
+      <button id="submit-btn" type="submit">Complete Payment</button>
+      <div id="payment-message"></div>
+    </form>
+  </div>
+
+  <footer>
+    © 2025 OpsLink Systems Network — All Rights Reserved.<br>
+    Visit <a href="https://opslinkcad.com">OpsLinkCAD</a> for more.
+  </footer>
+
+  <script>
+    const stripe = Stripe("pk_live_REPLACE_WITH_YOUR_PUBLIC_KEY");
+
+    const elements = stripe.elements();
+    const cardElement = elements.create("card", { style: { base: { color: "#fff", fontSize: "16px" } } });
+    cardElement.mount("#card-element");
+
+    const form = document.getElementById("payment-form");
+    const message = document.getElementById("payment-message");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      message.textContent = "Processing payment...";
+
+      try {
+        const res = await fetch("/api/checkout", { method: "POST" });
+        const { clientSecret } = await res.json();
+
+        const result = await stripe.confirmCardPayment(clientSecret, {
+          payment_method: { card: cardElement }
+        });
+
+        if (result.error) {
+          message.textContent = "❌ " + result.error.message;
+        } else if (result.paymentIntent.status === "succeeded") {
+          message.innerHTML = "✅ Payment successful!<br>Your Safeguard Premier license key will be sent to your Discord account within a few minutes.";
+        }
+      } catch (err) {
+        message.textContent = "❌ Error: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
