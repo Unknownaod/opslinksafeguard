@@ -13,20 +13,26 @@ const app = express();
    1️⃣ STRIPE WEBHOOK HANDLER (Dedicated DB Connection)
    ====================================================== */
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+// dedicated mongoose connection JUST for Stripe licenses (MONGO_URI)
 const mongooseStripe = require("mongoose");
+const licenseKeySchema = require("./models/LicenseKey");
 
-/* Connect ONLY this webhook to the MONGO_URI database */
-const webhookDB = mongooseStripe.createConnection(process.env.MONGO_URI, {})
-  .on("connected", () => console.log("🔗 Stripe License DB connected (MONGO_URI)"))
-  .on("error", err => console.error("❌ Stripe License DB error:", err));
+const webhookDB = mongooseStripe
+  .createConnection(process.env.MONGO_URI, {})
+  .on("connected", () =>
+    console.log("🔗 Stripe License DB connected (MONGO_URI)")
+  )
+  .on("error", (err) =>
+    console.error("❌ Stripe License DB error:", err)
+  );
 
-/* Load LicenseKey model using THIS connection */
-const LicenseKey = webhookDB.model(
-  "LicenseKey",
-  require("./models/LicenseKey").schema
-);
+// avoid OverwriteModelError on Vercel by reusing if exists
+const LicenseKey =
+  webhookDB.models.LicenseKey ||
+  webhookDB.model("LicenseKey", licenseKeySchema);
 
-/* Generate Safeguard License */
+// Generate Safeguard License
 function generateLicenseKey() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let key = "SAFE-";
@@ -37,42 +43,50 @@ function generateLicenseKey() {
   return key;
 }
 
-/* Stripe Webhook */
-app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async (req, res) => {
-  const sig = req.headers["stripe-signature"];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+// Stripe Webhook – MUST use express.raw ONLY for this route
+app.post(
+  "/api/stripe-webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const sig = req.headers["stripe-signature"];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  try {
-    const event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    try {
+      const event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        endpointSecret
+      );
 
-    if (event.type === "payment_intent.succeeded") {
-      const intent = event.data.object;
-      const licenseKey = generateLicenseKey();
+      if (event.type === "payment_intent.succeeded") {
+        const intent = event.data.object;
+        const licenseKey = generateLicenseKey();
 
-      console.log(`💳 Payment succeeded for ${intent.id}`);
-      console.log(`🎟 License generated: ${licenseKey}`);
+        console.log(`💳 Payment succeeded for ${intent.id}`);
+        console.log(`🎟 License generated: ${licenseKey}`);
 
-      await LicenseKey.create({
-        key: licenseKey,
-        paymentId: intent.id,
-        plan: intent.metadata.plan || "Premier",
-        active: true
-      });
+        await LicenseKey.create({
+          key: licenseKey,
+          paymentId: intent.id,
+          plan: intent.metadata?.plan || "Premier",
+          active: true
+        });
 
-      console.log("✅ License saved to Stripe License DB.");
+        console.log("✅ License saved to Stripe License DB.");
+      }
+
+      res.status(200).send("Webhook received");
+    } catch (err) {
+      console.error("⚠️ Webhook signature verification failed:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
     }
-
-    res.status(200).send("Webhook received");
-  } catch (err) {
-    console.error("⚠️ Webhook signature verification failed:", err.message);
-    res.status(400).send(`Webhook Error: ${err.message}`);
   }
-});
-
+);
 
 /* ======================================================
    2️⃣ EXPRESS JSON PARSERS (after webhook)
    ====================================================== */
+// IMPORTANT: must come AFTER the webhook raw handler
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -88,7 +102,12 @@ const {
   MONGODB_URI
 } = process.env;
 
-if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET || !DISCORD_REDIRECT_URI || !SESSION_SECRET) {
+if (
+  !DISCORD_CLIENT_ID ||
+  !DISCORD_CLIENT_SECRET ||
+  !DISCORD_REDIRECT_URI ||
+  !SESSION_SECRET
+) {
   console.warn("⚠️ Missing one or more Discord/SESSION env vars.");
 }
 if (!MONGODB_URI) {
@@ -102,12 +121,12 @@ const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
 /* ======================================================
-   5️⃣ DATABASE (MongoDB)
+   5️⃣ DATABASE (MongoDB) — main app DB
    ====================================================== */
 mongoose
   .connect(MONGODB_URI)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB connection failed:", err));
+  .catch((err) => console.error("❌ MongoDB connection failed:", err));
 
 /* ======================================================
    6️⃣ MODULE SCHEMA AND DEFAULTS
@@ -120,27 +139,85 @@ const moduleSchema = new mongoose.Schema({
   enabled: { type: Boolean, default: false },
   settings: { type: Object, default: {} }
 });
-const Module = mongoose.model("Module", moduleSchema);
+
+// avoid OverwriteModelError in serverless env
+const Module =
+  mongoose.models.Module || mongoose.model("Module", moduleSchema);
 
 const DEFAULT_MODULE_CATALOGUE = [
-  { id: "tickets", name: "Ticket System", description: "Advanced multi-panel ticket system with logging and transcripts.", enabled: true },
-  { id: "welcome", name: "Welcome / Goodbye / Autorole", description: "Welcome cards, goodbye messages, join/leave DMs and autoroles.", enabled: true },
-  { id: "verification", name: "Captcha Verification", description: "Captcha-based verification, staff controls and logging.", enabled: true },
-  { id: "leveling", name: "Leveling & XP", description: "XP per message, level-up channel and role rewards.", enabled: false },
-  { id: "logging", name: "Moderation Logs", description: "Moderation log channel for bans, kicks, warns and more.", enabled: true },
-  { id: "auditlogs", name: "Audit Logs", description: "Tracks joins, leaves and server changes in an audit log channel.", enabled: true },
-  { id: "vclogs", name: "VC Logs", description: "Logs users connecting, disconnecting and moving in voice.", enabled: false },
-  { id: "muterole", name: "Mute Role", description: "Dedicated mute role used by the moderation system.", enabled: true },
-  { id: "lockdown", name: "Lockdown System", description: "Lockdown channels or the whole server during incidents.", enabled: true },
-  { id: "antiraid", name: "Anti-Raid", description: "Protects your server from mass joins and raid behaviour.", enabled: true },
-  { id: "automod", name: "AutoMod", description: "Automatic filtering of links, spam and rule-breaking content.", enabled: false }
+  {
+    id: "tickets",
+    name: "Ticket System",
+    description: "Advanced multi-panel ticket system with logging and transcripts.",
+    enabled: true
+  },
+  {
+    id: "welcome",
+    name: "Welcome / Goodbye / Autorole",
+    description: "Welcome cards, goodbye messages, join/leave DMs and autoroles.",
+    enabled: true
+  },
+  {
+    id: "verification",
+    name: "Captcha Verification",
+    description: "Captcha-based verification, staff controls and logging.",
+    enabled: true
+  },
+  {
+    id: "leveling",
+    name: "Leveling & XP",
+    description: "XP per message, level-up channel and role rewards.",
+    enabled: false
+  },
+  {
+    id: "logging",
+    name: "Moderation Logs",
+    description: "Moderation log channel for bans, kicks, warns and more.",
+    enabled: true
+  },
+  {
+    id: "auditlogs",
+    name: "Audit Logs",
+    description: "Tracks joins, leaves and server changes in an audit log channel.",
+    enabled: true
+  },
+  {
+    id: "vclogs",
+    name: "VC Logs",
+    description: "Logs users connecting, disconnecting and moving in voice.",
+    enabled: false
+  },
+  {
+    id: "muterole",
+    name: "Mute Role",
+    description: "Dedicated mute role used by the moderation system.",
+    enabled: true
+  },
+  {
+    id: "lockdown",
+    name: "Lockdown System",
+    description: "Lockdown channels or the whole server during incidents.",
+    enabled: true
+  },
+  {
+    id: "antiraid",
+    name: "Anti-Raid",
+    description: "Protects your server from mass joins and raid behaviour.",
+    enabled: true
+  },
+  {
+    id: "automod",
+    name: "AutoMod",
+    description: "Automatic filtering of links, spam and rule-breaking content.",
+    enabled: false
+  }
 ];
 
 async function ensureModulesForGuild(guildId) {
   const existing = await Module.find({ guildId });
   if (existing.length >= DEFAULT_MODULE_CATALOGUE.length) return;
 
-  const ops = DEFAULT_MODULE_CATALOGUE.map(m => ({
+  const ops = DEFAULT_MODULE_CATALOGUE.map((m) => ({
     updateOne: {
       filter: { guildId, id: m.id },
       update: { $setOnInsert: { guildId, ...m, settings: {} } },
@@ -156,12 +233,15 @@ async function ensureModulesForGuild(guildId) {
 /* ======================================================
    7️⃣ NODE-FETCH HELPER
    ====================================================== */
-const fetch = (...args) => import("node-fetch").then(({ default: fn }) => fn(...args));
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fn }) => fn(...args));
 
 /* ======================================================
    8️⃣ AUTH / USER ROUTES
    ====================================================== */
-app.get("/", (_, res) => res.sendFile(path.join(publicPath, "index.html")));
+app.get("/", (_, res) =>
+  res.sendFile(path.join(publicPath, "index.html"))
+);
 
 app.get("/auth/discord", (req, res) => {
   const scope = encodeURIComponent("identify guilds");
@@ -247,11 +327,15 @@ app.get("/api/guilds", async (req, res) => {
       headers: { Authorization: `Bot ${BOT_TOKEN}` }
     });
     const botGuilds = await botRes.json();
-    const botIds = new Set(Array.isArray(botGuilds) ? botGuilds.map(g => g.id) : []);
+    const botIds = new Set(
+      Array.isArray(botGuilds) ? botGuilds.map((g) => g.id) : []
+    );
 
     const manageable = (Array.isArray(userGuilds) ? userGuilds : [])
-      .filter(g => (BigInt(g.permissions ?? 0n) & 0x20n) === 0x20n)
-      .map(g => ({ ...g, installed: botIds.has(g.id) }));
+      .filter(
+        (g) => (BigInt(g.permissions ?? 0n) & 0x20n) === 0x20n
+      )
+      .map((g) => ({ ...g, installed: botIds.has(g.id) }));
 
     res.json(manageable);
   } catch (err) {
@@ -282,7 +366,9 @@ app.post("/api/modules/toggle/:moduleId", async (req, res) => {
 
     mod.enabled = !mod.enabled;
     await mod.save();
-    console.log(`🔧 Toggled module ${mod.id} (${mod.guildId}) → ${mod.enabled}`);
+    console.log(
+      `🔧 Toggled module ${mod.id} (${mod.guildId}) → ${mod.enabled}`
+    );
     res.json({ success: true, enabled: mod.enabled });
   } catch (err) {
     console.error("Toggle module error:", err);
@@ -328,7 +414,9 @@ app.post("/api/checkout", async (req, res) => {
     res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
     console.error("❌ Stripe Checkout Error:", err);
-    res.status(500).json({ error: "Stripe Checkout Failed", message: err.message });
+    res
+      .status(500)
+      .json({ error: "Stripe Checkout Failed", message: err.message });
   }
 });
 
@@ -339,7 +427,6 @@ app.get("/success/:paymentId", async (req, res) => {
   try {
     const paymentId = req.params.paymentId;
 
-    // 👇 MUST use the LicenseKey model from webhookDB
     const license = await LicenseKey.findOne({ paymentId });
 
     if (!license) {
@@ -349,7 +436,6 @@ app.get("/success/:paymentId", async (req, res) => {
       `);
     }
 
-    // Verify payment on Stripe
     const session = await stripe.paymentIntents.retrieve(paymentId);
     if (session.status !== "succeeded") {
       return res.status(403).send(`
@@ -358,14 +444,12 @@ app.get("/success/:paymentId", async (req, res) => {
       `);
     }
 
-    // If everything is valid — show license
     return res.send(`
       <h1>🎉 Thank you for your purchase!</h1>
       <p>Your Safeguard Premier license key:</p>
       <code style="font-size:22px; font-weight:bold;">${license.key}</code>
       <p>Store this key safely. You will need it to activate Safeguard.</p>
     `);
-
   } catch (err) {
     console.error("Success Route Error:", err);
     return res.status(500).send(`
@@ -378,14 +462,20 @@ app.get("/success/:paymentId", async (req, res) => {
 /* ======================================================
    13️⃣ STATIC PAGES
    ====================================================== */
-app.get("/dashboard", (_, res) => res.sendFile(path.join(publicPath, "dashboard.html")));
-app.get("/dashboard/:id", (_, res) => res.sendFile(path.join(publicPath, "dashboard-guild.html")));
+app.get("/dashboard", (_, res) =>
+  res.sendFile(path.join(publicPath, "dashboard.html"))
+);
+app.get("/dashboard/:id", (_, res) =>
+  res.sendFile(path.join(publicPath, "dashboard-guild.html"))
+);
 
 /* ======================================================
    14️⃣ STARTUP
    ====================================================== */
 const PORT = process.env.PORT || 3000;
 if (!process.env.VERCEL) {
-  app.listen(PORT, () => console.log(`✅ Safeguard panel running on port ${PORT}`));
+  app.listen(PORT, () =>
+    console.log(`✅ Safeguard panel running on port ${PORT}`)
+  );
 }
 module.exports = app;
