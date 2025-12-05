@@ -1,37 +1,38 @@
 // api/checkout.js
-const express = require("express");
 const Stripe = require("stripe");
-const router = express.Router();
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Custom checkout route for SafeGuard Premier
-router.post("/api/checkout", async (req, res) => {
+module.exports = async (req, res) => {
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: "Method Not Allowed" });
+  }
+
   try {
-    // Product details
+    // === Product Info ===
     const productName = "SafeGuard Premier";
     const productDescription = "Monthly license subscription for OpsLink SafeGuard Premier";
-    const priceInCents = 799; // $7.99 USD
+    const priceInCents = 799; // $7.99 CAD/USD (depending on your Stripe account)
+    const currency = "cad"; // or "usd" if your Stripe account uses USD
 
-    // Create Stripe PaymentIntent
+    // === Create Stripe PaymentIntent ===
     const paymentIntent = await stripe.paymentIntents.create({
       amount: priceInCents,
-      currency: "cad",
+      currency,
       description: `${productName} – ${productDescription}`,
       automatic_payment_methods: { enabled: true },
       metadata: {
         product: productName,
         plan: "Premier",
         billing_cycle: "monthly",
-        type: "license",
-      },
+        type: "license"
+      }
     });
 
-    res.json({ clientSecret: paymentIntent.client_secret });
+    // === Return client secret to frontend ===
+    res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
-    console.error("❌ Stripe error:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Stripe Checkout Error:", err);
+    res.status(500).json({ error: "Internal Server Error", message: err.message });
   }
-});
-
-module.exports = router;
+};
