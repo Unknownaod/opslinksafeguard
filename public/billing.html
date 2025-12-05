@@ -44,6 +44,11 @@
       box-shadow:0 0 12px #ff660040;
     }
     button:hover { background:var(--accent-hover); transform:translateY(-2px); }
+    .small-btn {
+      background:#1a2238; margin-top:12px; box-shadow:none !important;
+    }
+    .small-btn:hover { background:#263355; }
+    code { color:#ff8c42; font-size:1rem; }
     footer { font-size:.8rem; opacity:.5; margin-top:18px; }
     @keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
   </style>
@@ -51,15 +56,22 @@
 <body>
   <div class="wrapper">
     <h1>Billing & Subscription</h1>
-    <p>Enter or manage your Safeguard Premier billing profile.</p>
+    <p>Manage your Safeguard Premier billing profile and subscription.</p>
 
-    <!-- Customer ID Input -->
+    <!-- DISPLAY SAVED CUSTOMER ID -->
+    <div id="cidDisplay" style="display:none; margin-bottom:18px;">
+      <small style="opacity:.7;">Your Stripe Customer ID:</small><br>
+      <code id="cidText"></code>
+      <button class="small-btn" onclick="resetCID()">Change Customer ID</button>
+    </div>
+
+    <!-- INPUT NEW CUSTOMER ID -->
     <div id="cidArea">
       <input id="cidInput" placeholder="Enter Stripe Customer ID (cus_xxxxxxx)">
       <button onclick="saveCID()">Save Customer ID</button>
     </div>
 
-    <!-- Billing Button -->
+    <!-- OPEN BILLING PORTAL -->
     <button id="billingBtn" style="display:none;" onclick="openPortal()">
       Open Billing Portal
     </button>
@@ -68,24 +80,36 @@
   </div>
 
   <script>
-    const billingBtn = document.getElementById("billingBtn");
+    const cidDisplay = document.getElementById("cidDisplay");
     const cidArea = document.getElementById("cidArea");
+    const cidText = document.getElementById("cidText");
+    const billingBtn = document.getElementById("billingBtn");
     const cidInput = document.getElementById("cidInput");
 
-    // Load saved customer ID
     const savedCID = localStorage.getItem("safeguard_customer");
-    if (savedCID) {
-      cidArea.style.display = "none";
-      billingBtn.style.display = "block";
-    }
+    if (savedCID) showCID(savedCID);
 
     function saveCID() {
       const val = cidInput.value.trim();
-      if (!val.startsWith("cus_")) return alert("Invalid Stripe customer ID format.");
+      if (!val.startsWith("cus_")) return alert("Customer ID must start with 'cus_'.");
       localStorage.setItem("safeguard_customer", val);
-      cidArea.style.display = "none";
-      billingBtn.style.display = "block";
+      showCID(val);
       alert("Customer ID saved successfully!");
+    }
+
+    function showCID(id) {
+      cidText.innerText = id;
+      cidArea.style.display = "none";
+      cidDisplay.style.display = "block";
+      billingBtn.style.display = "block";
+    }
+
+    function resetCID() {
+      localStorage.removeItem("safeguard_customer");
+      cidDisplay.style.display = "none";
+      billingBtn.style.display = "none";
+      cidArea.style.display = "block";
+      cidInput.value = "";
     }
 
     async function openPortal() {
@@ -100,6 +124,7 @@
 
       const data = await res.json();
       if (data.url) window.location.href = data.url;
+      else alert(data.message || "Unable to access billing portal.");
     }
   </script>
 </body>
