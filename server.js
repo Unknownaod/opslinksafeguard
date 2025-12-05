@@ -403,8 +403,8 @@ app.post("/api/checkout", async (req, res) => {
       automatic_payment_methods: { enabled: true },
       metadata: {
         product_name: "Safeguard Premier",
-        product_id: "prod_TY8nNOaaWUF45h",
-        price_id: "price_1Sb2VrL7YJgbhqHmAC4D91td",
+        product_id: "prod_TY80HIQVXTvUVA",
+        price_id: "price_1Sb1kpLQjsrxMZMFbEhl3Bjm",
         plan: "Premier",
         billing_cycle: "monthly",
         type: "license"
@@ -461,17 +461,28 @@ app.get("/success/:paymentId", async (req, res) => {
 
 app.post("/api/billing/portal", async (req, res) => {
   try {
-    const { customerId } = req.body; // store this when payment happens
+    const { customerId } = req.body;
+
+    if (!customerId) {
+      return res.status(400).json({
+        error: "Missing customerId",
+        message: "A Stripe customer ID must be provided to access the billing portal."
+      });
+    }
 
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: "https://www.opslinksafeguard.xyz/billing"
     });
 
-    res.json({ url: session.url });
+    return res.json({ url: session.url });
+
   } catch (err) {
     console.error("Billing Portal Error:", err);
-    res.status(500).json({ error: "Failed to create billing portal" });
+    return res.status(500).json({
+      error: "Failed to create billing portal",
+      message: err.message
+    });
   }
 });
 
