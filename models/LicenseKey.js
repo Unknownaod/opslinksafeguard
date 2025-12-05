@@ -1,9 +1,9 @@
 // models/LicenseKey.js
-const { Schema, model } = require("mongoose");
+const { Schema } = require("mongoose");
 
 const licenseKeySchema = new Schema({
   key: { type: String, required: true, unique: true },
-  paymentId: { type: String, required: true },      // ⬅️ ADD THIS
+  paymentId: { type: String, required: true },
   plan: { type: String, default: "Premier" },
   active: { type: Boolean, default: false },
   ownerId: { type: String, default: null },
@@ -11,4 +11,5 @@ const licenseKeySchema = new Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = model("LicenseKey", licenseKeySchema);
+/* 🔥 Export ONLY the schema */
+module.exports = licenseKeySchema;
