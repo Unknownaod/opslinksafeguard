@@ -427,6 +427,7 @@ app.get("/success/:paymentId", async (req, res) => {
   try {
     const paymentId = req.params.paymentId;
 
+    // Look up license by payment intent
     const license = await LicenseKey.findOne({ paymentId });
 
     if (!license) {
@@ -436,7 +437,9 @@ app.get("/success/:paymentId", async (req, res) => {
       `);
     }
 
+    // Retrieve payment intent from Stripe
     const session = await stripe.paymentIntents.retrieve(paymentId);
+
     if (session.status !== "succeeded") {
       return res.status(403).send(`
         <h1>❌ Payment Not Completed</h1>
@@ -444,13 +447,32 @@ app.get("/success/:paymentId", async (req, res) => {
       `);
     }
 
+    // Extract stripe customer ID from session
+    const customerId = session.customer || "Unknown";
+
     return res.send(`
       <h1>🎉 Thank you for your purchase!</h1>
       <p>Your Safeguard Premier license key:</p>
       <code style="font-size:22px; font-weight:bold;">${license.key}</code>
-      <p>Store this key safely. You will need it to activate Safeguard.</p>
-      <p>Invite the Bot Here: https://discord.com/oauth2/authorize?client_id=1446268459091624048&permissions=8&integration_type=0&scope=bot</p>
+
+      <br><br>
+
+      <h3>Your Stripe Customer ID:</h3>
+      <code style="font-size:18px; color:#ff6600;">${customerId}</code>
+
+      <p style="margin-top:10px; opacity:.7;">
+        You will need this ID to manage billing, update payment methods, or cancel your subscription.
+      </p>
+
+      <br>
+
+      <p>Invite the Bot Here:</p>
+      <a href="https://discord.com/oauth2/authorize?client_id=1446268459091624048&permissions=8&integration_type=0&scope=bot"
+         style="color:#7289da; font-size:18px; font-weight:bold;">
+        Add Safeguard to Your Discord Server
+      </a>
     `);
+
   } catch (err) {
     console.error("Success Route Error:", err);
     return res.status(500).send(`
@@ -460,23 +482,58 @@ app.get("/success/:paymentId", async (req, res) => {
   }
 });
 
+/* ======================================================
+   BILLING PORTAL — Opens Stripe Customer Dashboard
+   ====================================================== */
 app.post("/api/billing/portal", async (req, res) => {
   try {
     const { customerId } = req.body;
 
-    if (!customerId) {
+    // Validate existence
+    if (!customerId || typeof customerId !== "string") {
       return res.status(400).json({
-        error: "Missing customerId",
-        message: "A Stripe customer ID must be provided to access the billing portal."
+        error: "Missing or invalid customerId",
+        message: "A valid Stripe customer ID must be provided."
       });
     }
 
+    // Validate that it looks like a Stripe customer ID
+    if (!customerId.startsWith("cus_")) {
+      return res.status(400).json({
+        error: "Invalid Format",
+        message: "Stripe customer IDs must start with 'cus_'."
+      });
+    }
+
+    // Confirm the customer exists in Stripe (prevents fake IDs)
+    let customer;
+    try {
+      customer = await stripe.customers.retrieve(customerId);
+      if (customer.deleted) {
+        return res.status(410).json({
+          error: "Customer Deleted",
+          message: "This billing profile no longer exists in Stripe."
+        });
+      }
+    } catch (e) {
+      return res.status(404).json({
+        error: "Customer Not Found",
+        message: "Stripe could not locate this customer ID."
+      });
+    }
+
+    // Create billing portal session
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: "https://www.opslinksafeguard.xyz/billing"
     });
 
-    return res.json({ url: session.url });
+    return res.json({
+      success: true,
+      message: "Billing portal session created.",
+      url: session.url,
+      customerId
+    });
 
   } catch (err) {
     console.error("Billing Portal Error:", err);
