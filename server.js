@@ -4,15 +4,67 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
+const Stripe = require("stripe");
 
 dotenv.config();
-
 const app = express();
-app.use(express.json());
 
-/* ================================
-   ENV
-================================ */
+/* ======================================================
+   1️⃣ STRIPE WEBHOOK HANDLER (must be first)
+   ====================================================== */
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const LicenseKey = require("./models/LicenseKey");
+
+function generateLicenseKey() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let key = "SAFE-";
+  for (let i = 0; i < 12; i++) {
+    key += chars[Math.floor(Math.random() * chars.length)];
+    if (i === 3 || i === 7) key += "-";
+  }
+  return key;
+}
+
+app.post("/api/stripe-webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  try {
+    const event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+
+    if (event.type === "payment_intent.succeeded") {
+      const intent = event.data.object;
+      const licenseKey = generateLicenseKey();
+
+      console.log(`💳 Payment succeeded for ${intent.id}`);
+      console.log(`🎟 License generated: ${licenseKey}`);
+
+      await LicenseKey.create({
+        key: licenseKey,
+        paymentId: intent.id,
+        plan: intent.metadata.plan || "Premier",
+        active: true
+      });
+
+      console.log("✅ License saved to MongoDB.");
+    }
+
+    res.status(200).send("Webhook received");
+  } catch (err) {
+    console.error("⚠️ Webhook signature verification failed:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+});
+
+/* ======================================================
+   2️⃣ EXPRESS JSON PARSERS (after webhook)
+   ====================================================== */
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+/* ======================================================
+   3️⃣ ENVIRONMENT VARIABLES
+   ====================================================== */
 const {
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
@@ -29,23 +81,26 @@ if (!MONGODB_URI) {
   console.warn("⚠️ MONGODB_URI is not set.");
 }
 
-/* ================================
-   STATIC
-================================ */
+/* ======================================================
+   4️⃣ STATIC FILES
+   ====================================================== */
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
-/* ================================
-   DB
-================================ */
+/* ======================================================
+   5️⃣ DATABASE (MongoDB)
+   ====================================================== */
 mongoose
-  .connect(MONGODB_URI, { })
+  .connect(MONGODB_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB connection failed:", err));
 
+/* ======================================================
+   6️⃣ MODULE SCHEMA AND DEFAULTS
+   ====================================================== */
 const moduleSchema = new mongoose.Schema({
   guildId: String,
-  id: String,          // e.g. "welcome", "verification"
+  id: String,
   name: String,
   description: String,
   enabled: { type: Boolean, default: false },
@@ -53,77 +108,20 @@ const moduleSchema = new mongoose.Schema({
 });
 const Module = mongoose.model("Module", moduleSchema);
 
-/* Default module catalogue used when a guild is first opened in the panel */
 const DEFAULT_MODULE_CATALOGUE = [
-  {
-    id: "tickets",
-    name: "Ticket System",
-    description: "Advanced multi-panel ticket system with logging and transcripts.",
-    enabled: true
-  },
-  {
-    id: "welcome",
-    name: "Welcome / Goodbye / Autorole",
-    description: "Welcome cards, goodbye messages, join/leave DMs and autoroles.",
-    enabled: true
-  },
-  {
-    id: "verification",
-    name: "Captcha Verification",
-    description: "Captcha-based verification, staff controls and logging.",
-    enabled: true
-  },
-  {
-    id: "leveling",
-    name: "Leveling & XP",
-    description: "XP per message, level-up channel and role rewards.",
-    enabled: false
-  },
-  {
-    id: "logging",
-    name: "Moderation Logs",
-    description: "Moderation log channel for bans, kicks, warns and more.",
-    enabled: true
-  },
-  {
-    id: "auditlogs",
-    name: "Audit Logs",
-    description: "Tracks joins, leaves and server changes in an audit log channel.",
-    enabled: true
-  },
-  {
-    id: "vclogs",
-    name: "VC Logs",
-    description: "Logs users connecting, disconnecting and moving in voice.",
-    enabled: false
-  },
-  {
-    id: "muterole",
-    name: "Mute Role",
-    description: "Dedicated mute role used by the moderation system.",
-    enabled: true
-  },
-  {
-    id: "lockdown",
-    name: "Lockdown System",
-    description: "Lockdown channels or the whole server during incidents.",
-    enabled: true
-  },
-  {
-    id: "antiraid",
-    name: "Anti-Raid",
-    description: "Protects your server from mass joins and raid behaviour.",
-    enabled: true
-  },
-  {
-    id: "automod",
-    name: "AutoMod",
-    description: "Automatic filtering of links, spam and rule-breaking content.",
-    enabled: false
-  }
+  { id: "tickets", name: "Ticket System", description: "Advanced multi-panel ticket system with logging and transcripts.", enabled: true },
+  { id: "welcome", name: "Welcome / Goodbye / Autorole", description: "Welcome cards, goodbye messages, join/leave DMs and autoroles.", enabled: true },
+  { id: "verification", name: "Captcha Verification", description: "Captcha-based verification, staff controls and logging.", enabled: true },
+  { id: "leveling", name: "Leveling & XP", description: "XP per message, level-up channel and role rewards.", enabled: false },
+  { id: "logging", name: "Moderation Logs", description: "Moderation log channel for bans, kicks, warns and more.", enabled: true },
+  { id: "auditlogs", name: "Audit Logs", description: "Tracks joins, leaves and server changes in an audit log channel.", enabled: true },
+  { id: "vclogs", name: "VC Logs", description: "Logs users connecting, disconnecting and moving in voice.", enabled: false },
+  { id: "muterole", name: "Mute Role", description: "Dedicated mute role used by the moderation system.", enabled: true },
+  { id: "lockdown", name: "Lockdown System", description: "Lockdown channels or the whole server during incidents.", enabled: true },
+  { id: "antiraid", name: "Anti-Raid", description: "Protects your server from mass joins and raid behaviour.", enabled: true },
+  { id: "automod", name: "AutoMod", description: "Automatic filtering of links, spam and rule-breaking content.", enabled: false }
 ];
 
-/* Ensure a guild has all default modules created */
 async function ensureModulesForGuild(guildId) {
   const existing = await Module.find({ guildId });
   if (existing.length >= DEFAULT_MODULE_CATALOGUE.length) return;
@@ -131,40 +129,30 @@ async function ensureModulesForGuild(guildId) {
   const ops = DEFAULT_MODULE_CATALOGUE.map(m => ({
     updateOne: {
       filter: { guildId, id: m.id },
-      update: {
-        $setOnInsert: {
-          guildId,
-          id: m.id,
-          name: m.name,
-          description: m.description,
-          enabled: m.enabled,
-          settings: {}
-        }
-      },
+      update: { $setOnInsert: { guildId, ...m, settings: {} } },
       upsert: true
     }
   }));
-
   if (ops.length) {
     await Module.bulkWrite(ops);
     console.log(`✅ Seeded modules for guild ${guildId}`);
   }
 }
 
-/* node-fetch helper (works in CommonJS) */
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fn }) => fn(...args));
+/* ======================================================
+   7️⃣ NODE-FETCH HELPER
+   ====================================================== */
+const fetch = (...args) => import("node-fetch").then(({ default: fn }) => fn(...args));
 
-/* ================================
-   AUTH / USER ROUTES
-================================ */
-app.get("/", (_, res) => {
-  res.sendFile(path.join(publicPath, "index.html"));
-});
+/* ======================================================
+   8️⃣ AUTH / USER ROUTES
+   ====================================================== */
+app.get("/", (_, res) => res.sendFile(path.join(publicPath, "index.html")));
 
 app.get("/auth/discord", (req, res) => {
   const scope = encodeURIComponent("identify guilds");
-  const url = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}` +
+  const url =
+    `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}` +
     `&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}` +
     `&response_type=code&scope=${scope}`;
   res.redirect(url);
@@ -206,7 +194,6 @@ app.get("/auth/discord/callback", async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    // The frontend JS stores this in localStorage.
     res.redirect("/?token=" + encodeURIComponent(token));
   } catch (err) {
     console.error("OAuth error:", err);
@@ -226,9 +213,9 @@ app.get("/api/user", (req, res) => {
   }
 });
 
-/* ================================
-   GUILDS ENDPOINT
-================================ */
+/* ======================================================
+   9️⃣ GUILD ROUTES
+   ====================================================== */
 app.get("/api/guilds", async (req, res) => {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: "Missing token" });
@@ -237,20 +224,17 @@ app.get("/api/guilds", async (req, res) => {
     const decoded = jwt.verify(auth.split(" ")[1], SESSION_SECRET);
     const access = decoded.access_token;
 
-    // User guilds
     const userRes = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bearer ${access}` }
     });
     const userGuilds = await userRes.json();
 
-    // Bot guilds
     const botRes = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bot ${BOT_TOKEN}` }
     });
     const botGuilds = await botRes.json();
     const botIds = new Set(Array.isArray(botGuilds) ? botGuilds.map(g => g.id) : []);
 
-    // MANAGE_GUILD = 0x20
     const manageable = (Array.isArray(userGuilds) ? userGuilds : [])
       .filter(g => (BigInt(g.permissions ?? 0n) & 0x20n) === 0x20n)
       .map(g => ({ ...g, installed: botIds.has(g.id) }));
@@ -262,11 +246,9 @@ app.get("/api/guilds", async (req, res) => {
   }
 });
 
-/* ================================
-   MODULE API
-================================ */
-
-/* Get all modules for a guild (and auto-create defaults) */
+/* ======================================================
+   🔟 MODULE ROUTES
+   ====================================================== */
 app.get("/api/modules/:guildId", async (req, res) => {
   try {
     const guildId = req.params.guildId;
@@ -279,7 +261,6 @@ app.get("/api/modules/:guildId", async (req, res) => {
   }
 });
 
-/* Toggle enabled flag */
 app.post("/api/modules/toggle/:moduleId", async (req, res) => {
   try {
     const mod = await Module.findById(req.params.moduleId);
@@ -295,14 +276,12 @@ app.post("/api/modules/toggle/:moduleId", async (req, res) => {
   }
 });
 
-/* Update settings object */
 app.post("/api/modules/update/:moduleId", async (req, res) => {
   try {
     const mod = await Module.findById(req.params.moduleId);
     if (!mod) return res.status(404).json({ error: "Module not found" });
 
-    const newSettings = req.body.settings || {};
-    mod.settings = newSettings;
+    mod.settings = req.body.settings || {};
     await mod.save();
     console.log(`💾 Updated settings for ${mod.id} (${mod.guildId})`);
     res.json({ success: true, settings: mod.settings });
@@ -312,153 +291,73 @@ app.post("/api/modules/update/:moduleId", async (req, res) => {
   }
 });
 
-/* ================================
-   STRIPE CHECKOUT (Safeguard Premier)
-================================ */
-const Stripe = require("stripe");
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
+/* ======================================================
+   11️⃣ STRIPE CHECKOUT
+   ====================================================== */
 app.post("/api/checkout", async (req, res) => {
   try {
-    // --- Safeguard Premier Product Info ---
-    const productName = "OpsLink Safeguard Premier";
-    const priceId = "price_1Sb2VrL7YJgbhqHmAC4D91td"; // from Stripe dashboard
-    const productDescription = "Monthly license subscription for OpsLink Safeguard Premier";
-    const priceInCents = 799; // $7.99 USD
-
-    // --- Create PaymentIntent (manual card checkout) ---
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: priceInCents,
+      amount: 799,
       currency: "usd",
-      description: `${productName} – ${productDescription}`,
+      description: "OpsLink Safeguard Premier Subscription",
       automatic_payment_methods: { enabled: true },
       metadata: {
-        product_name: productName,
-        product_id: "prod_TY8nNOaaWUF45h", // optional reference
-        price_id: priceId,
+        product_name: "Safeguard Premier",
+        product_id: "prod_TY8nNOaaWUF45h",
+        price_id: "price_1Sb2VrL7YJgbhqHmAC4D91td",
         plan: "Premier",
         billing_cycle: "monthly",
         type: "license"
       }
     });
 
-    // --- Send clientSecret back to frontend ---
     res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
     console.error("❌ Stripe Checkout Error:", err);
-    res.status(500).json({
-      error: "Stripe Checkout Failed",
-      message: err.message
-    });
+    res.status(500).json({ error: "Stripe Checkout Failed", message: err.message });
   }
 });
 
-
-/* ================================
-   STRIPE WEBHOOK HANDLER
-================================ */
-const LicenseKey = require("./models/LicenseKey");
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-app.post(
-  "/api/stripe-webhook",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
-    const sig = req.headers["stripe-signature"];
-
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-    } catch (err) {
-      console.error("⚠️ Webhook signature verification failed:", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    // ---- SUCCESSFUL PAYMENT ----
-    if (event.type === "payment_intent.succeeded") {
-      const intent = event.data.object;
-      const licenseKey = generateLicenseKey();
-
-      console.log(`💳 Payment succeeded for ${intent.metadata.product}`);
-      console.log(`🎟 License generated: ${licenseKey}`);
-
-      // Save to LicenseKey model (REAL MODEL)
-      try {
-        await LicenseKey.create({
-          key: licenseKey,
-          paymentId: intent.id,              // ⬅️ IMPORTANT FOR SUCCESS ROUTE
-          plan: intent.metadata.plan || "Premier",
-          active: true                       // license becomes usable immediately
-        });
-
-        console.log("✅ License saved to MongoDB.");
-      } catch (err) {
-        console.error("❌ Failed to store license:", err);
-      }
-    }
-
-    res.status(200).send("Received.");
-  }
-);
-
-// SUCCESS ROUTE
+/* ======================================================
+   12️⃣ SUCCESS ROUTE
+   ====================================================== */
 app.get("/success/:paymentId", async (req, res) => {
   try {
     const paymentId = req.params.paymentId;
-
-    // 1) Find license linked to this payment
     const license = await LicenseKey.findOne({ paymentId });
+
     if (!license) {
-      return res.status(404).send(`
-        <h1>❌ Access Denied</h1>
-        <p>No valid Safeguard license found for this payment.</p>
-      `);
+      return res.status(404).send(`<h1>❌ Access Denied</h1><p>No valid Safeguard license found for this payment.</p>`);
     }
 
-    // 2) Verify payment via Stripe
     const session = await stripe.paymentIntents.retrieve(paymentId);
     if (session.status !== "succeeded") {
-      return res.status(403).send(`
-        <h1>❌ Payment Not Completed</h1>
-        <p>Your payment exists, but it was not marked as paid.</p>
-      `);
+      return res.status(403).send(`<h1>❌ Payment Not Completed</h1><p>Your payment exists, but it was not marked as paid.</p>`);
     }
 
-    // 3) Paid + License exists → Show it
     return res.send(`
       <h1>🎉 Thank you for your purchase!</h1>
       <p>Your Safeguard Premier license key:</p>
       <code style="font-size:22px;">${license.key}</code>
       <p>Store this key safely. You will need it to activate Safeguard.</p>
     `);
-
   } catch (err) {
     console.error("Success Route Error:", err);
-    return res.status(500).send(`
-      <h1>⚠️ Internal Error</h1>
-      <p>Unable to verify your payment at this time.</p>
-    `);
+    res.status(500).send(`<h1>⚠️ Internal Error</h1><p>${err.message}</p>`);
   }
 });
 
+/* ======================================================
+   13️⃣ STATIC PAGES
+   ====================================================== */
+app.get("/dashboard", (_, res) => res.sendFile(path.join(publicPath, "dashboard.html")));
+app.get("/dashboard/:id", (_, res) => res.sendFile(path.join(publicPath, "dashboard-guild.html")));
 
-/* ================================
-   STATIC ROUTES
-================================ */
-app.get("/dashboard", (_, res) =>
-  res.sendFile(path.join(publicPath, "dashboard.html"))
-);
-
-app.get("/dashboard/:id", (_, res) =>
-  res.sendFile(path.join(publicPath, "dashboard-guild.html"))
-);
-
-/* ================================
-   START (local) / EXPORT (Vercel)
-================================ */
+/* ======================================================
+   14️⃣ STARTUP
+   ====================================================== */
 const PORT = process.env.PORT || 3000;
 if (!process.env.VERCEL) {
-  app.listen(PORT, () => console.log(`✅ Safeguard panel on port ${PORT}`));
+  app.listen(PORT, () => console.log(`✅ Safeguard panel running on port ${PORT}`));
 }
-
 module.exports = app;
