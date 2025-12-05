@@ -322,7 +322,7 @@ app.post("/api/checkout", async (req, res) => {
   try {
     // --- Safeguard Premier Product Info ---
     const productName = "OpsLink Safeguard Premier";
-    const priceId = "price_1Sb1kpLQjsrxMZMFbEhI3Bjm"; // from Stripe dashboard
+    const priceId = "price_1Sb2VrL7YJgbhqHmAC4D91td"; // from Stripe dashboard
     const productDescription = "Monthly license subscription for OpsLink Safeguard Premier";
     const priceInCents = 799; // $7.99 USD
 
@@ -334,7 +334,7 @@ app.post("/api/checkout", async (req, res) => {
       automatic_payment_methods: { enabled: true },
       metadata: {
         product_name: productName,
-        product_id: "prod_TY80HlQVXTvUVA", // optional reference
+        product_id: "prod_TY8nNOaaWUF45h", // optional reference
         price_id: priceId,
         plan: "Premier",
         billing_cycle: "monthly",
