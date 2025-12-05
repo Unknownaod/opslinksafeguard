@@ -2,30 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Billing – Safeguard Premier</title>
+  <title>Safeguard Premier — Billing</title>
   <link rel="icon" href="/assets/Safeguard-Bot.png" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { background:#050816; color:#e5e7eb; font-family:Segoe UI; text-align:center; padding:60px; }
-    .box { background:#0b1220; padding:40px; border-radius:20px; width:480px; margin:auto; }
-    h1 { color:#ff6600; }
-    button {
-      background:#ff6600; color:white; padding:12px 20px;
-      border:none; border-radius:10px; margin-top:20px;
-      cursor:pointer; font-size:1rem; transition:.2s;
+    :root {
+      --bg:#050816; --panel:#0b1220ee; --accent:#ff6600; --accent-hover:#ff8c42;
+      --text:#e5e7eb; --muted:#94a3b8; --radius:18px; --glass:rgba(255,255,255,.06);
     }
-    button:hover { background:#ff944d; }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body {
+      background:linear-gradient(145deg,#050816,#090f2d);
+      font-family:'Inter',sans-serif; color:var(--text);
+      display:flex; justify-content:center; align-items:center;
+      height:100vh; overflow:hidden;
+    }
+    .wrapper {
+      width:480px; padding:48px; background:var(--panel);
+      border-radius:var(--radius); text-align:center;
+      border:1px solid var(--glass); backdrop-filter:blur(18px);
+      box-shadow:0 0 40px rgba(0,0,0,.45); animation:fadeIn .6s ease-out;
+    }
+    h1 {
+      font-size:2rem; margin-bottom:12px;
+      background:linear-gradient(90deg,#ff6600,#ffa54d);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    p { font-size:1rem; color:var(--muted); margin-bottom:24px; }
+    input {
+      width:100%; padding:14px; background:#11172d; color:white;
+      border:1px solid #1e2a44; border-radius:var(--radius);
+      margin-bottom:16px; font-size:1rem; outline:none;
+    }
+    input:focus { border-color:var(--accent); box-shadow:0 0 6px #ff660040; }
+    button {
+      width:100%; padding:14px; margin-top:5px;
+      font-size:1.05rem; font-weight:600;
+      background:var(--accent); color:white; border:none;
+      border-radius:var(--radius); cursor:pointer; transition:.25s;
+      box-shadow:0 0 12px #ff660040;
+    }
+    button:hover { background:var(--accent-hover); transform:translateY(-2px); }
+    footer { font-size:.8rem; opacity:.5; margin-top:18px; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
   </style>
 </head>
 <body>
-  <div class="box">
+  <div class="wrapper">
     <h1>Billing & Subscription</h1>
-    <p>Manage your Safeguard Premier license, view invoices, and update payment info.</p>
+    <p>Enter or manage your Safeguard Premier billing profile.</p>
 
-    <button onclick="openPortal()">Open Billing Portal</button>
-    <p style="opacity:.6;font-size:.85rem;">Powered securely by Stripe</p>
+    <!-- Customer ID Input -->
+    <div id="cidArea">
+      <input id="cidInput" placeholder="Enter Stripe Customer ID (cus_xxxxxxx)">
+      <button onclick="saveCID()">Save Customer ID</button>
+    </div>
+
+    <!-- Billing Button -->
+    <button id="billingBtn" style="display:none;" onclick="openPortal()">
+      Open Billing Portal
+    </button>
+
+    <footer>Powered securely by Stripe</footer>
   </div>
 
   <script>
+    const billingBtn = document.getElementById("billingBtn");
+    const cidArea = document.getElementById("cidArea");
+    const cidInput = document.getElementById("cidInput");
+
+    // Load saved customer ID
+    const savedCID = localStorage.getItem("safeguard_customer");
+    if (savedCID) {
+      cidArea.style.display = "none";
+      billingBtn.style.display = "block";
+    }
+
+    function saveCID() {
+      const val = cidInput.value.trim();
+      if (!val.startsWith("cus_")) return alert("Invalid Stripe customer ID format.");
+      localStorage.setItem("safeguard_customer", val);
+      cidArea.style.display = "none";
+      billingBtn.style.display = "block";
+      alert("Customer ID saved successfully!");
+    }
+
     async function openPortal() {
       const customerId = localStorage.getItem("safeguard_customer");
       if (!customerId) return alert("No billing profile found.");
