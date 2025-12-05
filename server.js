@@ -357,12 +357,13 @@ app.post("/api/checkout", async (req, res) => {
 /* ================================
    STRIPE WEBHOOK HANDLER
 ================================ */
+const LicenseKey = require("./models/LicenseKey");
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 app.post(
   "/api/stripe-webhook",
-  express.raw({ type: "application/json" }), // required for Stripe signature validation
-  (req, res) => {
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
     const sig = req.headers["stripe-signature"];
 
     let event;
@@ -373,46 +374,72 @@ app.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // ✅ Handle successful payment
+    // ---- SUCCESSFUL PAYMENT ----
     if (event.type === "payment_intent.succeeded") {
-      const paymentIntent = event.data.object;
-      const licenseKey = generateLicenseKey(); // function below
-      console.log(`💳 Payment succeeded for ${paymentIntent.metadata.product}`);
-      console.log(`🎟 Generated license: ${licenseKey}`);
+      const intent = event.data.object;
+      const licenseKey = generateLicenseKey();
 
-      // TODO: Store license in Mongo
-      const License = mongoose.model("License", new mongoose.Schema({
-        key: String,
-        product: String,
-        plan: String,
-        createdAt: { type: Date, default: Date.now }
-      }));
+      console.log(`💳 Payment succeeded for ${intent.metadata.product}`);
+      console.log(`🎟 License generated: ${licenseKey}`);
 
-      const newLicense = new License({
-        key: licenseKey,
-        product: paymentIntent.metadata.product,
-        plan: paymentIntent.metadata.plan
-      });
+      // Save to LicenseKey model (REAL MODEL)
+      try {
+        await LicenseKey.create({
+          key: licenseKey,
+          paymentId: intent.id,              // ⬅️ IMPORTANT FOR SUCCESS ROUTE
+          plan: intent.metadata.plan || "Premier",
+          active: true                       // license becomes usable immediately
+        });
 
-      newLicense.save().then(() => {
-        console.log("✅ License stored in MongoDB.");
-      });
+        console.log("✅ License saved to MongoDB.");
+      } catch (err) {
+        console.error("❌ Failed to store license:", err);
+      }
     }
 
     res.status(200).send("Received.");
   }
 );
 
-// License key generator
-function generateLicenseKey() {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let key = "";
-  for (let i = 0; i < 20; i++) {
-    key += chars.charAt(Math.floor(Math.random() * chars.length));
-    if ((i + 1) % 5 === 0 && i < 19) key += "-";
+// SUCCESS ROUTE
+app.get("/success/:paymentId", async (req, res) => {
+  try {
+    const paymentId = req.params.paymentId;
+
+    // 1) Find license linked to this payment
+    const license = await LicenseKey.findOne({ paymentId });
+    if (!license) {
+      return res.status(404).send(`
+        <h1>❌ Access Denied</h1>
+        <p>No valid Safeguard license found for this payment.</p>
+      `);
+    }
+
+    // 2) Verify payment via Stripe
+    const session = await stripe.paymentIntents.retrieve(paymentId);
+    if (session.status !== "succeeded") {
+      return res.status(403).send(`
+        <h1>❌ Payment Not Completed</h1>
+        <p>Your payment exists, but it was not marked as paid.</p>
+      `);
+    }
+
+    // 3) Paid + License exists → Show it
+    return res.send(`
+      <h1>🎉 Thank you for your purchase!</h1>
+      <p>Your Safeguard Premier license key:</p>
+      <code style="font-size:22px;">${license.key}</code>
+      <p>Store this key safely. You will need it to activate Safeguard.</p>
+    `);
+
+  } catch (err) {
+    console.error("Success Route Error:", err);
+    return res.status(500).send(`
+      <h1>⚠️ Internal Error</h1>
+      <p>Unable to verify your payment at this time.</p>
+    `);
   }
-  return key;
-}
+});
 
 
 /* ================================
