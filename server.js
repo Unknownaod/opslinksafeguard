@@ -313,36 +313,46 @@ app.post("/api/modules/update/:moduleId", async (req, res) => {
 });
 
 /* ================================
-   STRIPE CHECKOUT
+   STRIPE CHECKOUT (Safeguard Premier)
 ================================ */
 const Stripe = require("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 app.post("/api/checkout", async (req, res) => {
   try {
-    const productName = "SafeGuard Premier";
-    const productDescription = "Monthly license subscription for OpsLink SafeGuard Premier";
-    const priceInCents = 799; // $7.99 CAD or USD
+    // --- Safeguard Premier Product Info ---
+    const productName = "OpsLink Safeguard Premier";
+    const priceId = "price_1Sb1kpLQjsrxMZMFbEhI3Bjm"; // from Stripe dashboard
+    const productDescription = "Monthly license subscription for OpsLink Safeguard Premier";
+    const priceInCents = 799; // $7.99 USD
 
+    // --- Create PaymentIntent (manual card checkout) ---
     const paymentIntent = await stripe.paymentIntents.create({
       amount: priceInCents,
-      currency: "cad", // or "usd"
+      currency: "usd",
       description: `${productName} – ${productDescription}`,
       automatic_payment_methods: { enabled: true },
       metadata: {
-        product: productName,
+        product_name: productName,
+        product_id: "prod_TY80HlQVXTvUVA", // optional reference
+        price_id: priceId,
         plan: "Premier",
         billing_cycle: "monthly",
-        type: "license",
-      },
+        type: "license"
+      }
     });
 
+    // --- Send clientSecret back to frontend ---
     res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
     console.error("❌ Stripe Checkout Error:", err);
-    res.status(500).json({ error: "Internal Server Error", message: err.message });
+    res.status(500).json({
+      error: "Stripe Checkout Failed",
+      message: err.message
+    });
   }
 });
+
 
 /* ================================
    STRIPE WEBHOOK HANDLER
