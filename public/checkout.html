@@ -187,24 +187,32 @@
       message.textContent = "Processing payment...";
 
       try {
-        // 1) Ask backend for a PaymentIntent clientSecret
-        const res = await fetch("/api/checkout", { method: "POST" });
-        const data = await res.json();
-        if (!data.clientSecret) throw new Error("Failed to create payment session");
+        // Ask backend for a PaymentIntent clientSecret
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
 
-        // 2) Confirm card payment with Stripe
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || "Failed to create payment session");
+        }
+
+        const data = await res.json();
+        if (!data.clientSecret) throw new Error("Missing payment client secret.");
+
+        // Confirm card payment
         const result = await stripe.confirmCardPayment(data.clientSecret, {
-          payment_method: { card: cardElement }
+          payment_method: { card: cardElement },
         });
 
         if (result.error) {
           message.textContent = "❌ " + result.error.message;
         } else if (result.paymentIntent.status === "succeeded") {
-          // 3) Payment succeeded → redirect to success page
           message.textContent = "✅ Payment successful! Redirecting...";
-          window.location.href = "/success.html";
+          setTimeout(() => window.location.href = "/success.html", 1500);
         } else {
-          message.textContent = "❌ Payment was not completed.";
+          message.textContent = "❌ Payment not completed.";
         }
       } catch (err) {
         console.error(err);
