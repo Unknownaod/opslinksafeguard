@@ -102,12 +102,13 @@
       font-size: 1.1rem;
       cursor: pointer;
       transition: 0.3s ease;
+      box-shadow: 0 0 25px rgba(255,102,0,0.25);
     }
 
     #submit-btn:hover {
       background: var(--accent2);
       transform: translateY(-3px);
-      box-shadow: 0 0 25px rgba(255,102,0,0.3);
+      box-shadow: 0 0 35px rgba(255,102,0,0.4);
     }
 
     #payment-message {
@@ -115,6 +116,7 @@
       margin-top: 15px;
       color: var(--text-soft);
       font-size: 0.95rem;
+      min-height: 1.2em;
     }
 
     footer {
@@ -144,7 +146,11 @@
 
   <div class="checkout-container">
     <h1>Safeguard Premier Checkout</h1>
-    <p>You're about to subscribe to <strong>Safeguard Premier</strong> for <strong>$7.99/month</strong>.<br>Enter your card details below to complete your purchase securely.</p>
+    <p>
+      You're subscribing to <strong>Safeguard Premier</strong> for
+      <strong>$7.99/month</strong>.<br>
+      Enter your card details below to complete your purchase securely.
+    </p>
 
     <form id="payment-form">
       <div id="card-element"></div>
@@ -162,7 +168,15 @@
     const stripe = Stripe("pk_live_REPLACE_WITH_YOUR_PUBLIC_KEY");
 
     const elements = stripe.elements();
-    const cardElement = elements.create("card", { style: { base: { color: "#fff", fontSize: "16px" } } });
+    const cardElement = elements.create("card", {
+      style: {
+        base: {
+          color: "#ffffff",
+          fontSize: "16px",
+          "::placeholder": { color: "#9ca3af" }
+        }
+      }
+    });
     cardElement.mount("#card-element");
 
     const form = document.getElementById("payment-form");
@@ -173,20 +187,28 @@
       message.textContent = "Processing payment...";
 
       try {
+        // 1) Ask backend for a PaymentIntent clientSecret
         const res = await fetch("/api/checkout", { method: "POST" });
-        const { clientSecret } = await res.json();
+        const data = await res.json();
+        if (!data.clientSecret) throw new Error("Failed to create payment session");
 
-        const result = await stripe.confirmCardPayment(clientSecret, {
+        // 2) Confirm card payment with Stripe
+        const result = await stripe.confirmCardPayment(data.clientSecret, {
           payment_method: { card: cardElement }
         });
 
         if (result.error) {
           message.textContent = "❌ " + result.error.message;
         } else if (result.paymentIntent.status === "succeeded") {
-          message.innerHTML = "✅ Payment successful!<br>Your Safeguard Premier license key will be sent to your Discord account within a few minutes.";
+          // 3) Payment succeeded → redirect to success page
+          message.textContent = "✅ Payment successful! Redirecting...";
+          window.location.href = "/success.html";
+        } else {
+          message.textContent = "❌ Payment was not completed.";
         }
       } catch (err) {
-        message.textContent = "❌ Error: " + err.message;
+        console.error(err);
+        message.textContent = "❌ " + err.message;
       }
     });
   </script>
