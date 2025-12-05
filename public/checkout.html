@@ -165,7 +165,7 @@
   </footer>
 
   <script>
-    const stripe = Stripe("pk_test_51SVFpKL7YJgbhqHmMUfHMGWUGVzZoi8g8yB6RFVfGWKv6EQSdeIWnUweP9kS32ujepJqaLxMlU50SEoyKyo83g7y00kuwn7so5");
+const stripe = Stripe(window.ENV?.PUBLIC_STRIPE_KEY || "pk_test_51SVFpKL7YJgbhqHmMUfHMGWUGVzZoi8g8yB6RFVfGWKv6EQSdeIWnUweP9kS32ujepJqaLxMlU50SEoyKyo83g7y00kuwn7so5");
 
     const elements = stripe.elements();
     const cardElement = elements.create("card", {
