@@ -6,6 +6,7 @@
   <title>Safeguard Premier Checkout – OpsLink Systems</title>
   <link rel="icon" href="/assets/Safeguard-Bot.png" />
   <script src="https://js.stripe.com/v3/"></script>
+  <script src="/env.js"></script> <!-- inject PUBLIC_STRIPE_KEY -->
   <style>
     :root {
       --bg-main: #04060d;
@@ -16,124 +17,22 @@
       --text-soft: #a1a1aa;
       --radius-lg: 18px;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
-
-    body {
-      background: radial-gradient(circle at 20% 20%, #0b1220, #050816 70%);
-      color: var(--text-main);
-      overflow-x: hidden;
-    }
-
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 18px 60px;
-      background: rgba(10,15,25,0.7);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .nav-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .nav-left img {
-      width: 36px;
-      height: 36px;
-      filter: drop-shadow(0 0 6px rgba(255,102,0,0.4));
-    }
-
-    .nav-left span {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: var(--accent);
-    }
-
-    .checkout-container {
-      max-width: 600px;
-      margin: 80px auto;
-      background: var(--bg-card);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: var(--radius-lg);
-      box-shadow: 0 0 25px rgba(255,102,0,0.08);
-      padding: 50px;
-    }
-
-    h1 {
-      color: var(--accent);
-      font-size: 2.3rem;
-      text-align: center;
-      margin-bottom: 15px;
-    }
-
-    p {
-      color: var(--text-soft);
-      text-align: center;
-      margin-bottom: 30px;
-      line-height: 1.5;
-    }
-
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    #card-element {
-      background: rgba(255,255,255,0.05);
-      padding: 15px;
-      border-radius: var(--radius-lg);
-    }
-
-    #submit-btn {
-      background: var(--accent);
-      color: #fff;
-      padding: 14px;
-      border: none;
-      border-radius: var(--radius-lg);
-      font-weight: 600;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: 0.3s ease;
-      box-shadow: 0 0 25px rgba(255,102,0,0.25);
-    }
-
-    #submit-btn:hover {
-      background: var(--accent2);
-      transform: translateY(-3px);
-      box-shadow: 0 0 35px rgba(255,102,0,0.4);
-    }
-
-    #payment-message {
-      text-align: center;
-      margin-top: 15px;
-      color: var(--text-soft);
-      font-size: 0.95rem;
-      min-height: 1.2em;
-    }
-
-    footer {
-      border-top: 1px solid rgba(255,255,255,0.05);
-      background: #070b15;
-      color: var(--text-soft);
-      text-align: center;
-      padding: 30px 10px 40px;
-      font-size: 0.9rem;
-      margin-top: 60px;
-    }
-
-    footer a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 500;
-    }
+    body { background: radial-gradient(circle at 20% 20%, #0b1220, #050816 70%); color: var(--text-main); overflow-x: hidden; }
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 18px 60px; background: rgba(10,15,25,0.7); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05); position: sticky; top: 0; z-index: 100; }
+    .nav-left { display: flex; align-items: center; gap: 12px; }
+    .nav-left img { width: 36px; height: 36px; filter: drop-shadow(0 0 6px rgba(255,102,0,0.4)); }
+    .nav-left span { font-size: 1.3rem; font-weight: 600; color: var(--accent); }
+    .checkout-container { max-width: 600px; margin: 80px auto; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-lg); box-shadow: 0 0 25px rgba(255,102,0,0.08); padding: 50px; }
+    h1 { color: var(--accent); font-size: 2.3rem; text-align: center; margin-bottom: 15px; }
+    p { color: var(--text-soft); text-align: center; margin-bottom: 30px; line-height: 1.5; }
+    form { display: flex; flex-direction: column; gap: 20px; }
+    #card-element { background: rgba(255,255,255,0.05); padding: 15px; border-radius: var(--radius-lg); }
+    #submit-btn { background: var(--accent); color: #fff; padding: 14px; border: none; border-radius: var(--radius-lg); font-weight: 600; font-size: 1.1rem; cursor: pointer; transition: 0.3s ease; box-shadow: 0 0 25px rgba(255,102,0,0.25); }
+    #submit-btn:hover { background: var(--accent2); transform: translateY(-3px); box-shadow: 0 0 35px rgba(255,102,0,0.4); }
+    #payment-message { text-align: center; margin-top: 15px; color: var(--text-soft); font-size: 0.95rem; min-height: 1.2em; }
+    footer { border-top: 1px solid rgba(255,255,255,0.05); background: #070b15; color: var(--text-soft); text-align: center; padding: 30px 10px 40px; font-size: 0.9rem; margin-top: 60px; }
+    footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -164,66 +63,39 @@
     Visit <a href="https://opslinkcad.com">OpsLinkCAD</a> for more.
   </footer>
 
-  <script>
-const stripe = Stripe(window.ENV?.PUBLIC_STRIPE_KEY || "pk_test_51SVFpKL7YJgbhqHmMUfHMGWUGVzZoi8g8yB6RFVfGWKv6EQSdeIWnUweP9kS32ujepJqaLxMlU50SEoyKyo83g7y00kuwn7so5");
+<script>
+  const stripe = Stripe(window.ENV.PUBLIC_STRIPE_KEY);
 
-    const elements = stripe.elements();
-    const cardElement = elements.create("card", {
-      style: {
-        base: {
-          color: "#ffffff",
-          fontSize: "16px",
-          "::placeholder": { color: "#9ca3af" }
-        }
+  const elements = stripe.elements();
+  const cardElement = elements.create("card", {
+    style: { base: { color: "#ffffff", fontSize: "16px", "::placeholder": { color: "#9ca3af" } } }
+  });
+  cardElement.mount("#card-element");
+
+  const form = document.getElementById("payment-form");
+  const message = document.getElementById("payment-message");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    message.textContent = "Processing payment...";
+
+    try {
+      const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" } });
+      const data = await res.json();
+      if (!data.clientSecret) throw new Error("Missing payment client secret.");
+
+      const result = await stripe.confirmCardPayment(data.clientSecret, { payment_method: { card: cardElement } });
+
+      if (result.error) message.textContent = "❌ " + result.error.message;
+      else if (result.paymentIntent.status === "succeeded") {
+        message.textContent = "✅ Payment successful! Redirecting...";
+        setTimeout(() => window.location.href = `/success/${result.paymentIntent.id}`, 1500);
       }
-    });
-    cardElement.mount("#card-element");
-
-    const form = document.getElementById("payment-form");
-    const message = document.getElementById("payment-message");
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      message.textContent = "Processing payment...";
-
-      try {
-        // Ask backend for a PaymentIntent clientSecret
-        const res = await fetch("/api/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.message || "Failed to create payment session");
-        }
-
-        const data = await res.json();
-        if (!data.clientSecret) throw new Error("Missing payment client secret.");
-
-        // Confirm card payment
-        const result = await stripe.confirmCardPayment(data.clientSecret, {
-          payment_method: { card: cardElement },
-        });
-
-if (result.error) {
-  message.textContent = "❌ " + result.error.message;
-
-} else if (result.paymentIntent.status === "succeeded") {
-  message.textContent = "✅ Payment successful! Redirecting...";
-
-  // redirect using the REAL payment ID
-  const paymentId = result.paymentIntent.id;
-  setTimeout(() => window.location.href = `/success/${paymentId}`, 1500);
-
-} else {
-  message.textContent = "❌ Payment not completed.";
-}
-      } catch (err) {
-        console.error(err);
-        message.textContent = "❌ " + err.message;
-      }
-    });
-  </script>
+    } catch (err) {
+      console.error(err);
+      message.textContent = "❌ " + err.message;
+    }
+  });
+</script>
 </body>
 </html>
