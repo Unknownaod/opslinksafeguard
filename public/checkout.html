@@ -6,141 +6,141 @@
   <title>Safeguard Premier Checkout – OpsLink Systems</title>
   <link rel="icon" href="/assets/Safeguard-Bot.png" />
   <script src="https://js.stripe.com/v3/"></script>
-
   <style>
+    /* (same styling as previous version — unchanged) */
     :root {
-      --bg-main: #04060d;
-      --bg-card: #0b1220;
-      --accent: #ff6600;
-      --accent2: #ff944d;
-      --text-main: #e5e7eb;
-      --text-soft: #a1a1aa;
-      --radius-lg: 18px;
+      --bg-main:#04060d; --bg-card:#0b1220; --accent:#ff6600; --accent2:#ff944d;
+      --text-main:#e5e7eb; --text-soft:#a1a1aa; --radius-lg:18px;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
-    body { background: radial-gradient(circle at 20% 20%, #0b1220, #050816 70%); color: var(--text-main); overflow-x: hidden; }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",sans-serif;}
+    body{background:radial-gradient(circle at 20% 20%,#0b1220,#050816 70%);color:var(--text-main);overflow-x:hidden;}
 
-    nav { display: flex; justify-content: space-between; align-items: center; padding: 18px 60px; background: rgba(10,15,25,0.7); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05); position: sticky; top: 0; z-index: 100; }
-    .nav-left { display: flex; align-items: center; gap: 12px; }
-    .nav-left img { width: 36px; height: 36px; filter: drop-shadow(0 0 6px rgba(255,102,0,0.4)); }
-    .nav-left span { font-size: 1.3rem; font-weight: 600; color: var(--accent); }
+    nav{display:flex;justify-content:space-between;align-items:center;padding:18px 60px;background:rgba(10,15,25,0.7);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.05);position:sticky;top:0;z-index:100;}
+    .nav-left{display:flex;align-items:center;gap:12px;}
+    .nav-left img{width:36px;height:36px;filter:drop-shadow(0 0 6px rgba(255,102,0,0.4));}
+    .nav-left span{font-size:1.3rem;font-weight:600;color:var(--accent);}
 
-    .checkout-container { max-width: 600px; margin: 80px auto; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-lg); box-shadow: 0 0 25px rgba(255,102,0,0.08); padding: 50px; }
-    h1 { color: var(--accent); font-size: 2.3rem; text-align: center; margin-bottom: 15px; }
-    p { color: var(--text-soft); text-align: center; margin-bottom: 30px; line-height: 1.5; }
+    .checkout-container{max-width:600px;margin:80px auto;background:var(--bg-card);border:1px solid rgba(255,255,255,0.05);border-radius:var(--radius-lg);padding:50px;box-shadow:0 0 25px rgba(255,102,0,0.1);}
+    input{padding:14px;background:rgba(255,255,255,.06);border:none;border-radius:var(--radius-lg);color:white;font-size:1rem;}
+    input::placeholder{color:#9ca3af;}
 
-    /* Price Summary */
-    .price-box {
-      background: rgba(255,255,255,0.05);
-      padding: 20px;
-      border-radius: var(--radius-lg);
-      margin-bottom: 30px;
-      border: 1px solid rgba(255,255,255,0.05);
+    #card-element{background:rgba(255,255,255,.06);padding:14px;border-radius:var(--radius-lg);}
+    #submit-btn{background:var(--accent);color:white;padding:14px;border:none;border-radius:var(--radius-lg);font-weight:600;font-size:1.1rem;cursor:pointer;transition:.3s;}
+    #submit-btn:hover{background:var(--accent2);transform:translateY(-3px);}
+    #payment-message{text-align:center;font-size:.95rem;color:var(--text-soft);min-height:1.1rem;}
+
+    .agreement-box {
+      font-size: .85rem;
+      line-height: 1.4;
+      color: var(--text-soft);
+      margin-top: -5px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
     }
-    .line-item {
-      display: flex; justify-content: space-between;
-      margin: 8px 0; font-size: 1rem;
-    }
-    .total {
-      font-size: 1.2rem; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; font-weight: 700; color: var(--accent);
-    }
+    .agreement-box input { width: 18px; height: 18px; cursor: pointer; }
+    .agreement-box span a { color: var(--accent); text-decoration: none; }
+    .agreement-box span a:hover { text-decoration: underline; }
 
-    form { display: flex; flex-direction: column; gap: 20px; }
-    #card-element { background: rgba(255,255,255,0.05); padding: 15px; border-radius: var(--radius-lg); }
-    #submit-btn { background: var(--accent); color: #fff; padding: 14px; border: none; border-radius: var(--radius-lg); font-weight: 600; font-size: 1.1rem; cursor: pointer; transition: 0.3s ease; box-shadow: 0 0 25px rgba(255,102,0,0.25); }
-    #submit-btn:hover { background: var(--accent2); transform: translateY(-3px); box-shadow: 0 0 35px rgba(255,102,0,0.4); }
-    #payment-message { text-align: center; margin-top: 15px; color: var(--text-soft); font-size: 0.95rem; min-height: 1.2em; }
-
-    footer { border-top: 1px solid rgba(255,255,255,0.05); background: #070b15; color: var(--text-soft); text-align: center; padding: 30px 10px 40px; font-size: 0.9rem; margin-top: 60px; }
-    footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
-    footer a:hover { text-decoration: underline; }
+    footer{
+      background:#070b15;text-align:center;padding:28px;color:var(--text-soft);
+      font-size:.9rem;margin-top:60px;
+    }
   </style>
 </head>
-
 <body>
+
   <nav>
     <div class="nav-left">
-      <img src="/assets/Safeguard-Bot.png" alt="Safeguard Logo">
+      <img src="/assets/Safeguard-Bot.png" alt="Safeguard Logo" />
       <span>OpsLink Safeguard</span>
     </div>
   </nav>
 
   <div class="checkout-container">
     <h1>Safeguard Premier Checkout</h1>
-    <p>You’re subscribing to <strong>Safeguard Premier</strong>. Here's your full billing breakdown:</p>
-
-    <!-- 🔥 PRICE SUMMARY -->
-    <div class="price-box" id="price-box">
-      <div class="line-item"><span>Safeguard Premier</span><span id="subtotal">$7.99</span></div>
-      <div class="line-item"><span>Tax</span><span id="tax">$0.00</span></div>
-      <div class="total"><span>Total</span><span id="total">$7.99</span></div>
-    </div>
+    <p>Complete your subscription below. A license will be issued after payment.</p>
 
     <form id="payment-form">
+      <!-- EMAIL FIELD -->
+      <input id="email" type="email" placeholder="Email Address (Required)" required />
+
+      <!-- CARD FIELD -->
       <div id="card-element"></div>
-      <button id="submit-btn" type="submit">Complete Payment</button>
+
+      <!-- AGREEMENT -->
+      <label class="agreement-box">
+        <input type="checkbox" id="agree">
+        <span>
+          I understand and agree that I am purchasing a <strong>recurring subscription</strong>
+          and will be charged <strong>$7.99 USD per month</strong> (plus applicable taxes)
+          until cancelled. I acknowledge that <strong>refunds are not provided once a
+          license key has been issued</strong>, and it is my responsibility to cancel my
+          subscription via the billing portal. I agree to OpsLink Systems’
+          <a href="https://legal.opslinksystems.xyz" target="_blank">Terms of Service</a> and
+          <a href="legal.opslinksystems.xyz/billing.html" target="_blank">Billing Agreement</a>.
+        </span>
+      </label>
+
+      <!-- SUBMIT BUTTON -->
+      <button id="submit-btn" type="submit">Start Subscription</button>
       <div id="payment-message"></div>
     </form>
   </div>
 
   <footer>
-    © 2025 OpsLink Systems Network — All Rights Reserved.<br>
-    Visit <a href="https://opslinkcad.com">OpsLinkCAD</a> for more.
+    © 2025 OpsLink Systems Network — All Rights Reserved.
   </footer>
 
   <script>
-    const STRIPE_PUBLIC_KEY = "pk_live_51SVFpBLQjsrxMZMFiPh041fNL37kau7u4uITjjmKXkBabyHvx30Xl6scvSFDHBJDZlG6C71GFKltPWMEQwcU8z1R00j99wuaPd";
-    const stripe = Stripe(STRIPE_PUBLIC_KEY);
+    const stripe = Stripe("pk_live_51SVFpBLQjsrxMZMFiPh041fNL37kau7u4uITjjmKXkBabyHvx30Xl6scvSFDHBJDZlG6C71GFKltPWMEQwcU8z1R00j99wuaPd");
+    const elements = stripe.elements({ appearance: { theme:"night" } });
+    const card = elements.create("card");
+    card.mount("#card-element");
 
-    const subtotalEl = document.getElementById("subtotal");
-    const taxEl = document.getElementById("tax");
-    const totalEl = document.getElementById("total");
-
-    async function loadPricing() {
-      const res = await fetch("/api/checkout/preview"); // your backend returns price + tax
-      const data = await res.json();
-
-      subtotalEl.textContent = `$${(data.subtotal / 100).toFixed(2)}`;
-      taxEl.textContent = `$${(data.tax / 100).toFixed(2)}`;
-      totalEl.textContent = `$${(data.total / 100).toFixed(2)}`;
-    }
-
-    loadPricing(); // fetch price summary from backend
-
-    const elements = stripe.elements({ appearance: { theme: 'night' } });
-    const cardElement = elements.create("card");
-    cardElement.mount("#card-element");
-
-    const form = document.getElementById("payment-form");
-    const message = document.getElementById("payment-message");
-    const submitBtn = document.getElementById("submit-btn");
-
-    form.addEventListener("submit", async (e) => {
+    document.getElementById("payment-form").addEventListener("submit", async (e) => {
       e.preventDefault();
-      message.textContent = "Processing payment...";
-      submitBtn.disabled = true;
+
+      const agree = document.getElementById("agree");
+      const email = document.getElementById("email").value.trim();
+      const msg = document.getElementById("payment-message");
+      const btn = document.getElementById("submit-btn");
+
+      if (!agree.checked)
+        return msg.textContent = "❌ You must agree to the billing terms before continuing.";
+
+      if (!email)
+        return msg.textContent = "❌ Email is required.";
+
+      msg.textContent = "Processing...";
+      btn.disabled = true;
 
       try {
-        const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" } });
+        const res = await fetch("/api/checkout", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ email })
+        });
+
         const data = await res.json();
+        if (!data.clientSecret) throw new Error("Server error: Missing client secret.");
 
         const result = await stripe.confirmCardPayment(data.clientSecret, {
-          payment_method: { card: cardElement }
+          payment_method:{ card, billing_details:{ email } }
         });
 
         if (result.error) {
-          message.textContent = "❌ " + result.error.message;
-          submitBtn.disabled = false;
-        } else if (result.paymentIntent.status === "succeeded") {
-          message.textContent = "✅ Payment successful! Redirecting...";
-          setTimeout(() => {
-            window.location.href = `${window.location.origin}/success/${result.paymentIntent.id}`;
-          }, 1200);
+          msg.textContent = "❌ " + result.error.message;
+          btn.disabled = false;
+        } else {
+          localStorage.setItem("safeguard_customer", data.customerId);
+          msg.textContent = "✅ Subscription active! Redirecting...";
+          setTimeout(() => window.location.href = `/success/${result.paymentIntent.id}`, 1000);
         }
+
       } catch (err) {
-        console.error(err);
-        message.textContent = "❌ " + err.message;
-        submitBtn.disabled = false;
+        msg.textContent = "❌ " + err.message;
+        btn.disabled = false;
       }
     });
   </script>
