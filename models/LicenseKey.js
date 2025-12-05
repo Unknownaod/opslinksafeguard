@@ -11,5 +11,4 @@ const licenseKeySchema = new Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-/* 🔥 Export ONLY the schema */
 module.exports = licenseKeySchema;
