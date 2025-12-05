@@ -29,6 +29,22 @@
     h1 { color: var(--accent); font-size: 2.3rem; text-align: center; margin-bottom: 15px; }
     p { color: var(--text-soft); text-align: center; margin-bottom: 30px; line-height: 1.5; }
 
+    /* Price Summary */
+    .price-box {
+      background: rgba(255,255,255,0.05);
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 30px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .line-item {
+      display: flex; justify-content: space-between;
+      margin: 8px 0; font-size: 1rem;
+    }
+    .total {
+      font-size: 1.2rem; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; font-weight: 700; color: var(--accent);
+    }
+
     form { display: flex; flex-direction: column; gap: 20px; }
     #card-element { background: rgba(255,255,255,0.05); padding: 15px; border-radius: var(--radius-lg); }
     #submit-btn { background: var(--accent); color: #fff; padding: 14px; border: none; border-radius: var(--radius-lg); font-weight: 600; font-size: 1.1rem; cursor: pointer; transition: 0.3s ease; box-shadow: 0 0 25px rgba(255,102,0,0.25); }
@@ -51,11 +67,14 @@
 
   <div class="checkout-container">
     <h1>Safeguard Premier Checkout</h1>
-    <p>
-      You’re subscribing to <strong>Safeguard Premier</strong> for
-      <strong>$7.99/month</strong>.<br>
-      Enter your card details below to complete your purchase securely.
-    </p>
+    <p>You’re subscribing to <strong>Safeguard Premier</strong>. Here's your full billing breakdown:</p>
+
+    <!-- 🔥 PRICE SUMMARY -->
+    <div class="price-box" id="price-box">
+      <div class="line-item"><span>Safeguard Premier</span><span id="subtotal">$7.99</span></div>
+      <div class="line-item"><span>Tax</span><span id="tax">$0.00</span></div>
+      <div class="total"><span>Total</span><span id="total">$7.99</span></div>
+    </div>
 
     <form id="payment-form">
       <div id="card-element"></div>
@@ -70,19 +89,26 @@
   </footer>
 
   <script>
-    // 👇 Add your public Stripe key here
-    const STRIPE_PUBLIC_KEY = "pk_live_51SVFpBLQjsrxMZMFiPh041fNL37kau7u4uITjjmKXkBabyHvx30Xl6scvSFDHBJDZlG6C71GFKltPWMEQwcU8z1R00j99wuaPd"; // replace with process.env.NEXT_PUBLIC_STRIPE_KEY if Vercel injects it
-
+    const STRIPE_PUBLIC_KEY = "pk_live_51SVFpBLQjsrxMZMFiPh041fNL37kau7u4uITjjmKXkBabyHvx30Xl6scvSFDHBJDZlG6C71GFKltPWMEQwcU8z1R00j99wuaPd";
     const stripe = Stripe(STRIPE_PUBLIC_KEY);
-    const elements = stripe.elements({
-      appearance: {
-        theme: 'night',
-        variables: { colorPrimaryText: '#ffffff' }
-      }
-    });
-    const cardElement = elements.create("card", {
-      style: { base: { color: "#fff", fontSize: "16px", "::placeholder": { color: "#9ca3af" } } }
-    });
+
+    const subtotalEl = document.getElementById("subtotal");
+    const taxEl = document.getElementById("tax");
+    const totalEl = document.getElementById("total");
+
+    async function loadPricing() {
+      const res = await fetch("/api/checkout/preview"); // your backend returns price + tax
+      const data = await res.json();
+
+      subtotalEl.textContent = `$${(data.subtotal / 100).toFixed(2)}`;
+      taxEl.textContent = `$${(data.tax / 100).toFixed(2)}`;
+      totalEl.textContent = `$${(data.total / 100).toFixed(2)}`;
+    }
+
+    loadPricing(); // fetch price summary from backend
+
+    const elements = stripe.elements({ appearance: { theme: 'night' } });
+    const cardElement = elements.create("card");
     cardElement.mount("#card-element");
 
     const form = document.getElementById("payment-form");
@@ -95,13 +121,8 @@
       submitBtn.disabled = true;
 
       try {
-        const res = await fetch("/api/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" }
-        });
-
+        const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" } });
         const data = await res.json();
-        if (!data.clientSecret) throw new Error("Missing client secret from server.");
 
         const result = await stripe.confirmCardPayment(data.clientSecret, {
           payment_method: { card: cardElement }
