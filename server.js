@@ -392,33 +392,58 @@ app.post("/api/modules/update/:moduleId", async (req, res) => {
 });
 
 /* ======================================================
-   11️⃣ STRIPE CHECKOUT
+   11️⃣ STRIPE CHECKOUT — SUBSCRIPTION + TAX + METADATA
    ====================================================== */
 app.post("/api/checkout", async (req, res) => {
   try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: 799,
-      currency: "usd",
-      description: "OpsLink Safeguard Premier Subscription",
-      automatic_payment_methods: { enabled: true },
+    const { email } = req.body; // optional but recommended
+
+    // 1️⃣ Create Stripe Customer (or reuse existing)
+    const customer = await stripe.customers.create({
+      email,
       metadata: {
-        product_name: "Safeguard Premier",
-        product_id: "prod_TY80HIQVXTvUVA",
-        price_id: "price_1Sb1kpLQjsrxMZMFbEhl3Bjm",
-        plan: "Premier",
-        billing_cycle: "monthly",
-        type: "license"
+        app: "Safeguard",
+        plan: "Premier"
       }
     });
 
-    res.status(200).json({ clientSecret: paymentIntent.client_secret });
+    // 2️⃣ Create subscription with tax + price
+    const subscription = await stripe.subscriptions.create({
+      customer: customer.id,
+      items: [
+        {
+          price: "price_1Sb1kpLQjsrxMZMFbEhl3Bjm" // YOUR SAFEGUARD PRICE
+        }
+      ],
+      metadata: {
+        product_name: "Safeguard Premier",
+        product_id: "prod_TY80HIQVXTvUVA",
+        plan: "Premier",
+        billing_cycle: "monthly",
+        type: "license"
+      },
+      automatic_tax: { enabled: true }, // 👈 TAX AUTOMATION
+      payment_behavior: "default_incomplete",
+      expand: ["latest_invoice.payment_intent"]
+    });
+
+    const paymentIntent = subscription.latest_invoice.payment_intent;
+
+    return res.status(200).json({
+      clientSecret: paymentIntent.client_secret,
+      customerId: customer.id, // 👈 store this on frontend for billing portal
+      subscriptionId: subscription.id
+    });
+
   } catch (err) {
     console.error("❌ Stripe Checkout Error:", err);
-    res
-      .status(500)
-      .json({ error: "Stripe Checkout Failed", message: err.message });
+    return res.status(500).json({
+      error: "Stripe Checkout Failed",
+      message: err.message
+    });
   }
 });
+
 
 /* ======================================================
    12️⃣ SUCCESS ROUTE (uses Stripe License DB)
