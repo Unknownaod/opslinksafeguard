@@ -5,6 +5,7 @@
   <title>Payment Successful – Safeguard Premier</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="/assets/Safeguard-Bot.png" />
+
   <style>
     body {
       background: radial-gradient(circle at 20% 20%, #0b1220, #050816 70%);
@@ -16,29 +17,90 @@
       height: 100vh;
       text-align: center;
     }
+
     .box {
       background: #0b1220;
-      padding: 40px 50px;
+      padding: 45px 60px;
       border-radius: 18px;
       border: 1px solid rgba(255,255,255,0.06);
       box-shadow: 0 0 25px rgba(255,102,0,0.12);
+      width: 480px;
+      animation: fadeIn .7s ease-in-out;
     }
-    h1 { color: #ff6600; margin-bottom: 12px; }
-    p { color: #a1a1aa; line-height: 1.6; }
-    a { color: #ff944d; text-decoration: none; font-weight: 600; }
+
+    @keyframes fadeIn {
+      from {opacity:0; transform:scale(.95);}
+      to {opacity:1; transform:scale(1);}
+    }
+
+    h1 {
+      color: #ff6600;
+      margin-bottom: 16px;
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    p {
+      color: #c7c7d1;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .license-label {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #ff944d;
+    }
+
+    .license-box {
+      background: #000;
+      border: 1px solid #ff6600;
+      color: #ffb97a;
+      padding: 14px 18px;
+      margin-top: 10px;
+      font-size: 22px;
+      border-radius: 10px;
+      letter-spacing: 2px;
+      display: inline-block;
+      font-weight: 700;
+    }
   </style>
 </head>
+
 <body>
   <div class="box">
     <h1>Payment Successful 🎉</h1>
-    <p>
-      Your Safeguard Premier payment has been processed.<br>
-      A license key has been generated and stored in our system.
-    </p>
-    <p>
-      Please join our Discord and open a ticket to receive your license:<br>
-      <a href="https://discord.gg/UF6Dt66phh" target="_blank">discord.gg/UF6Dt66phh</a>
-    </p>
+
+    <p>Your Safeguard Premier license has been generated.</p>
+    <p>Store this key securely — you will need it to activate Safeguard.</p>
+
+    <!-- License Key Display -->
+    <div class="license-label">Your License Key</div>
+    <div id="licenseKey" class="license-box">Loading...</div>
   </div>
+
+  <script>
+    // Fetch the license key for this payment
+    async function loadLicense() {
+      try {
+        const paymentId = window.location.pathname.split("/").pop();
+        const res = await fetch(`/success/${paymentId}`);
+        const html = await res.text();
+
+        // Extract key from server-rendered response
+        const match = html.match(/<code[^>]*>(.*?)<\/code>/);
+        if (match && match[1]) {
+          document.getElementById("licenseKey").textContent = match[1];
+        } else {
+          document.getElementById("licenseKey").textContent = "Error loading license key.";
+        }
+      } catch {
+        document.getElementById("licenseKey").textContent = "Error loading license key.";
+      }
+    }
+
+    loadLicense();
+  </script>
 </body>
 </html>
