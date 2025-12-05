@@ -310,7 +310,33 @@
 
 <script>
   const stripe = Stripe("pk_live_51SVFpBLQjsrxMZMFiPh041fNL37kau7u4uITjjmKXkBabyHvx30Xl6scvSFDHBJDZlG6C71GFKltPWMEQwcU8z1R00j99wuaPd");
-  const elements = stripe.elements({ appearance: { theme: "night" } });
+
+  /* Stripe Elements appearance fix */
+  const elements = stripe.elements({
+    appearance: {
+      theme: "night",
+      variables: {
+        colorText: "#ffffff",
+        colorBackground: "rgba(255,255,255,0.06)",
+        colorPrimary: "#ff6600",
+        borderRadius: "14px",
+        fontFamily: '"Segoe UI", sans-serif',
+        fontSizeBase: "16px",
+      },
+      rules: {
+        ".Input": {
+          border: "1px solid rgba(255,255,255,0.15)",
+          padding: "14px",
+          transition: "0.3s",
+        },
+        ".Input:focus": {
+          borderColor: "#ff6600",
+          boxShadow: "0 0 10px rgba(255,102,0,0.4)",
+        },
+        ".Label": { color: "#e5e7eb", fontWeight: "500" },
+      },
+    },
+  });
 
   const cardNumber = elements.create("cardNumber");
   const cardExpiry = elements.create("cardExpiry");
@@ -320,36 +346,74 @@
   cardExpiry.mount("#card-expiry");
   cardCvc.mount("#card-cvc");
 
-  const taxRates = { US:0.08, CA:0.13, GB:0.20, AU:0.10, DE:0.19, FR:0.20, IN:0.18, Other:0.00 };
-  const basePrice = 7.99;
-  const countrySelect = document.getElementById("country");
-  const summary = document.getElementById("summary");
+  /* ========= COUNTRY / CURRENCY / TAX ========= */
 
-  function updateTax() {
+  // Approx static exchange rates (you can replace with live API)
+  const exchangeRates = {
+    USD: 1.0,
+    CAD: 1.36,
+    GBP: 0.79,
+    EUR: 0.91,
+    AUD: 1.52,
+    INR: 83.0,
+    JPY: 150.0,
+  };
+
+  // Country to currency + tax map
+  const countryData = {
+    US: { currency: "USD", tax: 0.08 },
+    CA: { currency: "CAD", tax: 0.13 },
+    GB: { currency: "GBP", tax: 0.20 },
+    FR: { currency: "EUR", tax: 0.20 },
+    DE: { currency: "EUR", tax: 0.19 },
+    AU: { currency: "AUD", tax: 0.10 },
+    IN: { currency: "INR", tax: 0.18 },
+    JP: { currency: "JPY", tax: 0.10 },
+    Other: { currency: "USD", tax: 0.0 },
+  };
+
+  const baseUSD = 7.99;
+  const summary = document.getElementById("summary");
+  const countrySelect = document.getElementById("country");
+
+  function updateSummary() {
     const country = countrySelect.value;
-    const tax = (basePrice * (taxRates[country] || 0)).toFixed(2);
-    const total = (basePrice + parseFloat(tax)).toFixed(2);
+    const { currency, tax } = countryData[country] || countryData["Other"];
+    const rate = exchangeRates[currency] || 1;
+    const localPrice = baseUSD * rate;
+    const taxAmt = localPrice * tax;
+    const total = localPrice + taxAmt;
+
     summary.innerHTML = `
       <div>Product: <strong>Safeguard Premier Subscription</strong></div>
-      <div>Base Price: $${basePrice} USD</div>
-      <div>Tax (${country}): $${tax}</div>
-      <div><strong>Total: $${total} USD</strong></div>
+      <div>Base Price: ${currencySymbol(currency)}${localPrice.toFixed(2)} ${currency}</div>
+      <div>Tax (${Math.round(tax * 100)}%): ${currencySymbol(currency)}${taxAmt.toFixed(2)} ${currency}</div>
+      <div><strong>Total: ${currencySymbol(currency)}${total.toFixed(2)} ${currency}</strong></div>
     `;
   }
 
-  updateTax();
-  countrySelect.addEventListener("change", updateTax);
+  function currencySymbol(code) {
+    const symbols = {
+      USD: "$", CAD: "C$", GBP: "£", EUR: "€", AUD: "A$", INR: "₹", JPY: "¥"
+    };
+    return symbols[code] || "$";
+  }
+
+  countrySelect.addEventListener("change", updateSummary);
+  updateSummary();
+
+  /* ========= STRIPE SUBMIT ========= */
 
   document.getElementById("payment-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const email = document.getElementById("email").value.trim();
     const agree = document.getElementById("agree");
+    const email = document.getElementById("email").value.trim();
     const msg = document.getElementById("payment-message");
     const btn = document.getElementById("submit-btn");
     const country = countrySelect.value;
 
-    if (!agree.checked) return msg.textContent = "❌ Please agree to billing terms.";
-    if (!email) return msg.textContent = "❌ Email required.";
+    if (!agree.checked) return (msg.textContent = "❌ Please agree to billing terms.");
+    if (!email) return (msg.textContent = "❌ Email required.");
 
     msg.textContent = "Processing...";
     btn.disabled = true;
@@ -358,12 +422,13 @@
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, country })
+        body: JSON.stringify({ email, country }),
       });
-
       const data = await res.json();
+      if (!data.clientSecret) throw new Error("Server error.");
+
       const result = await stripe.confirmCardPayment(data.clientSecret, {
-        payment_method: { card: cardNumber, billing_details: { email } }
+        payment_method: { card: cardNumber, billing_details: { email } },
       });
 
       if (result.error) {
@@ -371,9 +436,9 @@
         btn.disabled = false;
       } else {
         msg.textContent = "✅ Subscription active! Redirecting...";
-        setTimeout(() => window.location.href = `/success/${result.paymentIntent.id}`, 1200);
+        localStorage.setItem("safeguard_customer", data.customerId);
+        setTimeout(() => (window.location.href = `/success/${result.paymentIntent.id}`), 1000);
       }
-
     } catch (err) {
       msg.textContent = "❌ " + err.message;
       btn.disabled = false;
