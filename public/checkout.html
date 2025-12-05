@@ -206,14 +206,19 @@
           payment_method: { card: cardElement },
         });
 
-        if (result.error) {
-          message.textContent = "❌ " + result.error.message;
-        } else if (result.paymentIntent.status === "succeeded") {
-          message.textContent = "✅ Payment successful! Redirecting...";
-          setTimeout(() => window.location.href = "/success.html", 1500);
-        } else {
-          message.textContent = "❌ Payment not completed.";
-        }
+if (result.error) {
+  message.textContent = "❌ " + result.error.message;
+
+} else if (result.paymentIntent.status === "succeeded") {
+  message.textContent = "✅ Payment successful! Redirecting...";
+
+  // redirect using the REAL payment ID
+  const paymentId = result.paymentIntent.id;
+  setTimeout(() => window.location.href = `/success/${paymentId}`, 1500);
+
+} else {
+  message.textContent = "❌ Payment not completed.";
+}
       } catch (err) {
         console.error(err);
         message.textContent = "❌ " + err.message;
