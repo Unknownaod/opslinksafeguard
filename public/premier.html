@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safeguard Premier – OpsLink Systems</title>
+  <link rel="icon" href="/assets/Safeguard-Bot.png" />
+  <style>
+    :root {
+      --bg-main: #04060d;
+      --bg-card: #0b1220;
+      --accent: #ff6600;
+      --accent2: #ff944d;
+      --text-main: #e5e7eb;
+      --text-soft: #a1a1aa;
+      --radius-lg: 18px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at 20% 20%, #0b1220, #050816 70%);
+      color: var(--text-main);
+      overflow-x: hidden;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 60px;
+      background: rgba(10,15,25,0.7);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-left img {
+      width: 36px;
+      height: 36px;
+      filter: drop-shadow(0 0 6px rgba(255,102,0,0.4));
+    }
+
+    .nav-left span {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .nav-links a {
+      color: var(--text-soft);
+      text-decoration: none;
+      margin-left: 24px;
+      font-weight: 500;
+      transition: 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent2);
+    }
+
+    .hero {
+      text-align: center;
+      padding: 110px 20px 90px;
+      position: relative;
+    }
+
+    .hero img {
+      width: 140px;
+      height: 140px;
+      filter: drop-shadow(0 0 16px rgba(255,102,0,0.5));
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      color: var(--accent);
+      margin-top: 20px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 12px rgba(255,102,0,0.4);
+    }
+
+    .hero p {
+      color: var(--text-soft);
+      margin-top: 14px;
+      font-size: 1.1rem;
+    }
+
+    .pricing {
+      text-align: center;
+      margin: 80px auto;
+      max-width: 800px;
+      padding: 0 30px;
+    }
+
+    .pricing .price {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      box-shadow: 0 0 25px rgba(255,102,0,0.08);
+    }
+
+    .price h2 {
+      color: var(--accent);
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .price h3 {
+      font-size: 2.5rem;
+      color: var(--accent2);
+      margin-bottom: 25px;
+    }
+
+    .price ul {
+      text-align: left;
+      max-width: 500px;
+      margin: 0 auto;
+      color: var(--text-soft);
+      line-height: 1.6;
+    }
+
+    .price li {
+      margin-bottom: 10px;
+    }
+
+    .purchase-btn {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 14px 34px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      text-decoration: none;
+      transition: 0.25s;
+    }
+
+    .purchase-btn:hover {
+      background: var(--accent2);
+      transform: translateY(-3px);
+      box-shadow: 0 0 25px rgba(255,102,0,0.4);
+    }
+
+    .rules {
+      max-width: 900px;
+      margin: 100px auto;
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(255,255,255,0.05);
+      padding: 40px;
+      box-shadow: 0 0 20px rgba(255,102,0,0.05);
+    }
+
+    .rules h2 {
+      color: var(--accent);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .rules ol {
+      line-height: 1.7;
+      color: var(--text-soft);
+      padding-left: 24px;
+    }
+
+    .rules li {
+      margin-bottom: 12px;
+    }
+
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      background: #070b15;
+      color: var(--text-soft);
+      text-align: center;
+      padding: 30px 10px 40px;
+      font-size: 0.9rem;
+      margin-top: 60px;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-left">
+      <img src="/assets/Safeguard-Bot.png" alt="Safeguard Logo" />
+      <span>OpsLink Safeguard</span>
+    </div>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/#panel">Panel</a>
+      <a href="/premier.html" style="color:#ff944d;">Premier</a>
+      <a href="#">Docs</a>
+      <a href="https://discord.gg/UF6Dt66phh">Support</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <img src="/assets/Safeguard-Bot.png" alt="Safeguard Logo" />
+    <h1>Safeguard Premier</h1>
+    <p>Advanced Protection • Enterprise Grade • $7.99/month</p>
+  </section>
+
+  <section class="pricing">
+    <div class="price">
+      <h2>Upgrade to Premier</h2>
+      <h3>$7.99 <span style="font-size:1rem;">/ month</span></h3>
+      <ul>
+        <li>✔ AI-based Anti-Raid & Anti-Nuke Protection</li>
+        <li>✔ Real-time Incident Detection & Auto Recovery</li>
+        <li>✔ Advanced Audit Logs & Threat Reports</li>
+        <li>✔ Priority Support with 1-hour response times</li>
+        <li>✔ Customizable License Dashboard Access</li>
+        <li>✔ Early Access to Beta Features</li>
+      </ul>
+      <a href="https://opslinkcad.com/purchase" class="purchase-btn">Purchase Premier License</a>
+    </div>
+  </section>
+
+  <section class="rules">
+    <h2>Safeguard Premier Rules & Terms</h2>
+    <ol>
+      <li>Each license key is unique and may only be used on one Discord server at a time.</li>
+      <li>License keys must not be shared, sold, or distributed without authorization from OpsLink Systems.</li>
+      <li>Refunds are only issued in the event of proven service failure within the first 7 days of purchase.</li>
+      <li>Misuse of Safeguard Premier or attempts to bypass its protection systems will result in license termination.</li>
+      <li>All Premier features are tied to active subscriptions; access is removed when the subscription lapses.</li>
+      <li>Prices are subject to change with prior notice through official OpsLink channels.</li>
+      <li>OpsLink Systems reserves the right to revoke access at any time if terms are violated or misuse is detected.</li>
+      <li>Use of Safeguard Premier constitutes acceptance of these terms and the OpsLink Systems End User License Agreement.</li>
+      <li>By purchasing, you agree that your Discord account may be verified for license ownership.</li>
+      <li>Unauthorized duplication or modification of Safeguard Premier services is strictly prohibited.</li>
+    </ol>
+  </section>
+
+  <footer>
+    © 2025 OpsLink Systems Network — All Rights Reserved.<br>
+    Visit <a href="https://opslinkcad.com">OpsLinkCAD</a> for more.
+  </footer>
+</body>
+</html>
