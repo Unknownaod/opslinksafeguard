@@ -449,6 +449,7 @@ app.get("/success/:paymentId", async (req, res) => {
       <p>Your Safeguard Premier license key:</p>
       <code style="font-size:22px; font-weight:bold;">${license.key}</code>
       <p>Store this key safely. You will need it to activate Safeguard.</p>
+      <p>Invite the Bot Here: https://discord.com/oauth2/authorize?client_id=1446268459091624048&permissions=8&integration_type=0&scope=bot</p>
     `);
   } catch (err) {
     console.error("Success Route Error:", err);
