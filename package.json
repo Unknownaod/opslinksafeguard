@@ -1,16 +1,26 @@
 {
   "name": "safeguard-panel",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "description": "OpsLink Safeguard Licensing & Dashboard Panel",
   "main": "server.js",
+  "type": "commonjs",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
-    "express": "^4.19.0",
     "dotenv": "^16.4.0",
-    "mongoose": "^8.19.0",
+    "express": "^4.19.0",
     "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.5.3",
     "node-fetch": "^3.3.2",
     "stripe": "^16.0.0"
-  }
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "Proprietary - OpsLink Systems"
 }
