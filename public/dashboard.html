@@ -177,7 +177,7 @@ async function loadGuilds(){
 function manageGuild(id){
   overlay.classList.add("active");
   setTimeout(() => {
-    window.location.href = `/dashboard/${id}.html`;
+    window.location.href = `/dashboard-guild.html?guild=${id}`;
   }, 600);
 }
 
