@@ -1,3 +1,4 @@
+// api/modules/toggle/[moduleId].js
 const connectDB = require("../../../lib/db");
 const WelcomeGuildConfig = require("../../../models/WelcomeGuildConfig");
 const GuildConfig = require("../../../models/GuildConfig");
@@ -7,80 +8,137 @@ const { Settings: LevelSettings } = require("../../../models/LevelSettings");
 const TicketGuildConfig = require("../../../models/TicketGuildConfig");
 const LockdownSetup = require("../../../models/LockdownSetup");
 const ModuleSettings = require("../../../models/ModuleSettings");
+const AdminRole = require("../../../models/AdminRole");
+const MuteRole = require("../../../models/MuteRole");
+const BotStatusChannel = require("../../../models/BotStatusChannel");
+const PunishmentConfig = require("../../../models/PunishmentConfig");
+const Sticky = require("../../../models/Sticky");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).end();
 
   const { moduleId } = req.query;
-  const { guildId, enabled } = req.body;
-  if (!guildId) return res.status(400).json({ error: "guildId missing" });
+  const { guildId, enabled } = req.body || {};
 
-  await connectDB();
-
-  switch (moduleId) {
-    case "welcome":
-      const welcome = await WelcomeGuildConfig.findOne({ guildId });
-      if (!welcome) return res.status(404).end();
-      welcome.welcome.enabled = enabled;
-      welcome.goodbye.enabled = enabled;
-      await welcome.save();
-      break;
-
-    case "verification":
-      const verify = await WelcomeGuildConfig.findOne({ guildId });
-      verify.verify.enabled = enabled;
-      await verify.save();
-      break;
-
-    case "logging":
-      const log = await GuildConfig.findOne({ guildId });
-      if (!enabled) log.modLogChannelId = null;
-      await log.save();
-      break;
-
-    case "auditlogs":
-      const audit = await AuditGuildConfig.findOne({ guildId });
-      if (!enabled) audit.modLogChannelId = null;
-      await audit.save();
-      break;
-
-    case "vclogs":
-      const vc = await VcGuildConfig.findOne({ guildId });
-      if (!enabled) vc.modLogChannelId = null;
-      await vc.save();
-      break;
-
-    case "leveling":
-      const level = await LevelSettings.findOne({ GuildID: guildId });
-      level.XPPerMessage = enabled ? 5 : 0;
-      await level.save();
-      break;
-
-    case "tickets":
-      const ticket = await TicketGuildConfig.findOne({ guildId });
-      if (!enabled) {
-        ticket.panelChannel = null;
-        ticket.supportRole = null;
-      }
-      await ticket.save();
-      break;
-
-    case "lockdown":
-      const lockdown = await LockdownSetup.findOne({ guildId });
-      if (!enabled) {
-        lockdown.channelRoles = [];
-        lockdown.serverRoles = [];
-      }
-      await lockdown.save();
-      break;
-
-    case "automod":
-    case "antiraid":
-      const mod = await ModuleSettings.findOne({ guildId, moduleId });
-      mod.enabled = enabled;
-      await mod.save();
-      break;
+  if (!guildId || typeof enabled !== "boolean") {
+    return res
+      .status(400)
+      .json({ error: "guildId and boolean enabled are required" });
   }
 
-  res.json({ ok: true });
+  try {
+    await connectDB();
+
+    switch (moduleId) {
+      case "welcome": {
+        const cfg = await WelcomeGuildConfig.findOne({ guildId });
+        if (!cfg) break;
+        cfg.welcome.enabled = enabled;
+        cfg.goodbye.enabled = enabled;
+        await cfg.save();
+        break;
+      }
+      case "verification": {
+        const cfg = await WelcomeGuildConfig.findOne({ guildId });
+        if (!cfg) break;
+        cfg.verify.enabled = enabled;
+        await cfg.save();
+        break;
+      }
+      case "logging": {
+        const cfg = await GuildConfig.findOne({ guildId });
+        if (!cfg) break;
+        if (!enabled) cfg.modLogChannelId = null;
+        await cfg.save();
+        break;
+      }
+      case "auditlogs": {
+        const cfg = await AuditGuildConfig.findOne({ guildId });
+        if (!cfg) break;
+        if (!enabled) cfg.modLogChannelId = null;
+        await cfg.save();
+        break;
+      }
+      case "vclogs": {
+        const cfg = await VcGuildConfig.findOne({ guildId });
+        if (!cfg) break;
+        if (!enabled) cfg.modLogChannelId = null;
+        await cfg.save();
+        break;
+      }
+      case "adminrole":
+      case "muterole":
+      case "botstatus":
+        // these are controlled by presence of IDs; toggle alone doesn't change anything
+        break;
+
+      case "lockdown": {
+        const cfg = await LockdownSetup.findOne({ guildId });
+        if (!cfg) break;
+        if (!enabled) {
+          cfg.channelRoles = [];
+          cfg.serverRoles = [];
+        }
+        await cfg.save();
+        break;
+      }
+      case "leveling": {
+        const cfg = await LevelSettings.findOne({ GuildID: guildId });
+        if (!cfg) break;
+        cfg.XPPerMessage = enabled ? cfg.XPPerMessage || 5 : 0;
+        await cfg.save();
+        break;
+      }
+      case "sticky": {
+        const cfg = await Sticky.findOne({ guildId });
+        if (!cfg) break;
+        if (!enabled) {
+          cfg.stickies = [];
+        }
+        await cfg.save();
+        break;
+      }
+      case "punishments": {
+        const cfg = await PunishmentConfig.findOne({ guildId });
+        if (!cfg) break;
+        if (!enabled) cfg.rules = [];
+        await cfg.save();
+        break;
+      }
+
+      case "tickets": {
+        const cfg = await TicketGuildConfig.findOne({ guildId });
+        if (!cfg) break;
+        if (!enabled) {
+          cfg.panelChannel = null;
+          cfg.supportRole = null;
+          cfg.ticketCategory = null;
+        }
+        await cfg.save();
+        break;
+      }
+
+      // ModuleSettings-based modules
+      case "antiraid":
+      case "automod":
+      case "announcements":
+      case "giveaways":
+      case "polls": {
+        const cfg =
+          (await ModuleSettings.findOne({ guildId, moduleId })) ||
+          (await ModuleSettings.create({ guildId, moduleId }));
+        cfg.enabled = enabled;
+        await cfg.save();
+        break;
+      }
+
+      default:
+        return res.status(404).json({ error: "Unknown moduleId" });
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("POST /api/modules/toggle error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
