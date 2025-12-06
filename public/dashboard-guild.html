@@ -2,361 +2,1315 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>OpsLink Safeguard – Server Modules</title>
+  <title>Safeguard – Server Control Panel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="/assets/Safeguard-Bot.png" />
   <style>
     :root {
       --bg-main: #050711;
-      --bg-sidebar: #0b0f1e;
-      --bg-card: #101524;
+      --bg-sidebar: #040712;
+      --bg-card: #0b1020;
+      --bg-card-soft: #12172a;
       --accent: #ff7a1a;
       --accent-soft: rgba(255, 122, 26, 0.18);
+      --accent-strong: #ff9b3d;
       --text-main: #f9fafb;
       --text-soft: #9ca3af;
       --text-muted: #6b7280;
-      --border-subtle: rgba(148, 163, 184, 0.15);
-      --radius-md: 12px;
+      --border-subtle: rgba(148, 163, 184, 0.18);
+      --radius-md: 10px;
       --radius-lg: 18px;
       --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.65);
+      --transition-fast: 150ms ease-out;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: "Segoe UI", system-ui, sans-serif;
-      background: #050711;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text-main);
-      display: flex;
+      background: radial-gradient(circle at top left, #111827 0, #020617 55%);
       min-height: 100vh;
       overflow: hidden;
     }
 
-    aside {
-      width: 260px;
-      background: var(--bg-sidebar);
+    .app-shell {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: linear-gradient(180deg, #040712, #050816);
+      border-right: 1px solid var(--border-subtle);
+      padding: 18px 18px 18px;
       display: flex;
       flex-direction: column;
-      padding: 22px 18px;
-      border-right: 1px solid var(--border-subtle);
+      gap: 16px;
     }
 
     .sidebar-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 28px;
+      gap: 10px;
+      padding: 6px 6px 10px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.9);
     }
 
-    .sidebar-header img {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-    }
-
-    main {
-      flex: 1;
-      overflow-y: auto;
-      padding: 40px 60px;
-      background: linear-gradient(180deg, #070b16, #05060d);
-    }
-
-    h1 {
-      font-size: 1.8rem;
-      margin-bottom: 25px;
-      color: #fff;
-    }
-
-    .modules-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 18px;
-    }
-
-    .module-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 22px;
-      box-shadow: var(--shadow-soft);
-      transition: transform 0.2s ease, border 0.2s ease;
-      cursor: pointer;
-    }
-
-    .module-card:hover {
-      transform: translateY(-2px);
-      border-color: var(--accent);
-    }
-
-    .module-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .badge {
-      padding: 3px 10px;
-      border-radius: var(--radius-md);
-      font-size: 0.75rem;
-      background: #1a1f2d;
-      color: var(--text-soft);
-    }
-
-    .badge-on {
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
-
-    .toggle input {
-      appearance: none;
-      width: 38px;
-      height: 20px;
-      background: #222;
-      border-radius: 999px;
-      position: relative;
-      outline: none;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    .toggle input:checked {
-      background: var(--accent);
-    }
-
-    .toggle input::before {
-      content: "";
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      background: #fff;
-      border-radius: 50%;
-      top: 2px;
-      left: 2px;
-      transition: left 0.2s ease;
-    }
-
-    .toggle input:checked::before {
-      left: 20px;
-    }
-
-    .modal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7);
+    .sidebar-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 30% 0%, #ffb26b 0, #ff7a1a 40%, #111827 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      visibility: hidden;
-      opacity: 0;
-      transition: 0.3s ease;
-      z-index: 10;
+      font-size: 20px;
+      box-shadow: 0 0 16px rgba(255, 122, 26, 0.6);
     }
 
-    .modal.show {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    .modal-inner {
-      background: var(--bg-card);
-      border-radius: var(--radius-lg);
-      padding: 26px;
-      width: 520px;
-      max-height: 85vh;
-      overflow-y: auto;
-      box-shadow: var(--shadow-soft);
-      animation: fadeIn 0.3s ease;
-    }
-
-    .modal-inner h2 {
-      margin-top: 0;
-      margin-bottom: 16px;
-      font-size: 1.3rem;
-    }
-
-    @keyframes fadeIn {
-      from { transform: scale(0.95); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    .modal-actions {
+    .sidebar-title {
       display: flex;
-      justify-content: flex-end;
-      margin-top: 16px;
+      flex-direction: column;
+      gap: 2px;
     }
 
-    .btn {
-      padding: 8px 18px;
-      border: none;
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      font-weight: 500;
+    .sidebar-title span:first-child {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
     }
 
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .btn-secondary {
-      background: #1f2937;
-      color: #fff;
-      margin-right: 10px;
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 0.9rem;
+    .sidebar-title span:last-child {
+      font-size: 11px;
       color: var(--text-soft);
     }
 
-    .form-group input, .form-group textarea {
+    .sidebar-section-label {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 8px 4px 6px;
+    }
+
+    .sidebar-nav-group {
+      margin-bottom: 6px;
+    }
+
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      color: var(--text-soft);
+      cursor: pointer;
+      border: 1px solid transparent;
+      margin-bottom: 4px;
+      transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+    }
+
+    .sidebar-nav-item:hover {
+      background: rgba(15, 23, 42, 0.9);
+      border-color: rgba(148, 163, 184, 0.5);
+      color: #e5e7eb;
+      transform: translateX(1px);
+    }
+
+    .sidebar-nav-item.active {
+      background: radial-gradient(circle at 0 0, var(--accent-soft), transparent 60%);
+      border-color: rgba(248, 163, 54, 0.7);
+      color: var(--accent-strong);
+    }
+
+    .sidebar-nav-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.7);
+    }
+
+    .sidebar-nav-item.active .sidebar-nav-indicator {
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      font-size: 11px;
+      color: var(--text-muted);
+      padding-top: 10px;
+      border-top: 1px solid rgba(15, 23, 42, 0.9);
+    }
+
+    .sidebar-footer button {
+      margin-top: 8px;
       width: 100%;
-      background: #0c1220;
-      border: 1px solid #1f2937;
-      border-radius: var(--radius-md);
-      padding: 8px 10px;
-      color: #fff;
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.9);
+      color: #e5e7eb;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .sidebar-footer button:hover {
+      background: rgba(15, 23, 42, 1);
+      border-color: rgba(248, 163, 54, 0.9);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.7);
+      transform: translateY(-1px);
+    }
+
+    /* Main */
+    .main {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .main-header {
+      padding: 16px 24px 10px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .main-header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .main-header-left h1 {
+      font-size: 20px;
+      margin: 0;
+      letter-spacing: 0.02em;
+    }
+
+    .main-header-left span {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .main-header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--text-soft);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .user-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.9);
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .user-pill img {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      object-fit: cover;
+    }
+
+    .main-content {
+      padding: 16px 24px 20px;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    .status-bar {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.7);
+    }
+
+    .group-block {
+      margin-bottom: 22px;
+    }
+
+    .group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .group-header h2 {
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .group-header span {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .module-card {
+      background: radial-gradient(circle at top left, #1f2937 0, #020617 60%);
+      border-radius: var(--radius-lg);
+      padding: 16px 14px 12px;
+      border: 1px solid rgba(15, 23, 42, 0.9);
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .module-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top left, var(--accent-soft), transparent 55%);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .module-card-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .module-chip-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .module-name {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .module-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      min-height: 32px;
+    }
+
+    .module-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+      gap: 8px;
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text-soft);
+      background: rgba(15, 23, 42, 0.75);
+    }
+
+    .badge-on {
+      border-color: rgba(34, 197, 94, 0.55);
+      color: #bbf7d0;
+      background: rgba(22, 163, 74, 0.16);
+    }
+
+    .btn-ghost {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.9);
+      color: #e5e7eb;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: background var(--transition-fast), border-color var(--transition-fast),
+        transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(15, 23, 42, 1);
+      border-color: rgba(248, 163, 54, 0.9);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .toggle {
+      position: relative;
+      width: 40px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(15, 23, 42, 0.9);
+      transition: 0.2s;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: #e5e7eb;
+      transition: 0.2s;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    }
+
+    input:checked + .slider {
+      background: linear-gradient(135deg, #22c55e, #4ade80);
+      border-color: transparent;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(18px);
+      background-color: #020617;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: min(820px, 100% - 32px);
+      max-height: 90vh;
+      background: radial-gradient(circle at top left, #1e293b 0, #020617 55%);
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.85);
+      padding: 18px 20px 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .modal-header span {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .modal-body {
+      padding-top: 6px;
+      padding-bottom: 8px;
+      overflow: auto;
+      border-top: 1px solid rgba(148, 163, 184, 0.3);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .modal-section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .field-group {
+      margin-bottom: 8px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      margin-bottom: 3px;
+      color: #e5e7eb;
+    }
+
+    .field-description {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      padding: 7px 9px;
+      font-size: 13px;
+      background: rgba(15, 23, 42, 0.95);
+      color: #f9fafb;
+      outline: none;
+      resize: vertical;
+      min-height: 34px;
+    }
+
+    textarea {
+      min-height: 68px;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--accent-strong);
+      box-shadow: 0 0 0 1px rgba(248, 163, 54, 0.7);
+    }
+
+    .modal-aside {
+      font-size: 12px;
+      color: var(--text-soft);
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.8);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
     }
 
     .save-status {
-      margin-top: 10px;
-      font-size: 0.9rem;
-      color: var(--accent);
+      font-size: 12px;
+      color: var(--text-soft);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .save-status span.icon {
+      font-size: 14px;
+    }
+
+    .btn-secondary,
+    .btn-primary {
+      border-radius: 999px;
+      padding: 7px 12px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background: rgba(15, 23, 42, 0.9);
+      color: #e5e7eb;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background var(--transition-fast), border-color var(--transition-fast),
+        transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(15, 23, 42, 1);
+      border-color: rgba(248, 163, 54, 0.9);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.7);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ff7a1a, #ff9b3d);
+      border-color: transparent;
+      color: #020617;
+      font-weight: 500;
+      box-shadow: 0 8px 30px rgba(248, 133, 31, 0.55);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #ffa94d, #ff7a1a);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .sidebar {
+        display: none;
+      }
+      .main-header {
+        padding-inline: 14px;
+      }
+      .main-content {
+        padding-inline: 14px;
+      }
+      .modal-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
   </style>
 </head>
 <body>
-
-  <aside>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
     <div class="sidebar-header">
-      <img src="/assets/Safeguard-Bot.png" alt="Safeguard Logo" />
-      <h3>SafeGuard</h3>
+      <div class="sidebar-logo">🛡️</div>
+      <div class="sidebar-title">
+        <span>Safeguard</span>
+        <span id="sidebarGuild">Loading server…</span>
+      </div>
     </div>
-    <p style="color: var(--text-soft);">Server Configuration Panel</p>
+
+    <div id="sidebarNav"></div>
+
+    <div class="sidebar-footer">
+      <div>Signed in as</div>
+      <div class="user-pill" id="sidebarUser">
+        <img id="sidebarUserAvatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="User"/>
+        <span id="sidebarUserName">Loading…</span>
+      </div>
+      <button id="backBtn">← Back to Servers</button>
+      <button id="logoutBtn">Logout</button>
+    </div>
   </aside>
 
-  <main>
-    <h1>Server Modules</h1>
-    <div class="modules-grid" id="modulesGrid"></div>
-  </main>
-
-  <div class="modal" id="settingsModal">
-    <div class="modal-inner">
-      <h2 id="modalTitle">Module Settings</h2>
-      <form id="moduleForm"></form>
-      <div class="modal-actions">
-        <button class="btn btn-secondary" id="closeModal">Close</button>
-        <button class="btn btn-primary" id="saveModule">Save Changes</button>
+  <!-- Main -->
+  <div class="main">
+    <header class="main-header">
+      <div class="main-header-left">
+        <h1 id="pageTitle">Server Modules</h1>
+        <span id="pageSubtitle">Configuring guild…</span>
       </div>
-      <div class="save-status" id="saveStatus"></div>
-    </div>
-  </div>
-
-<script>
-const guildId = new URLSearchParams(location.search).get("guild");
-const authHeader = {}; // if using OAuth, add Authorization header here
-const grid = document.getElementById("modulesGrid");
-const modal = document.getElementById("settingsModal");
-const modalTitle = document.getElementById("modalTitle");
-const moduleForm = document.getElementById("moduleForm");
-const saveStatus = document.getElementById("saveStatus");
-let currentModules = [];
-let currentModule = null;
-
-async function loadModules() {
-  grid.innerHTML = "<p>Loading modules...</p>";
-  const res = await fetch(`/api/modules/${guildId}`);
-  currentModules = await res.json();
-  renderModules();
-}
-
-function renderModules() {
-  grid.innerHTML = "";
-  for (const mod of currentModules) {
-    const card = document.createElement("div");
-    card.className = "module-card";
-    card.innerHTML = `
-      <div class="module-card-header">
-        <strong>${mod.name}</strong>
-        <div class="toggle">
-          <input type="checkbox" ${mod.enabled ? "checked" : ""} data-module-id="${mod.id}">
+      <div class="main-header-right">
+        <span class="badge-pill" id="changesBadge">No unsaved changes</span>
+        <div class="user-pill">
+          <img id="userAvatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="User" />
+          <span id="userName">Loading user…</span>
         </div>
       </div>
-      <p>${mod.description}</p>
-      <div class="badge ${mod.enabled ? "badge-on" : ""}">
-        ${mod.enabled ? "Enabled" : "Disabled"}
+    </header>
+
+    <main class="main-content">
+      <div class="status-bar">
+        <div class="status-dot"></div>
+        <span id="statusText">Connecting to Safeguard Panel API…</span>
       </div>
-    `;
-    card.querySelector("input").addEventListener("change", onToggleModule);
-    card.addEventListener("click", () => openModuleSettings(mod));
-    grid.appendChild(card);
+
+      <div id="modulesContainer"></div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="moduleModalBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h2 id="modalTitle">Module</h2>
+        <span id="modalSubtitle">Edit configuration for this module.</span>
+      </div>
+      <button class="btn-secondary" id="closeModalBtn" type="button">✕ Close</button>
+    </div>
+
+    <div class="modal-body">
+      <form id="moduleForm">
+        <div class="modal-grid">
+          <div>
+            <div class="modal-section-title">Configuration</div>
+            <div id="modalFields"></div>
+          </div>
+          <aside class="modal-aside">
+            <div class="modal-section-title">Hints</div>
+            <div id="modalHints">
+              Use IDs for channels/roles (right-click in Discord with Developer Mode). Some fields support multiple values separated by commas or new lines.
+            </div>
+          </aside>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <div class="save-status" id="saveStatus">
+        <span class="icon">💾</span>
+        <span>Waiting for changes…</span>
+      </div>
+      <div>
+        <button class="btn-secondary" id="resetFormBtn" type="button">Reset</button>
+        <button class="btn-primary" id="saveFormBtn" type="button">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ====== UTIL / GLOBAL STATE ======
+  const params = new URLSearchParams(window.location.search);
+  const guildId = params.get("guild");
+  if (!guildId) {
+    window.location.href = "/dashboard.html";
   }
-}
 
-async function onToggleModule(e) {
-  e.stopPropagation();
-  const moduleId = e.target.getAttribute("data-module-id");
-  const enabled = e.target.checked;
-  const card = e.target.closest(".module-card");
-  const badge = card.querySelector(".badge");
+  const token =
+    localStorage.getItem("safeguard_token") ||
+    localStorage.getItem("sg_token") ||
+    localStorage.getItem("token");
 
-  badge.textContent = enabled ? "Enabled" : "Disabled";
-  badge.classList.toggle("badge-on", enabled);
-
-  await fetch(`/api/modules/toggle/${moduleId}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeader },
-    body: JSON.stringify({ guildId, enabled })
-  });
-}
-
-function openModuleSettings(mod) {
-  currentModule = mod;
-  modal.classList.add("show");
-  modalTitle.textContent = mod.name + " Settings";
-  moduleForm.innerHTML = "";
-
-  for (const [key, value] of Object.entries(mod.settings || {})) {
-    const field = document.createElement("div");
-    field.className = "form-group";
-    field.innerHTML = `
-      <label>${key}</label>
-      <input name="${key}" value="${value ?? ""}" />
-    `;
-    moduleForm.appendChild(field);
+  if (!token) {
+    window.location.href = "/";
   }
-}
 
-document.getElementById("closeModal").onclick = () => {
-  modal.classList.remove("show");
-};
+  const authHeader = { Authorization: "Bearer " + token };
 
-document.getElementById("saveModule").onclick = async (e) => {
-  e.preventDefault();
-  if (!currentModule) return;
-  const formData = new FormData(moduleForm);
-  const settings = {};
-  for (const [k, v] of formData.entries()) settings[k] = v;
-  saveStatus.textContent = "Saving...";
-  await fetch(`/api/modules/update/${currentModule.id}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeader },
-    body: JSON.stringify({ guildId, settings })
+  const sidebarGuild = document.getElementById("sidebarGuild");
+  const sidebarNav = document.getElementById("sidebarNav");
+  const statusText = document.getElementById("statusText");
+  const modulesContainer = document.getElementById("modulesContainer");
+  const userNameEl = document.getElementById("userName");
+  const userAvatarEl = document.getElementById("userAvatar");
+  const sidebarUserName = document.getElementById("sidebarUserName");
+  const sidebarUserAvatar = document.getElementById("sidebarUserAvatar");
+  const pageTitle = document.getElementById("pageTitle");
+  const pageSubtitle = document.getElementById("pageSubtitle");
+  const changesBadge = document.getElementById("changesBadge");
+
+  const modalBackdrop = document.getElementById("moduleModalBackdrop");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalSubtitle = document.getElementById("modalSubtitle");
+  const modalFields = document.getElementById("modalFields");
+  const modalHints = document.getElementById("modalHints");
+  const moduleForm = document.getElementById("moduleForm");
+  const saveStatus = document.getElementById("saveStatus");
+
+  let currentModules = [];
+  let currentModule = null;
+
+  // Field definitions for each module
+  const MODULE_DEFINITIONS = {
+    welcome: {
+      group: "General",
+      subtitle: "Welcome & goodbye messages, DMs and autoroles.",
+      hints: "Use {mention}, {user}, {server}, {membercount} in messages. Autoroles is a comma-separated list of role IDs.",
+      fields: [
+        { key: "welcomeChannelId", label: "Welcome Channel ID", type: "text", description: "Channel where welcome messages are sent." },
+        { key: "welcomeMessage", label: "Welcome Message", type: "textarea", description: "Main welcome message. Supports placeholders and \\n for new lines." },
+        { key: "welcomeDm", label: "Welcome DM Message", type: "textarea", description: "Optional DM sent when a member joins." },
+        { key: "goodbyeChannelId", label: "Goodbye Channel ID", type: "text", description: "Channel for leave messages." },
+        { key: "goodbyeMessage", label: "Goodbye Message", type: "textarea", description: "Message when a member leaves." },
+        { key: "goodbyeDm", label: "Goodbye DM Message", type: "textarea", description: "Optional DM sent when a member leaves." },
+        { key: "autoroles", label: "Autoroles (comma-separated role IDs)", type: "text", description: "Example: 123,456,789" },
+        { key: "autoroleDelayMs", label: "Autorole Delay (ms)", type: "number", description: "Delay before giving autoroles (1000 = 1s)." }
+      ]
+    },
+    verification: {
+      group: "General",
+      subtitle: "Captcha verification, roles and logging.",
+      hints: "Difficulty modes: easy, medium, hard, manual. Roles is a comma-separated list of role IDs given after verification.",
+      fields: [
+        { key: "panelChannelId", label: "Verification Panel Channel ID", type: "text", description: "Channel where the verification panel is sent." },
+        { key: "logChannelId", label: "Verification Log Channel ID", type: "text", description: "Channel for verification logs." },
+        { key: "roles", label: "Roles (comma-separated IDs)", type: "text", description: "Roles to grant after success." },
+        { key: "staffRoleId", label: "Staff Role ID", type: "text", description: "Role that can manage verification." },
+        { key: "message", label: "Panel Message", type: "textarea", description: "Text shown above the Verify button." },
+        { key: "difficultyMode", label: "Difficulty Mode", type: "text", description: "easy, medium, hard, manual" },
+        { key: "difficultyLength", label: "Captcha Length (manual)", type: "number", description: "Number of characters when using manual mode." },
+        { key: "difficultyDecoys", label: "Decoy Characters (manual)", type: "number", description: "Number of decoys in manual mode." },
+        { key: "difficultyTrace", label: "Trace Lines (true/false)", type: "text", description: "Whether to draw trace lines in captcha." }
+      ]
+    },
+    logging: {
+      group: "General",
+      subtitle: "Moderation log channel.",
+      hints: "This is used for warns, kicks, bans, timeouts and similar actions.",
+      fields: [
+        { key: "modLogChannelId", label: "Moderation Log Channel ID", type: "text", description: "Channel ID where moderation logs are sent." }
+      ]
+    },
+    auditlogs: {
+      group: "General",
+      subtitle: "Audit logs channel.",
+      hints: "Join/leave, configuration, and general audit logging.",
+      fields: [
+        { key: "auditLogChannelId", label: "Audit Log Channel ID", type: "text", description: "Channel ID used for audit logs." }
+      ]
+    },
+    vclogs: {
+      group: "General",
+      subtitle: "Voice channel logging.",
+      hints: "Tracks join, leave and move events for voice channels.",
+      fields: [
+        { key: "vcLogChannelId", label: "VC Log Channel ID", type: "text", description: "Channel where VC logs are posted." }
+      ]
+    },
+    adminrole: {
+      group: "General",
+      subtitle: "SafeGuard admin role.",
+      hints: "This role can use high-level Safeguard commands and dashboard actions if you wire it in the bot.",
+      toggle: false,
+      fields: [
+        { key: "adminRoleId", label: "Admin Role ID", type: "text", description: "Role ID that should be treated as Safeguard admin." }
+      ]
+    },
+    muterole: {
+      group: "General",
+      subtitle: "Global mute role.",
+      hints: "Used by your mute commands. Typically a role that denies Send Messages everywhere.",
+      toggle: false,
+      fields: [
+        { key: "muteRoleId", label: "Mute Role ID", type: "text", description: "Role ID used when a member is muted." }
+      ]
+    },
+    lockdown: {
+      group: "General",
+      subtitle: "Lockdown behavior.",
+      hints: "Channel roles/server roles are used by your lockdown system to decide who keeps access.",
+      fields: [
+        { key: "channelRoles", label: "Channel Roles (comma-separated)", type: "text", description: "Roles that keep per-channel permissions during lockdown." },
+        { key: "serverRoles", label: "Server Roles (comma-separated)", type: "text", description: "Roles that keep global permissions during lockdown." }
+      ]
+    },
+    botstatus: {
+      group: "General",
+      subtitle: "Bot status channel.",
+      hints: "Channel where the bot posts its status message. Your bot should update it on restart/ping.",
+      toggle: false,
+      fields: [
+        { key: "statusChannelId", label: "Status Channel ID", type: "text", description: "Channel ID for the bot status message." }
+      ]
+    },
+
+    antiraid: {
+      group: "Protection",
+      subtitle: "Anti-raid thresholds.",
+      hints: "These values should match what your bot expects when checking join rates.",
+      fields: [
+        { key: "joinThreshold", label: "Join Threshold", type: "number", description: "Approx number of joins in a window that triggers anti-raid." },
+        { key: "timeWindowSec", label: "Time Window (seconds)", type: "number", description: "Time window used when counting joins." },
+        { key: "autoLockdown", label: "Auto Lockdown (true/false)", type: "text", description: "If true, automatically triggers lockdown on raids." }
+      ]
+    },
+    automod: {
+      group: "Protection",
+      subtitle: "Automatic filters.",
+      hints: "The bot should read these values to enforce anti-link, anti-invite and word filters.",
+      fields: [
+        { key: "blockLinks", label: "Block Links (true/false)", type: "text", description: "Whether to block links from regular members." },
+        { key: "blockInvites", label: "Block Discord Invites (true/false)", type: "text", description: "Whether to block Discord invites." },
+        { key: "blacklistedWords", label: "Blacklisted Words (one per line)", type: "textarea", description: "Each line is a blocked word/phrase." }
+      ]
+    },
+    punishments: {
+      group: "Protection",
+      subtitle: "Warn → punishment mapping.",
+      hints: "Each line: warningCount:action:durationMinutes. Example: 3:timeout:60 or 5:kick: or 7:ban:",
+      fields: [
+        { key: "rules", label: "Rules", type: "textarea", description: "One rule per line, format: warnings:action:durationMinutes(optional)." }
+      ]
+    },
+
+    leveling: {
+      group: "Engagement",
+      subtitle: "XP system & level rewards.",
+      hints: "Your bot should sync these values to how it calculates XP and level rewards.",
+      fields: [
+        { key: "xpPerMessage", label: "XP per Message", type: "number", description: "Base XP given per message." },
+        { key: "levelUpChannelId", label: "Level-Up Channel ID", type: "text", description: "Channel for level-up messages." },
+        { key: "roleRewards", label: "Role Rewards (one per line)", type: "textarea", description: "Each line: level:ROLE_ID (e.g. 5:123456789012345678)." }
+      ]
+    },
+    sticky: {
+      group: "Engagement",
+      subtitle: "Sticky messages.",
+      hints: "These settings control who can manage stickies and the default restick interval.",
+      fields: [
+        { key: "staffRoleIds", label: "Staff Role IDs (comma-separated)", type: "text", description: "Roles that can configure sticky messages." },
+        { key: "defaultIntervalMs", label: "Default Interval (ms)", type: "number", description: "Delay between resticking messages (60000 = 1 minute)." }
+      ]
+    },
+    announcements: {
+      group: "Engagement",
+      subtitle: "Announcement defaults.",
+      hints: "Used as defaults for announcement commands in your bot.",
+      fields: [
+        { key: "defaultChannelId", label: "Default Announcement Channel ID", type: "text", description: "Channel to use when a command doesn't specify one." },
+        { key: "pingRoles", label: "Ping Roles (comma-separated IDs)", type: "text", description: "Roles to ping on announcements." }
+      ]
+    },
+    giveaways: {
+      group: "Engagement",
+      subtitle: "Giveaway defaults.",
+      hints: "Your bot can read these to prefill giveaway duration/winners/channel.",
+      fields: [
+        { key: "defaultChannelId", label: "Default Giveaway Channel ID", type: "text", description: "Channel to use for giveaways." },
+        { key: "defaultDurationMinutes", label: "Default Duration (minutes)", type: "number", description: "Length of giveaways if no duration is specified." },
+        { key: "defaultWinners", label: "Default Winners Count", type: "number", description: "Number of winners if not specified." }
+      ]
+    },
+    polls: {
+      group: "Engagement",
+      subtitle: "Poll defaults.",
+      hints: "Your bot can use these defaults for quick polls.",
+      fields: [
+        { key: "defaultChannelId", label: "Default Poll Channel ID", type: "text", description: "Channel to use for polls." },
+        { key: "requireRoleIds", label: "Required Role IDs (comma-separated)", type: "text", description: "Only these roles can vote/create polls (if your bot uses this)." }
+      ]
+    },
+    tickets: {
+      group: "Engagement",
+      subtitle: "Ticket system defaults.",
+      hints: "Your /ticket commands should read these values to decide where to create tickets and who handles them.",
+      fields: [
+        { key: "panelChannel", label: "Ticket Panel Channel ID", type: "text", description: "Channel where ticket panel is posted." },
+        { key: "supportRole", label: "Support Role ID", type: "text", description: "Role that gets pings on new tickets." },
+        { key: "ticketCategory", label: "Ticket Category ID", type: "text", description: "Category where new tickets are created." }
+      ]
+    }
+  };
+
+  const GROUP_ORDER = ["General", "Protection", "Engagement"];
+
+  // ====== LOAD USER ======
+  async function loadUser() {
+    try {
+      const res = await fetch("/api/user", { headers: authHeader });
+      const data = await res.json();
+      if (!data.loggedIn) {
+        localStorage.removeItem("safeguard_token");
+        localStorage.removeItem("sg_token");
+        localStorage.removeItem("token");
+        window.location.href = "/auth/discord";
+        return;
+      }
+      const u = data.user;
+      const name = `${u.username}#${u.discriminator}`;
+      userNameEl.textContent = name;
+      sidebarUserName.textContent = name;
+      if (u.avatar) {
+        const url = `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=64`;
+        userAvatarEl.src = url;
+        sidebarUserAvatar.src = url;
+      }
+    } catch (err) {
+      console.error("User load error:", err);
+    }
+  }
+
+  // ====== LOAD MODULES ======
+  async function loadModules() {
+    try {
+      statusText.textContent = "Loading modules…";
+      const res = await fetch(`/api/modules/${guildId}`, { headers: authHeader });
+      if (!res.ok) throw new Error("Module fetch failed");
+      const modules = await res.json();
+      if (!Array.isArray(modules) || !modules.length) {
+        modulesContainer.innerHTML =
+          '<p style="color: var(--text-muted); font-size: 14px;">No modules found for this guild.</p>';
+        statusText.textContent = "No modules available.";
+        sidebarGuild.textContent = `Guild ${guildId}`;
+        pageSubtitle.textContent = `Configuring guild ID ${guildId}`;
+        return;
+      }
+      currentModules = modules;
+      renderModules(modules);
+      sidebarGuild.textContent = `Guild ID ${guildId}`;
+      pageSubtitle.textContent = `Configuring guild ID ${guildId}`;
+      statusText.textContent = "Modules loaded. Use toggles & Configure buttons to update.";
+    } catch (err) {
+      console.error("Modules load error:", err);
+      statusText.textContent = "Failed to load modules from API.";
+      modulesContainer.innerHTML =
+        '<p style="color: #f97373; font-size: 14px;">Failed to load modules. Check API logs.</p>';
+    }
+  }
+
+  function renderModules(mods) {
+    modulesContainer.innerHTML = "";
+    sidebarNav.innerHTML = "";
+
+    const modsByGroup = {};
+    for (const mod of mods) {
+      const def = MODULE_DEFINITIONS[mod.id] || {};
+      const group = def.group || mod.group || "General";
+      if (!modsByGroup[group]) modsByGroup[group] = [];
+      modsByGroup[group].push(mod);
+    }
+
+    // Sidebar nav
+    GROUP_ORDER.forEach(group => {
+      if (!modsByGroup[group] || !modsByGroup[group].length) return;
+
+      const groupWrap = document.createElement("div");
+      groupWrap.className = "sidebar-nav-group";
+
+      const label = document.createElement("div");
+      label.className = "sidebar-section-label";
+      label.textContent = group;
+      groupWrap.appendChild(label);
+
+      modsByGroup[group].forEach(mod => {
+        const item = document.createElement("div");
+        item.className = "sidebar-nav-item";
+        item.dataset.target = `module-${mod.id}`;
+        item.innerHTML = `
+          <span class="sidebar-nav-indicator"></span>
+          <span>${mod.name}</span>
+        `;
+        item.addEventListener("click", () => {
+          document
+            .getElementById(`module-${mod.id}`)
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+          // highlight
+          sidebarNav
+            .querySelectorAll(".sidebar-nav-item")
+            .forEach(el => el.classList.remove("active"));
+          item.classList.add("active");
+        });
+        groupWrap.appendChild(item);
+      });
+
+      sidebarNav.appendChild(groupWrap);
+    });
+
+    // Main cards grouped by group
+    GROUP_ORDER.forEach(group => {
+      const groupMods = modsByGroup[group];
+      if (!groupMods || !groupMods.length) return;
+
+      const block = document.createElement("section");
+      block.className = "group-block";
+
+      const header = document.createElement("div");
+      header.className = "group-header";
+      header.innerHTML = `
+        <h2>${group}</h2>
+        <span>${groupMods.length} module${groupMods.length > 1 ? "s" : ""}</span>
+      `;
+      block.appendChild(header);
+
+      const grid = document.createElement("div");
+      grid.className = "module-grid";
+
+      for (const mod of groupMods) {
+        const card = document.createElement("article");
+        card.className = "module-card";
+        card.id = `module-${mod.id}`;
+
+        const def = MODULE_DEFINITIONS[mod.id] || {};
+        const subtitle = def.subtitle || "";
+        const description = mod.description || subtitle || "No description provided.";
+        const showToggle = def.toggle !== false;
+
+        card.innerHTML = `
+          <div class="module-card-inner">
+            <div class="module-chip-row">
+              <div class="module-name">${mod.name}</div>
+              ${
+                showToggle
+                  ? `<label class="toggle">
+                      <input type="checkbox" ${mod.enabled ? "checked" : ""} data-module-id="${mod.id}">
+                      <span class="slider"></span>
+                    </label>`
+                  : ""
+              }
+            </div>
+            <div class="module-desc">${description}</div>
+            <div class="module-footer">
+              <span class="badge ${mod.enabled ? "badge-on" : ""}">
+                ${mod.enabled ? "Enabled" : "Disabled"}
+              </span>
+              <button class="btn-ghost" data-configure-id="${mod.id}">
+                ⚙ Configure
+              </button>
+            </div>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      }
+
+      block.appendChild(grid);
+      modulesContainer.appendChild(block);
+    });
+
+    // Attach listeners
+    modulesContainer.querySelectorAll('input[type="checkbox"]').forEach(input => {
+      input.addEventListener("change", onToggleModule);
+    });
+    modulesContainer.querySelectorAll("[data-configure-id]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-configure-id");
+        const mod = currentModules.find(m => m.id === id);
+        if (mod) openModuleModal(mod);
+      });
+    });
+  }
+
+  async function onToggleModule(e) {
+    const moduleId = e.target.getAttribute("data-module-id");
+    const enabled = e.target.checked;
+    const card = e.target.closest(".module-card");
+    const badge = card.querySelector(".badge");
+
+    // optimistic UI
+    badge.textContent = enabled ? "Enabled" : "Disabled";
+    badge.classList.toggle("badge-on", enabled);
+    changesBadge.textContent = "Changes applied";
+    changesBadge.style.borderColor = "rgba(34,197,94,0.6)";
+    changesBadge.style.color = "#bbf7d0";
+
+    try {
+      const res = await fetch(`/api/modules/toggle/${moduleId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ guildId, enabled })
+      });
+      if (!res.ok) throw new Error("Toggle failed");
+      const idx = currentModules.findIndex(m => m.id === moduleId);
+      if (idx !== -1) {
+        currentModules[idx].enabled = enabled;
+      }
+    } catch (err) {
+      console.error("Toggle error:", err);
+      // revert
+      e.target.checked = !enabled;
+      badge.textContent = !enabled ? "Enabled" : "Disabled";
+      badge.classList.toggle("badge-on", !enabled);
+      changesBadge.textContent = "Toggle failed";
+      changesBadge.style.borderColor = "rgba(248,113,113,0.8)";
+      changesBadge.style.color = "#fecaca";
+      alert("Failed to toggle module. Check API logs.");
+    }
+  }
+
+  // ====== MODAL LOGIC ======
+  function openModuleModal(mod) {
+    currentModule = mod;
+
+    const def = MODULE_DEFINITIONS[mod.id] || { fields: [] };
+    modalTitle.textContent = mod.name;
+    modalSubtitle.textContent =
+      def.subtitle || "Edit configuration for this module.";
+    modalHints.textContent =
+      def.hints ||
+      "Values here are stored in MongoDB. Your bot should read them and sync them to its own models.";
+
+    const settings = mod.settings || {};
+    modalFields.innerHTML = "";
+
+    const fields = def.fields || [];
+    if (!fields.length) {
+      const p = document.createElement("p");
+      p.textContent =
+        "This module currently has no specific editor. You can still toggle it on/off from the main view.";
+      p.style.fontSize = "13px";
+      p.style.color = "var(--text-muted)";
+      modalFields.appendChild(p);
+    } else {
+      for (const field of fields) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "field-group";
+
+        const label = document.createElement("div");
+        label.className = "field-label";
+        label.textContent = field.label;
+
+        const desc = document.createElement("div");
+        desc.className = "field-description";
+        desc.textContent = field.description || "";
+
+        let input;
+        if (field.type === "textarea") {
+          input = document.createElement("textarea");
+        } else {
+          input = document.createElement("input");
+          input.type = field.type || "text";
+        }
+
+        input.name = field.key;
+        if (settings[field.key] !== undefined && settings[field.key] !== null) {
+          input.value = String(settings[field.key]);
+        }
+
+        wrapper.appendChild(label);
+        if (field.description) wrapper.appendChild(desc);
+        wrapper.appendChild(input);
+        modalFields.appendChild(wrapper);
+      }
+    }
+
+    saveStatus.innerHTML =
+      '<span class="icon">💾</span><span>Waiting for changes…</span>';
+    modalBackdrop.classList.add("show");
+  }
+
+  function closeModuleModal() {
+    modalBackdrop.classList.remove("show");
+    currentModule = null;
+  }
+
+  async function saveModuleSettings() {
+    if (!currentModule) return;
+
+    const formData = new FormData(moduleForm);
+    const settings = {};
+    for (const [key, value] of formData.entries()) {
+      settings[key] = value.trim();
+    }
+
+    saveStatus.innerHTML =
+      '<span class="icon">⏳</span><span>Saving to MongoDB…</span>';
+    changesBadge.textContent = "Saving…";
+    changesBadge.style.borderColor = "rgba(248,163,54,0.7)";
+    changesBadge.style.color = "#fed7aa";
+
+    try {
+      const res = await fetch(`/api/modules/update/${currentModule.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader
+        },
+        body: JSON.stringify({ guildId, settings })
+      });
+      if (!res.ok) throw new Error("Save failed");
+      const data = await res.json();
+
+      // update in-memory copy
+      currentModule.settings = data.settings || settings;
+      const idx = currentModules.findIndex(m => m.id === currentModule.id);
+      if (idx !== -1) currentModules[idx] = currentModule;
+
+      saveStatus.innerHTML =
+        '<span class="icon">✅</span><span>Saved. Bot will pick up changes via Mongo.</span>';
+      changesBadge.textContent = "All changes saved";
+      changesBadge.style.borderColor = "rgba(34,197,94,0.6)";
+      changesBadge.style.color = "#bbf7d0";
+    } catch (err) {
+      console.error("Save settings error:", err);
+      saveStatus.innerHTML =
+        '<span class="icon">❌</span><span>Failed to save. Check API logs.</span>';
+      changesBadge.textContent = "Save failed";
+      changesBadge.style.borderColor = "rgba(248,113,113,0.8)";
+      changesBadge.style.color = "#fecaca";
+    }
+  }
+
+  function resetModuleForm() {
+    if (!currentModule) return;
+    openModuleModal(currentModule);
+    saveStatus.innerHTML =
+      '<span class="icon">💾</span><span>Form reset to last saved values.</span>';
+  }
+
+  // ====== NAV + EVENTS ======
+  document.getElementById("backBtn").addEventListener("click", () => {
+    window.location.href = "/dashboard.html";
   });
-  saveStatus.textContent = "✅ Saved successfully.";
-  setTimeout(() => (saveStatus.textContent = ""), 2500);
-};
 
-loadModules();
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    localStorage.removeItem("safeguard_token");
+    localStorage.removeItem("sg_token");
+    localStorage.removeItem("token");
+    window.location.href = "/";
+  });
+
+  document.getElementById("closeModalBtn").addEventListener("click", closeModuleModal);
+  document.getElementById("saveFormBtn").addEventListener("click", saveModuleSettings);
+  document.getElementById("resetFormBtn").addEventListener("click", resetModuleForm);
+
+  modalBackdrop.addEventListener("click", (e) => {
+    if (e.target === modalBackdrop) closeModuleModal();
+  });
+
+  // ====== INIT ======
+  (async function init() {
+    pageTitle.textContent = "Server Modules";
+    await loadUser();
+    await loadModules();
+  })();
 </script>
 </body>
 </html>
