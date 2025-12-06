@@ -12,6 +12,7 @@ const app = express();
 /* ======================================================
    1️⃣ STRIPE WEBHOOK HANDLER (Dedicated DB Connection)
    ====================================================== */
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // dedicated mongoose connection JUST for Stripe licenses (MONGO_URI)
@@ -86,6 +87,7 @@ app.post(
 /* ======================================================
    2️⃣ EXPRESS JSON PARSERS (after webhook)
    ====================================================== */
+
 // IMPORTANT: must come AFTER the webhook raw handler
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -93,6 +95,7 @@ app.use(express.urlencoded({ extended: true }));
 /* ======================================================
    3️⃣ ENVIRONMENT VARIABLES
    ====================================================== */
+
 const {
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
@@ -110,6 +113,7 @@ if (
 ) {
   console.warn("⚠️ Missing one or more Discord/SESSION env vars.");
 }
+
 if (!MONGODB_URI) {
   console.warn("⚠️ MONGODB_URI is not set.");
 }
@@ -117,12 +121,14 @@ if (!MONGODB_URI) {
 /* ======================================================
    4️⃣ STATIC FILES
    ====================================================== */
+
 const publicPath = path.join(__dirname, "public");
 app.use(express.static(publicPath));
 
 /* ======================================================
    5️⃣ DATABASE (MongoDB) — main app DB
    ====================================================== */
+
 mongoose
   .connect(MONGODB_URI)
   .then(() => console.log("✅ MongoDB connected"))
@@ -131,6 +137,7 @@ mongoose
 /* ======================================================
    6️⃣ MODULE SCHEMA AND DEFAULTS
    ====================================================== */
+
 const moduleSchema = new mongoose.Schema({
   guildId: String,
   id: String,
@@ -224,6 +231,7 @@ async function ensureModulesForGuild(guildId) {
       upsert: true
     }
   }));
+
   if (ops.length) {
     await Module.bulkWrite(ops);
     console.log(`✅ Seeded modules for guild ${guildId}`);
@@ -233,12 +241,14 @@ async function ensureModulesForGuild(guildId) {
 /* ======================================================
    7️⃣ NODE-FETCH HELPER
    ====================================================== */
+
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fn }) => fn(...args));
 
 /* ======================================================
    8️⃣ AUTH / USER ROUTES
    ====================================================== */
+
 app.get("/", (_, res) =>
   res.sendFile(path.join(publicPath, "index.html"))
 );
@@ -271,7 +281,9 @@ app.get("/auth/discord/callback", async (req, res) => {
       body: params,
       headers: { "Content-Type": "application/x-www-form-urlencoded" }
     });
+
     const oauthData = await tokenRes.json();
+
     if (!oauthData.access_token) {
       console.error("OAuth token error:", oauthData);
       return res.redirect("/?error=oauth_failed");
@@ -280,6 +292,7 @@ app.get("/auth/discord/callback", async (req, res) => {
     const userRes = await fetch("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${oauthData.access_token}` }
     });
+
     const user = await userRes.json();
 
     const token = jwt.sign(
@@ -310,6 +323,7 @@ app.get("/api/user", (req, res) => {
 /* ======================================================
    9️⃣ GUILD ROUTES
    ====================================================== */
+
 app.get("/api/guilds", async (req, res) => {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: "Missing token" });
@@ -318,11 +332,13 @@ app.get("/api/guilds", async (req, res) => {
     const decoded = jwt.verify(auth.split(" ")[1], SESSION_SECRET);
     const access = decoded.access_token;
 
+    // User guilds (OAuth)
     const userRes = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bearer ${access}` }
     });
     const userGuilds = await userRes.json();
 
+    // Bot guilds
     const botRes = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bot ${BOT_TOKEN}` }
     });
@@ -331,6 +347,7 @@ app.get("/api/guilds", async (req, res) => {
       Array.isArray(botGuilds) ? botGuilds.map((g) => g.id) : []
     );
 
+    // Manageable guilds (user has MANAGE_GUILD)
     const manageable = (Array.isArray(userGuilds) ? userGuilds : [])
       .filter(
         (g) => (BigInt(g.permissions ?? 0n) & 0x20n) === 0x20n
@@ -347,11 +364,15 @@ app.get("/api/guilds", async (req, res) => {
 /* ======================================================
    🔟 MODULE ROUTES
    ====================================================== */
+
 app.get("/api/modules/:guildId", async (req, res) => {
   try {
     const guildId = req.params.guildId;
+
     await ensureModulesForGuild(guildId);
+
     const modules = await Module.find({ guildId }).sort({ name: 1 });
+
     res.json(modules);
   } catch (err) {
     console.error("Get modules error:", err);
@@ -359,16 +380,44 @@ app.get("/api/modules/:guildId", async (req, res) => {
   }
 });
 
+/**
+ * Toggle a module ON/OFF.
+ *
+ * Frontend sends:
+ *  POST /api/modules/toggle/:moduleId
+ *  body: { guildId, enabled }
+ *
+ * Where:
+ *  - :moduleId is the string id (e.g. "welcome", "logging")
+ *  - guildId is the server ID
+ */
 app.post("/api/modules/toggle/:moduleId", async (req, res) => {
   try {
-    const mod = await Module.findById(req.params.moduleId);
-    if (!mod) return res.status(404).json({ error: "Module not found" });
+    const moduleId = req.params.moduleId;
+    const { guildId, enabled } = req.body || {};
 
-    mod.enabled = !mod.enabled;
+    if (!guildId) {
+      return res.status(400).json({ error: "Missing guildId in body" });
+    }
+
+    const mod = await Module.findOne({ guildId, id: moduleId });
+    if (!mod) {
+      return res.status(404).json({ error: "Module not found" });
+    }
+
+    // If frontend explicitly sends a boolean, use it; otherwise toggle
+    if (typeof enabled === "boolean") {
+      mod.enabled = enabled;
+    } else {
+      mod.enabled = !mod.enabled;
+    }
+
     await mod.save();
+
     console.log(
       `🔧 Toggled module ${mod.id} (${mod.guildId}) → ${mod.enabled}`
     );
+
     res.json({ success: true, enabled: mod.enabled });
   } catch (err) {
     console.error("Toggle module error:", err);
@@ -376,14 +425,37 @@ app.post("/api/modules/toggle/:moduleId", async (req, res) => {
   }
 });
 
+/**
+ * Update module settings.
+ *
+ * Frontend sends:
+ *  POST /api/modules/update/:moduleId
+ *  body: { guildId, settings }
+ *
+ * Where:
+ *  - :moduleId is the string id (e.g. "welcome")
+ *  - guildId is the server ID
+ *  - settings is an object with key/value pairs
+ */
 app.post("/api/modules/update/:moduleId", async (req, res) => {
   try {
-    const mod = await Module.findById(req.params.moduleId);
-    if (!mod) return res.status(404).json({ error: "Module not found" });
+    const moduleId = req.params.moduleId;
+    const { guildId, settings } = req.body || {};
 
-    mod.settings = req.body.settings || {};
+    if (!guildId) {
+      return res.status(400).json({ error: "Missing guildId in body" });
+    }
+
+    const mod = await Module.findOne({ guildId, id: moduleId });
+    if (!mod) {
+      return res.status(404).json({ error: "Module not found" });
+    }
+
+    mod.settings = settings || {};
     await mod.save();
+
     console.log(`💾 Updated settings for ${mod.id} (${mod.guildId})`);
+
     res.json({ success: true, settings: mod.settings });
   } catch (err) {
     console.error("Update module settings error:", err);
@@ -394,6 +466,7 @@ app.post("/api/modules/update/:moduleId", async (req, res) => {
 /* ======================================================
    11️⃣ STRIPE CHECKOUT
    ====================================================== */
+
 app.post("/api/checkout", async (req, res) => {
   try {
     const paymentIntent = await stripe.paymentIntents.create({
@@ -423,6 +496,7 @@ app.post("/api/checkout", async (req, res) => {
 /* ======================================================
    12️⃣ SUCCESS ROUTE (uses Stripe License DB)
    ====================================================== */
+
 app.get("/success/:paymentId", async (req, res) => {
   try {
     const paymentId = req.params.paymentId;
@@ -485,6 +559,7 @@ app.get("/success/:paymentId", async (req, res) => {
 /* ======================================================
    BILLING PORTAL — Opens Stripe Customer Dashboard
    ====================================================== */
+
 app.post("/api/billing/portal", async (req, res) => {
   try {
     const { customerId } = req.body;
@@ -544,13 +619,14 @@ app.post("/api/billing/portal", async (req, res) => {
   }
 });
 
-
 /* ======================================================
    13️⃣ STATIC PAGES
    ====================================================== */
+
 app.get("/dashboard", (_, res) =>
   res.sendFile(path.join(publicPath, "dashboard.html"))
 );
+
 app.get("/dashboard/:id", (_, res) =>
   res.sendFile(path.join(publicPath, "dashboard-guild.html"))
 );
@@ -558,10 +634,13 @@ app.get("/dashboard/:id", (_, res) =>
 /* ======================================================
    14️⃣ STARTUP
    ====================================================== */
+
 const PORT = process.env.PORT || 3000;
+
 if (!process.env.VERCEL) {
   app.listen(PORT, () =>
     console.log(`✅ Safeguard panel running on port ${PORT}`)
   );
 }
+
 module.exports = app;
