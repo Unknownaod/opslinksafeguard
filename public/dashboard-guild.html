@@ -1670,8 +1670,8 @@
           body: JSON.stringify({ guildId, enabled }),
         });
         const data = await res.json();
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || data.details || "Toggle failed");
+        if (!res.ok || (data.success !== true && data.enabled === undefined)) {
+         throw new Error(data.error || "Toggle failed");
         }
         const idx = currentModules.findIndex((m) => m.id === moduleId);
         if (idx !== -1) currentModules[idx].enabled = enabled;
