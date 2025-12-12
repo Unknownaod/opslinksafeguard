@@ -17,24 +17,27 @@ const PunishmentConfig = require("../../models/PunishmentConfig");
 const Sticky = require("../../models/Sticky");
 
 module.exports = async (req, res) => {
-  if (req.method !== "GET") {
-    res.status(405).json({ error: "Method Not Allowed" });
-    return;
-  }
+  if (req.method !== "GET")
+    return res.status(405).json({ error: "Method Not Allowed" });
 
-  const { guildId } = req.query;
-  if (!guildId) {
-    res.status(400).json({ error: "Missing guildId" });
-    return;
-  }
+  // ✅ Use params for /api/modules/:guildId routes
+  const guildId = req.params?.guildId || req.query?.guildId;
+  if (!guildId)
+    return res.status(400).json({ error: "Missing guildId parameter" });
 
   try {
     await connectDB();
 
-    // helpers
-    const ensure = async (Model, query) =>
-      (await Model.findOne(query)) || (await Model.create(query));
+    console.log(`[Modules] Fetching configuration for guild ${guildId}`);
 
+    // Helper to ensure document exists
+    const ensure = async (Model, query, defaults = {}) => {
+      const existing = await Model.findOne(query);
+      if (existing) return existing;
+      return await Model.create({ ...query, ...defaults });
+    };
+
+    // =============== FETCH/CREATE CONFIGS ===============
     const welcomeCfg = await ensure(WelcomeGuildConfig, { guildId });
     const guildCfg = await ensure(GuildConfig, { guildId });
     const auditCfg = await ensure(AuditGuildConfig, { guildId });
@@ -74,8 +77,8 @@ module.exports = async (req, res) => {
       moduleId: "polls",
     });
 
+    // =============== MODULE DEFINITIONS ===============
     const modules = [
-      // GENERAL
       {
         id: "welcome",
         name: "Welcome & Goodbye",
@@ -125,9 +128,7 @@ module.exports = async (req, res) => {
         group: "General",
         enabled: !!guildCfg.modLogChannelId,
         description: "Warn, kick, ban and moderation log channel.",
-        settings: {
-          modLogChannelId: guildCfg.modLogChannelId || "",
-        },
+        settings: { modLogChannelId: guildCfg.modLogChannelId || "" },
       },
       {
         id: "auditlogs",
@@ -136,9 +137,7 @@ module.exports = async (req, res) => {
         enabled: !!auditCfg.modLogChannelId,
         description:
           "Configuration changes and join/leave logging channel for the guild.",
-        settings: {
-          auditLogChannelId: auditCfg.modLogChannelId || "",
-        },
+        settings: { auditLogChannelId: auditCfg.modLogChannelId || "" },
       },
       {
         id: "vclogs",
@@ -146,19 +145,16 @@ module.exports = async (req, res) => {
         group: "General",
         enabled: !!vcCfg.modLogChannelId,
         description: "Track joins, leaves and moves between voice channels.",
-        settings: {
-          vcLogChannelId: vcCfg.modLogChannelId || "",
-        },
+        settings: { vcLogChannelId: vcCfg.modLogChannelId || "" },
       },
       {
         id: "adminrole",
         name: "Admin Role",
         group: "General",
         enabled: !!adminRole?.roleId,
-        description: "Designated SafeGuard admin role for the dashboard/bot.",
-        settings: {
-          adminRoleId: adminRole?.roleId || "",
-        },
+        description:
+          "Designated SafeGuard admin role for the dashboard/bot.",
+        settings: { adminRoleId: adminRole?.roleId || "" },
       },
       {
         id: "muterole",
@@ -166,9 +162,7 @@ module.exports = async (req, res) => {
         group: "General",
         enabled: !!muteRole?.roleId,
         description: "Global mute role used by moderation commands.",
-        settings: {
-          muteRoleId: muteRole?.roleId || "",
-        },
+        settings: { muteRoleId: muteRole?.roleId || "" },
       },
       {
         id: "lockdown",
@@ -177,7 +171,8 @@ module.exports = async (req, res) => {
         enabled:
           (lockdownCfg.channelRoles?.length || 0) > 0 ||
           (lockdownCfg.serverRoles?.length || 0) > 0,
-        description: "Control which roles keep permissions during lockdown.",
+        description:
+          "Control which roles keep permissions during lockdown.",
         settings: {
           channelRoles: (lockdownCfg.channelRoles || []).join(","),
           serverRoles: (lockdownCfg.serverRoles || []).join(","),
@@ -190,12 +185,8 @@ module.exports = async (req, res) => {
         enabled: !!botStatus?.channelId,
         description:
           "Channel where SafeGuard posts its live status/uptime message.",
-        settings: {
-          statusChannelId: botStatus?.channelId || "",
-        },
+        settings: { statusChannelId: botStatus?.channelId || "" },
       },
-
-      // SECURITY / PROTECTION
       {
         id: "antiraid",
         name: "Anti-Raid",
@@ -232,18 +223,15 @@ module.exports = async (req, res) => {
         settings: {
           rules:
             (punishCfg.rules || [])
-              .map((r) =>
-                [
-                  r.warningCount,
-                  r.action,
-                  r.duration != null ? r.duration : "",
-                ].join(":")
+              .map(
+                (r) =>
+                  `${r.warningCount}:${r.action}:${
+                    r.duration != null ? r.duration : ""
+                  }`
               )
               .join("\n") || "",
         },
       },
-
-      // ENGAGEMENT
       {
         id: "leveling",
         name: "XP & Leveling",
@@ -329,9 +317,10 @@ module.exports = async (req, res) => {
       },
     ];
 
-    res.json(modules);
+    // ✅ Success response
+    res.status(200).json(modules);
   } catch (err) {
-    console.error("GET /api/modules error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("❌ GET /api/modules/:guildId error:", err);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
   }
 };
