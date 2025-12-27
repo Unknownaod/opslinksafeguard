@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safeguard Docs – OpsLink Systems</title>
+<link rel="icon" href="assets/SafeGuard-Bot.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #04060d;
+  --card: #0b1220;
+  --border: rgba(255,255,255,0.08);
+
+  --accent: #ff6600;
+  --accent-soft: rgba(255,102,0,0.18);
+  --accent2: #ff944d;
+
+  --text: #e5e7eb;
+  --muted: #a1a1aa;
+}
+*{box-sizing:border-box}
+
+body {
+  margin:0;
+  background: radial-gradient(circle at 20% 20%, #0b1220, #050816 70%);
+  color: var(--text);
+  font-family: Inter, sans-serif;
+}
+
+/* ================================
+   NAVBAR (MATCHES HOME)
+================================ */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 60px;
+  background: rgba(10,15,25,0.7);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-logo-link {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .nav-logo {
+      height: 40px;
+    }
+
+    .nav-title {
+      margin-left: 8px;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+.nav-left img {
+  width: 36px;
+  height: 36px;
+  filter: drop-shadow(0 0 6px rgba(255,102,0,0.4));
+}
+
+.nav-left span {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.nav-links a {
+  color: var(--muted);
+  text-decoration: none;
+  margin-left: 24px;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+.nav-links a:hover {
+  color: var(--accent2);
+}
+
+.nav-links a.active {
+  color: #ff944d;
+  text-shadow: 0 0 6px rgba(255,255,255,0.25);
+}
+
+/* ================================
+   LAYOUT
+================================ */
+.container{
+  max-width:1400px;
+  margin:0 auto;
+  padding:48px;
+  display:grid;
+  grid-template-columns:300px 1fr;
+  gap:48px
+}
+
+/* ================================
+   SIDEBAR
+================================ */
+.sidebar {
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.06),
+    rgba(255,255,255,0.02)
+  );
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px;
+  position: sticky;
+  top: 120px; /* below navbar */
+  height: fit-content;
+  backdrop-filter: blur(6px);
+}
+
+/* Section headers */
+.sidebar h4 {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin: 18px 0 14px;
+}
+
+.sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  position: relative;
+  transition: 0.2s ease;
+}
+
+.sidebar a:hover {
+  background: rgba(255,102,0,0.12);
+  transform: translateX(4px);
+}
+
+.sidebar a.active {
+  background: var(--accent-soft);
+  color: #fff;
+}
+
+.sidebar a::before{
+  content:"";
+  position:absolute;
+  left:-8px;
+  top:8px;
+  bottom:8px;
+  width:3px;
+  border-radius:3px;
+  background:transparent;
+  transition:.25s;
+}
+
+.sidebar a.active::before{
+  background:var(--accent);
+}
+
+.search{
+  width:100%;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:#02030a;
+  color:var(--text);
+  margin-bottom:16px
+}
+
+.bot-icon{width:18px}
+
+/* ================================
+   CONTENT CARDS
+================================ */
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.01));
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:26px;
+  margin-bottom:18px
+}
+
+.card h2{color:var(--accent);margin:0}
+.card-content{margin-top:14px}
+.hidden{display:none}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid var(--border);padding:10px;text-align:center}
+th{color:var(--accent)}
+
+footer {
+  border-top: 1px solid rgba(255,255,255,0.05);
+  background: linear-gradient(
+    180deg,
+    rgba(7,11,21,0.85),
+    rgba(7,11,21,0.6)
+  );
+  backdrop-filter: blur(8px);
+  color: var(--muted);
+  text-align: center;
+  padding: 30px 10px 40px;
+  font-size: 0.9rem;
+  margin-top: 60px;
+}
+
+footer a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="/home" class="nav-logo-link">
+      <img src="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" alt="Safeguard Logo" class="nav-logo" />
+      <span class="nav-title">OpsLink Safeguard</span>
+    </a>
+  </div>
+  <div class="nav-links">
+    <a href="/home">Home</a>
+    <a href="/bots">Our Bots</a>
+    <a href="/panel">Panel</a>
+    <a href="/status">Status</a>
+    <a href="/docs" class="active">Docs</a>
+    <a href="/premier">Premier</a>
+    <a href="/billing">Billing</a>
+    <a href="https://discord.gg/UF6Dt66phh">Support</a>
+  </div>
+</nav>
+
+<div class="container">
+<aside class="sidebar">
+<input class="search" placeholder="Search docs…" id="search">
+<h4>Select Bot</h4>
+<a class="bot-link active" data-bot="safeguard" data-name="Safeguard" data-icon="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png"><img class="bot-icon" src="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png">Safeguard</a>
+<a class="bot-link" data-bot="music" data-name="Music" data-icon="https://i.postimg.cc/C5BhbPc3/Safe-Guard-Music.png"><img class="bot-icon" src="https://i.postimg.cc/C5BhbPc3/Safe-Guard-Music.png">Music</a>
+<h4>Documentation</h4>
+<div id="docNav">
+<a class="doc-link" data-section="overview">📘 Overview</a>
+<a class="doc-link" data-section="setup">⚙️ Setup</a>
+<a class="doc-link" data-section="commands">⌨️ Commands</a>
+<a class="doc-link" data-section="faq">❓ FAQ</h2></a>
+<a class="doc-link" data-section="additional">📎 Additional Info</a>
+</div>
+</aside>
+
+<main>
+<div class="bot-docs" data-bot="safeguard">
+<div class="card"><h2>Permission Matrix</h2>
+<table>
+<tr><th>Feature</th><th>Admin</th><th>Moderator</th><th>User</th></tr>
+<tr><td>Initial Setup</td><td>✔</td><td>✖</td><td>✖</td></tr>
+<tr><td>Threat Protection</td><td>✔</td><td>✔</td><td>✖</td></tr>
+<tr><td>Lockdown</td><td>✔</td><td>✖</td><td>✖</td></tr>
+</table></div>
+
+<div class="card"><h2>Overview</h2><p>Safeguard actively protects Discord servers from raids, spam, compromised accounts, and destructive actions using real-time behavior analysis.</p></div>
+<div class="card"><h2>Setup</h2><ol><li>Invite Safeguard</li><li>Run /setup</li><li>Select protection preset</li></ol></div>
+<div class="card">
+  <h2>Commands</h2>
+  <table>
+    <tr>
+      <th>Command</th>
+      <th>Description</th>
+      <th>Permission</th>
+    </tr>
+    <tr>
+      <td>/setup</td>
+      <td>Initial bot configuration</td>
+      <td>Admin</td>
+    </tr>
+    <tr>
+      <td>/status</td>
+      <td>View current protection status</td>
+      <td>Moderator</td>
+    </tr>
+    <tr>
+      <td>/lockdown</td>
+      <td>Lock server during active threat</td>
+      <td>Admin</td>
+    </tr>
+  </table>
+</div>
+<div class="card"><h2>FAQ</h2><p><strong>Does it need admin?</strong> Yes.</p></div>
+<div class="card"><h2>Additional Info</h2><ul><li>AI threat scoring</li><li>Audit logs</li></ul></div>
+</div>
+
+<div class="bot-docs hidden" data-bot="music">
+<div class="card"><h2>Permission Matrix</h2>
+<table>
+<tr><th>Feature</th><th>Admin</th><th>DJ</th><th>User</th></tr>
+<tr><td>Play</td><td>✔</td><td>✔</td><td>✔</td></tr>
+<tr><td>Skip</td><td>✔</td><td>✔</td><td>✖</td></tr>
+</table></div>
+
+<div class="card"><h2>Overview</h2><p>High-quality Discord music playback with queues, filters, and low latency.</p></div>
+<div class="card"><h2>Setup</h2><ol><li>Invite Music bot</li><li>Join VC</li></ol></div>
+<div class="card">
+  <h2>Commands</h2>
+  <table>
+    <tr>
+      <th>Command</th>
+      <th>Description</th>
+      <th>Permission</th>
+    </tr>
+    <tr>
+      <td>/setup</td>
+      <td>Initial bot configuration</td>
+      <td>Admin</td>
+    </tr>
+    <tr>
+      <td>/status</td>
+      <td>View current protection status</td>
+      <td>Moderator</td>
+    </tr>
+    <tr>
+      <td>/lockdown</td>
+      <td>Lock server during active threat</td>
+      <td>Admin</td>
+    </tr>
+  </table>
+</div>
+<div class="card"><h2>FAQ</h2><p><strong>Spotify supported?</strong> Yes.</p></div>
+<div class="card"><h2>Additional Info</h2><ul><li>24/7 uptime</li><li>Filters</li></ul></div>
+</div>
+</main>
+</div>
+
+<footer>
+    © 2025 OpsLink Systems Network — All Rights Reserved.<br>
+    Visit <a href="https://opslinksystems.xyz">OpsLink Systems</a> for more.
+  </footer>
+</body>
+
+<script>
+let currentBot='safeguard';
+
+function showBot(bot){
+  currentBot=bot;
+  document.querySelectorAll('.bot-docs').forEach(b=>b.classList.add('hidden'));
+  document.querySelector(`.bot-docs[data-bot="${bot}"]`).classList.remove('hidden');
+  document.querySelectorAll('.bot-link').forEach(l=>l.classList.remove('active'));
+  document.querySelector(`.bot-link[data-bot="${bot}"]`).classList.add('active');
+}
+
+document.querySelectorAll('.bot-link').forEach(l=>l.onclick=()=>showBot(l.dataset.bot));
+
+const links=document.querySelectorAll('.doc-link');
+links.forEach(l=>l.onclick=e=>{
+  e.preventDefault();
+  const card=[...document.querySelectorAll(`.bot-docs[data-bot="${currentBot}"] .card`)]
+    .find(c=>c.querySelector('h2')?.innerText.toLowerCase()===l.dataset.section);
+  if(!card) return;
+  const y=card.getBoundingClientRect().top+window.scrollY-140;
+  window.scrollTo({top:y,behavior:'smooth'});
+});
+
+window.addEventListener('scroll',()=>{
+  const cards=[...document.querySelectorAll(`.bot-docs[data-bot="${currentBot}"] .card`)]
+    .filter(c=>['overview','setup','commands','faq','additional']
+    .includes(c.querySelector('h2')?.innerText.toLowerCase()));
+
+  let active=null;
+  cards.forEach(c=>{if(c.getBoundingClientRect().top<160) active=c});
+  if(!active) return;
+  const key=active.querySelector('h2').innerText.toLowerCase();
+  links.forEach(a=>a.classList.toggle('active',a.dataset.section===key));
+});
+
+search.oninput=()=>{
+  const q=search.value.toLowerCase();
+  document.querySelectorAll('.card').forEach(c=>c.style.display=c.innerText.toLowerCase().includes(q)?'':'none');
+};
+</script>
+</body>
+</html>

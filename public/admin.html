@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel – OpsLink Safeguard</title>
+<link rel="icon" href="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+ --bg:#050816;
+ --panel:#0b1220;
+ --panel2:#020617;
+ --accent:#ff7a18;
+ --accent2:#ff944d;
+ --text:#e5e7eb;
+ --muted:#9ca3af;
+ --ok:#22c55e;
+ --warn:#f59e0b;
+ --danger:#ef4444;
+}
+
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ font-family:system-ui;
+ background:radial-gradient(1200px 600px at 50% -20%,#0f172a,#050816);
+ color:var(--text);
+ min-height:100vh;
+ display:flex;
+ flex-direction:column;
+}
+
+/* NAVBAR */
+nav{
+ position:sticky;
+ top:0;
+ z-index:100;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ padding:18px 60px;
+ background:linear-gradient(180deg,#020617,#050816);
+ border-bottom:1px solid rgba(255,255,255,.06);
+}
+
+.nav-left{
+ display:flex;
+ align-items:center;
+ gap:12px;
+ font-weight:700;
+}
+
+.nav-logo-link {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .nav-logo {
+      height: 40px;
+    }
+
+    .nav-title {
+      margin-left: 8px;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+.nav-left img{width:34px}
+
+.nav-left span{
+ color:var(--accent);
+ font-size:1.15rem;
+}
+
+.nav-links a{
+ color:var(--muted);
+ text-decoration:none;
+ margin-left:26px;
+ font-weight:500;
+}
+
+.nav-links a:hover{color:var(--accent)}
+.nav-links a.active{color:var(--accent2)}
+
+/* CONTENT */
+.wrap{
+ flex:1;
+ max-width:1200px;
+ margin:60px auto;
+ padding:0 24px;
+}
+
+h1{
+ color:var(--accent);
+ margin-bottom:30px;
+}
+
+/* CARDS */
+.section{
+ background:linear-gradient(180deg,#020617,#0b1220);
+ border-radius:18px;
+ padding:24px;
+ margin-bottom:30px;
+ border: 1px solid rgba(255,255,255,0.05);
+ box-shadow: 0 0 20px rgba(255,102,0,0.15);
+}
+
+.section h2{
+ margin-top:0;
+ margin-bottom:18px;
+ color:var(--accent2);
+}
+
+/* FORM */
+input, select, textarea{
+ width:100%;
+ padding:11px 14px;
+ margin-bottom:12px;
+ border-radius:10px;
+ border:1px solid rgba(255,255,255,.08);
+ background:#020617;
+ color:var(--text);
+ outline:none;
+}
+
+textarea{resize:none;height:80px}
+
+input:focus, select:focus, textarea:focus{
+ border-color:var(--accent);
+ box-shadow:0 0 0 2px rgba(255,122,24,.15);
+}
+
+/* BUTTONS */
+button{
+ padding:10px 16px;
+ border-radius:10px;
+ border:none;
+ cursor:pointer;
+ font-weight:600;
+ background:linear-gradient(180deg,#ff944d,#ff7a18);
+ color:#020617;
+}
+
+button.danger{
+ background:linear-gradient(180deg,#ff5a5a,#ef4444);
+ color:white;
+}
+
+/* INCIDENTS */
+.incident{
+ background:#020617;
+ border-radius:12px;
+ padding:14px;
+ margin-bottom:12px;
+ border-left:4px solid var(--danger);
+}
+
+.incident.low{border-color:var(--ok)}
+.incident.degraded{border-color:var(--warn)}
+.incident.major{border-color:#fb7185}
+.incident.critical{border-color:var(--danger)}
+
+.incident small{color:var(--muted)}
+
+/* TIMELINE */
+.timeline{
+ margin-top:10px;
+ font-size:.85rem;
+}
+
+.timeline div{
+ margin-top:6px;
+ opacity:.85;
+}
+
+/* LOG */
+.log{
+ font-size:.85rem;
+ opacity:.75;
+}
+
+/* FOOTER */
+footer {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      background: #070b15;
+      color: var(--text-soft);
+      text-align: center;
+      padding: 30px 10px 40px;
+      font-size: 0.9rem;
+      margin-top: 60px;
+    }
+
+    footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    footer a:hover { text-decoration: underline; }
+
+/* ================= ADDED (NON-BREAKING) ================= */
+
+/* Hidden modal scaffold for future incident view */
+#incidentModal{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.65);
+ display:none;
+ align-items:center;
+ justify-content:center;
+ z-index:999;
+}
+
+#incidentModal .modal{
+ background:#020617;
+ border-radius:18px;
+ padding:24px;
+ max-width:520px;
+ width:90%;
+ box-shadow:0 40px 80px rgba(0,0,0,.7);
+}
+
+/* Utility class (safe to ignore if unused) */
+.hidden{display:none}
+
+</style>
+</head>
+
+<body>
+
+<nav>
+ <div class="nav-left">
+    <a href="/home" class="nav-logo-link">
+        <img src="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" alt="Safeguard Logo" class="nav-logo" />
+        <span class="nav-title">OpsLink Safeguard</span>
+    </a>
+</div>
+ <div class="nav-links">
+  <a href="/home">Home</a>
+  <a href="/status">Status</a>
+  <a href="/admin" class="active">Admin</a>
+  <a href="#" onclick="logout()">Logout</a>
+ </div>
+</nav>
+
+<div class="wrap">
+
+<!-- CREATE INCIDENT -->
+<div class="section">
+<h2>Create Incident</h2>
+
+<select id="incidentService" aria-label="Service"></select>
+
+<select id="incidentSeverity" aria-label="Severity">
+ <option value="low">Low</option>
+ <option value="degraded">Degraded</option>
+ <option value="major">Major</option>
+ <option value="critical">Critical</option>
+</select>
+
+<input id="incidentTitle" placeholder="Incident title" aria-label="Incident title">
+<textarea id="incidentReason" placeholder="Public reason (shown on status page)" aria-label="Incident reason"></textarea>
+
+<button onclick="createIncident()">Create Incident</button>
+</div>
+
+<!-- ACTIVE INCIDENTS -->
+<div class="section">
+<h2>Active Incidents</h2>
+<div id="activeIncidents" data-empty-text="No active incidents">
+ <small>Loading…</small>
+</div>
+</div>
+
+<!-- MAINTENANCE -->
+<div class="section">
+<h2>Schedule Maintenance</h2>
+
+<select id="maintService" aria-label="Maintenance service"></select>
+<input type="datetime-local" id="maintStart">
+<input type="datetime-local" id="maintEnd">
+<textarea id="maintReason" placeholder="Maintenance reason (public banner)"></textarea>
+
+<button onclick="createMaintenance()">Schedule Maintenance</button>
+</div>
+
+<!-- ACTIVITY LOG -->
+<div class="section">
+<h2>Admin Activity</h2>
+<div id="adminLog" class="log">No activity yet</div>
+</div>
+</div>
+
+<footer>
+  © 2025 OpsLink Systems Network — All Rights Reserved.<br>
+  Visit <a href="https://opslink.systems">OpsLink Systems</a>
+</footer>
+
+<!-- ================= ADDED: INCIDENT MODAL (INACTIVE) ================= -->
+<div id="incidentModal" role="dialog" aria-hidden="true">
+ <div class="modal">
+  <strong>Incident Details</strong>
+  <p>This modal is reserved for future click-to-open incident views.</p>
+  <button onclick="document.getElementById('incidentModal').style.display='none'">
+   Close
+  </button>
+ </div>
+</div>
+
+<script src="admin.js"></script>
+<script>
+async function logout(){
+ await fetch("/api/admin/logout",{method:"POST"});
+ location.href="/admin-login";
+}
+</script>
+
+</body>
+</html>

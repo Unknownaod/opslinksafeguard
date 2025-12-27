@@ -3,57 +3,257 @@
 <head>
   <meta charset="UTF-8" />
   <title>Safeguard Premier — Billing</title>
-  <link rel="icon" href="/assets/Safeguard-Bot.png" />
+  <link rel="icon" href="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" />
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:#050816; --panel:#0b1220ee; --accent:#ff6600; --accent-hover:#ff8c42;
-      --text:#e5e7eb; --muted:#94a3b8; --radius:18px; --glass:rgba(255,255,255,.06);
+  --bg:#050816;
+  --panel:#0b1220ee;
+  --accent:#ff6600;
+  --accent-hover:#ff8c42;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --radius:18px;
+  --glass:rgba(255,255,255,.06);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(145deg,#050816,#090f2d);
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= NAVBAR ================= */
+
+nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 60px;
+      background: rgba(10,15,25,0.7);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body {
-      background:linear-gradient(145deg,#050816,#090f2d);
-      font-family:'Inter',sans-serif; color:var(--text);
-      display:flex; justify-content:center; align-items:center;
-      height:100vh; overflow:hidden;
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    .wrapper {
-      width:480px; padding:48px; background:var(--panel);
-      border-radius:var(--radius); text-align:center;
-      border:1px solid var(--glass); backdrop-filter:blur(18px);
-      box-shadow:0 0 40px rgba(0,0,0,.45); animation:fadeIn .6s ease-out;
+
+    .nav-logo-link {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
     }
-    h1 {
-      font-size:2rem; margin-bottom:12px;
-      background:linear-gradient(90deg,#ff6600,#ffa54d);
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+
+    .nav-logo {
+      height: 40px;
     }
-    p { font-size:1rem; color:var(--muted); margin-bottom:24px; }
-    input {
-      width:100%; padding:14px; background:#11172d; color:white;
-      border:1px solid #1e2a44; border-radius:var(--radius);
-      margin-bottom:16px; font-size:1rem; outline:none;
+
+    .nav-title {
+      margin-left: 8px;
+      font-weight: bold;
+      font-size: 1.2rem;
     }
-    input:focus { border-color:var(--accent); box-shadow:0 0 6px #ff660040; }
-    button {
-      width:100%; padding:14px; margin-top:5px;
-      font-size:1.05rem; font-weight:600;
-      background:var(--accent); color:white; border:none;
-      border-radius:var(--radius); cursor:pointer; transition:.25s;
-      box-shadow:0 0 12px #ff660040;
+
+    .nav-left img {
+      width: 36px;
+      height: 36px;
+      filter: drop-shadow(0 0 6px rgba(255,102,0,0.4));
     }
-    button:hover { background:var(--accent-hover); transform:translateY(-2px); }
-    .small-btn {
-      background:#1a2238; margin-top:12px; box-shadow:none !important;
+
+    .nav-left span {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--accent);
     }
-    .small-btn:hover { background:#263355; }
-    code { color:#ff8c42; font-size:1rem; }
-    footer { font-size:.8rem; opacity:.5; margin-top:18px; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+
+    .nav-links a {
+      color: var(--text-soft);
+      text-decoration: none;
+      margin-left: 24px;
+      font-weight: 500;
+      transition: 0.2s ease;
+    }
+
+    .nav-links a:hover { color: var(--accent2); }
+
+/* ================= PAGE LAYOUT ================= */
+
+.page {
+  min-height: calc(100vh - 80px); /* navbar height */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  flex: 1;
+}
+
+/* ================= BILLING CARD ================= */
+
+.wrapper {
+  width: 480px;
+  padding: 48px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  text-align: center;
+  border: 1px solid var(--glass);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 0 40px rgba(0,0,0,.45);
+  animation: fadeIn .6s ease-out;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg,#ff6600,#ffa54d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+p {
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  background: #11172d;
+  color: white;
+  border: 1px solid #1e2a44;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  font-size: 1rem;
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 6px #ff660040;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 5px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: .25s;
+  box-shadow: 0 0 12px #ff660040;
+}
+
+button:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+.small-btn {
+  background: #1a2238;
+  margin-top: 12px;
+  box-shadow: none;
+}
+
+.small-btn:hover {
+  background: #263355;
+}
+
+code {
+  color: #ff8c42;
+  font-size: 1rem;
+}
+
+footer {
+  font-size: .8rem;
+  opacity: .5;
+  margin-top: 18px;
+}
+
+/* ================= SITE FOOTER ================= */
+
+.site-footer {
+  padding: 30px 10px 40px;
+  margin-top: 60px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  background: linear-gradient(
+    180deg,
+    rgba(7,11,21,0.85),
+    rgba(7,11,21,0.6)
+  );
+  color: var(--muted);
+  backdrop-filter: blur(8px);
+  opacity: 1;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.site-footer a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.site-footer a:hover {
+  text-decoration: underline;
+}
+
+/* ================= ANIMATION ================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
   </style>
 </head>
 <body>
+    <nav>
+    <div class="nav-left">
+      <a href="/home" class="nav-logo-link">
+        <img src="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" alt="Safeguard Logo" class="nav-logo" />
+        <span class="nav-title">OpsLink Safeguard</span>
+      </a>
+    </div>
+    <div class="nav-links">
+      <a href="/home">Home</a>
+      <a href="/bots">Our Bots</a>
+      <a href="/panel">Panel</a>
+      <a href="/status">Status</a>
+      <a href="/docs">Docs</a>
+      <a href="/premier">Premier</a>
+      <a href="/billing" style="color:#ff944d;">Billing</a>
+      <a href="https://discord.gg/UF6Dt66phh">Support</a>
+    </div>
+  </nav>
+
+  <div class="page">
   <div class="wrapper">
     <h1>Billing & Subscription</h1>
     <p>Manage your Safeguard Premier billing profile and subscription.</p>
@@ -77,6 +277,7 @@
     </button>
 
     <footer>Powered securely by Stripe</footer>
+  </div>
   </div>
 
   <script>
@@ -127,5 +328,9 @@
       else alert(data.message || "Unable to access billing portal.");
     }
   </script>
+  <footer class="site-footer">
+  © 2025 OpsLink Systems Network — All Rights Reserved.<br>
+  Visit <a href="https://opslinksystems.xyz">OpsLink Systems</a> for more.
+</footer>
 </body>
 </html>

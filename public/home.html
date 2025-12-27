@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpsLink Safeguard – Discord Security Panel</title>
+  <link rel="icon" href="/assets/Safeguard-Bot.png" />
+<style>
+  :root {
+    --bg-main: #04060d;
+    --bg-card: #0b1220;
+    --accent: #ff6600;
+    --accent2: #ff944d;
+    --text-main: #e5e7eb;
+    --text-soft: #a1a1aa;
+    --radius-lg: 18px;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", sans-serif;
+  }
+
+  body {
+    background: radial-gradient(circle at 20% 20%, #0b1220, #050816 70%);
+    color: var(--text-main);
+    overflow-x: hidden;
+  }
+
+  /* ================================
+     WARNING BANNER
+  ================================ */
+  .warning-banner {
+    background: #ffd60a;
+    color: #000;
+    text-align: center;
+    font-weight: 600;
+    padding: 14px 10px;
+    font-size: 0.95rem;
+    border-bottom: 2px solid #e6b800;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    animation: slideDown 0.6s ease;
+  }
+
+  .warning-banner a {
+    color: #000;
+    text-decoration: underline;
+    font-weight: 700;
+  }
+
+  @keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* ================================
+     NAVIGATION
+  ================================ */
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 60px;
+    background: rgba(10,15,25,0.7);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    position: sticky;
+    top: 48px; /* leave room for banner */
+    z-index: 100;
+  }
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nav-left img {
+    width: 36px;
+    height: 36px;
+    filter: drop-shadow(0 0 6px rgba(255,102,0,0.4));
+  }
+
+  .nav-left span {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+  }
+
+  .nav-links a {
+    color: var(--text-soft);
+    text-decoration: none;
+    margin-left: 24px;
+    font-weight: 500;
+    transition: 0.2s ease;
+  }
+
+  .nav-links a:hover {
+    color: var(--accent2);
+  }
+
+  /* ================================
+     HERO SECTION
+  ================================ */
+  .hero {
+    text-align: center;
+    padding: 110px 20px 90px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: "";
+    position: absolute;
+    top: -200px;
+    left: -200px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255,102,0,0.3), transparent 70%);
+    animation: glow 8s infinite alternate ease-in-out;
+    z-index: 0;
+    filter: blur(80px);
+  }
+
+  @keyframes glow {
+    0% { transform: translate(0,0) scale(1); opacity: 0.6; }
+    100% { transform: translate(120px,80px) scale(1.1); opacity: 0.8; }
+  }
+
+  .hero img {
+    width: 140px;
+    height: 140px;
+    filter: drop-shadow(0 0 16px rgba(255,102,0,0.5));
+    z-index: 1;
+    position: relative;
+  }
+
+  .hero h1 {
+    font-size: 3rem;
+    color: var(--accent);
+    margin-top: 20px;
+    letter-spacing: 1px;
+    z-index: 1;
+    position: relative;
+    text-shadow: 0 0 12px rgba(255,102,0,0.4);
+  }
+
+  .hero p {
+    color: var(--text-soft);
+    margin-top: 12px;
+    font-size: 1.1rem;
+    z-index: 1;
+    position: relative;
+  }
+
+  .hero-buttons {
+    margin-top: 40px;
+    z-index: 1;
+    position: relative;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 14px 34px;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: 1.05rem;
+    text-decoration: none;
+    margin: 0 10px;
+    transition: 0.25s ease;
+    cursor: pointer;
+  }
+
+  .discord-login {
+    background: #5865f2;
+    color: #fff;
+    box-shadow: 0 0 18px rgba(88,101,242,0.4);
+  }
+
+  .discord-login:hover {
+    background: #4a57e3;
+    transform: translateY(-3px);
+    box-shadow: 0 0 26px rgba(88,101,242,0.6);
+  }
+
+  .manage-btn {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 18px rgba(255,102,0,0.3);
+  }
+
+  .manage-btn:hover {
+    background: var(--accent2);
+    transform: translateY(-3px);
+    box-shadow: 0 0 26px rgba(255,102,0,0.5);
+  }
+
+  .logout-btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+
+  .logout-btn:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* ================================
+     BOT FAMILY SHOWCASE
+  ================================ */
+  .bots-section {
+    text-align: center;
+    padding: 80px 40px;
+    background: radial-gradient(circle at center, rgba(255,102,0,0.06), transparent 80%);
+  }
+
+  .bots-section h2 {
+    color: var(--accent);
+    font-size: 2.3rem;
+    margin-bottom: 12px;
+  }
+
+  .bots-section p {
+    color: var(--text-soft);
+    max-width: 700px;
+    margin: 0 auto 45px;
+    line-height: 1.6;
+  }
+
+  .bots-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 35px;
+  }
+
+  .bot-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255,255,255,0.05);
+    width: 300px;
+    padding: 30px 20px 40px;
+    box-shadow: 0 0 25px rgba(255,102,0,0.05);
+    transition: 0.3s ease;
+  }
+
+  .bot-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 0 30px rgba(255,102,0,0.15);
+  }
+
+  .bot-card img {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 10px rgba(255,102,0,0.4));
+  }
+
+  .bot-card h3 {
+    color: var(--accent2);
+    margin-bottom: 10px;
+  }
+
+  .bot-card p {
+    color: var(--text-soft);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .bot-card a {
+    display: inline-block;
+    margin-top: 15px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .bot-card a:hover {
+    color: var(--accent2);
+  }
+
+  /* ================================
+     PANEL PREVIEW + FOOTER
+  ================================ */
+  .panel-preview {
+    max-width: 1100px;
+    margin: 70px auto 50px;
+    padding: 0 40px;
+    text-align: center;
+  }
+
+  footer {
+    border-top: 1px solid rgba(255,255,255,0.05);
+    background: #070b15;
+    color: var(--text-soft);
+    text-align: center;
+    padding: 30px 10px 40px;
+    font-size: 0.9rem;
+    margin-top: 60px;
+  }
+
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  footer a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+
+  <div class="warning-banner">
+    ⚠️ <strong>Notice:</strong> The OpsLink Safeguard Dashboard is currently <strong>unoperational</strong>. Updates will be announced soon.  
+    The bot remains fully configurable through Discord commands.  
+    Join our community to stay updated: <a href="https://discord.gg/UF6Dt66phh" target="_blank">discord.gg/UF6Dt66phh</a> — Thank you for your continued support 💛
+  </div>
+
+  <nav>
+    <div class="nav-left">
+    <a href="/home" class="nav-logo-link">
+      <img src="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" alt="Safeguard Logo" class="nav-logo" />
+      <span class="nav-title">OpsLink Safeguard</span>
+    </a>
+  </div>
+  <div class="nav-links">
+    <a href="/home">Home</a>
+    <a href="/bots">Our Bots</a>
+    <a href="/panel">Panel</a>
+    <a href="/status">Status</a>
+    <a href="/docs" style="color:#ff944d;">Docs</a>
+    <a href="/premier">Premier</a>
+    <a href="/billing">Billing</a>
+    <a href="https://discord.gg/UF6Dt66phh">Support</a>
+  </div>
+  </nav>
+
+  <section class="hero">
+    <img src="/assets/Safeguard-Bot.png" alt="OpsLink Safeguard Logo">
+    <h1>Safeguard Panel</h1>
+    <p id="userLabel">Keeping Communities Safe — Powered by OpsLink Systems.</p>
+    <div class="hero-buttons">
+      <a id="loginBtn" href="/auth/discord" class="btn discord-login">Login with Discord</a>
+      <a id="manageBtn" href="/dashboard" class="btn manage-btn" style="display:none;">Manage Your Servers</a>
+      <button id="logoutBtn" class="btn logout-btn" style="display:none;">Logout</button>
+    </div>
+  </section>
+
+  <!-- ================================
+       SAFEGUARD FAMILY SHOWCASE
+  ================================ -->
+  <section id="bots" class="bots-section">
+    <h2>The Safeguard Family</h2>
+    <p>From advanced protection to premium automation and even music playback — meet our three powerful bots built to enhance your Discord community.</p>
+
+    <div class="bots-container">
+      <div class="bot-card">
+        <img src="/assets/Safeguard-Bot.png" alt="Safeguard">
+        <h3>Safeguard</h3>
+        <p>The original all-in-one Discord security bot featuring anti-nuke, anti-raid, moderation, and activity monitoring for ultimate peace of mind.</p>
+        <a href="#">Learn More →</a>
+      </div>
+
+      <div class="bot-card">
+        <img src="/assets/Safeguard-Premier.png" alt="Safeguard Premier">
+        <h3>Safeguard Premier</h3>
+        <p>Unlock the next level of defense with AI-based threat detection, custom audit analytics, role protection, and enterprise-grade control systems.</p>
+        <a href="premier.html">Explore Premier →</a>
+      </div>
+
+      <div class="bot-card">
+        <img src="/assets/Safeguard-Music.png" alt="Safeguard Music">
+        <h3>Safeguard Music</h3>
+        <p>Experience seamless, secure, and high-quality music playback. Connect YouTube, Spotify, or SoundCloud with built-in protection and zero lag.</p>
+        <a href="#">Try Music →</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    © 2025 OpsLink Systems Network — All Rights Reserved.<br>
+    Visit <a href="https://opslinksystems.xyz">OpsLink Systems</a> for more.
+  </footer>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenParam = urlParams.get("token");
+    if (tokenParam) {
+      localStorage.setItem("safeguard_token", tokenParam);
+      window.history.replaceState({}, document.title, "/");
+    }
+
+    const token = localStorage.getItem("safeguard_token");
+    const loginBtn = document.getElementById("loginBtn");
+    const manageBtn = document.getElementById("manageBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userLabel = document.getElementById("userLabel");
+
+    async function checkUser() {
+      if (!token) return;
+      try {
+        const res = await fetch("/api/user", {
+          headers: { Authorization: "Bearer " + token }
+        });
+        const data = await res.json();
+        if (data.loggedIn) {
+          userLabel.textContent = `Welcome, ${data.user.username}#${data.user.discriminator}`;
+          loginBtn.style.display = "none";
+          manageBtn.style.display = "inline-block";
+          logoutBtn.style.display = "inline-block";
+        }
+      } catch (err) {
+        console.error("Failed to check user:", err);
+      }
+    }
+
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("safeguard_token");
+      window.location.href = "/";
+    });
+
+    checkUser();
+  </script>
+</body>
+</html>

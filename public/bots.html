@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Safeguard Premier – OpsLink Systems</title>
+  <title>Safeguard Bots – OpsLink Systems</title>
   <link rel="icon" href="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" />
   <style>
     :root {
@@ -204,6 +204,78 @@
     td:first-child { font-weight: 600; color: var(--accent); }
     td { text-align: center; }
 
+    .bots-section {
+    text-align: center;
+    padding: 80px 40px;
+    background: radial-gradient(circle at center, rgba(255,102,0,0.06), transparent 80%);
+  }
+
+  .bots-section h2 {
+    color: var(--accent);
+    font-size: 2.3rem;
+    margin-bottom: 12px;
+  }
+
+  .bots-section p {
+    color: var(--text-soft);
+    max-width: 700px;
+    margin: 0 auto 45px;
+    line-height: 1.6;
+  }
+
+  .bots-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 35px;
+  }
+
+  .bot-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255,255,255,0.05);
+    width: 300px;
+    padding: 30px 20px 40px;
+    box-shadow: 0 0 25px rgba(255,102,0,0.05);
+    transition: 0.3s ease;
+  }
+
+  .bot-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 0 30px rgba(255,102,0,0.15);
+  }
+
+  .bot-card img {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 10px rgba(255,102,0,0.4));
+  }
+
+  .bot-card h3 {
+    color: var(--accent2);
+    margin-bottom: 10px;
+  }
+
+  .bot-card p {
+    color: var(--text-soft);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .bot-card a {
+    display: inline-block;
+    margin-top: 15px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .bot-card a:hover {
+    color: var(--accent2);
+  }
+
     footer {
       border-top: 1px solid rgba(255,255,255,0.05);
       background: #070b15;
@@ -228,97 +300,42 @@
     </div>
     <div class="nav-links">
       <a href="/home">Home</a>
-      <a href="/bots">Our Bots</a>
+      <a href="/bots" style="color:#ff944d;">Our Bots</a>
       <a href="/panel">Panel</a>
       <a href="/status">Status</a>
       <a href="/docs">Docs</a>
-      <a href="/premier" style="color:#ff944d;">Premier</a>
+      <a href="/premier">Premier</a>
       <a href="/billing">Billing</a>
       <a href="https://discord.gg/UF6Dt66phh">Support</a>
     </div>
   </nav>
 
-  <section class="hero">
-    <img src="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" alt="Safeguard Logo" />
-    <h1>Safeguard Premier</h1>
-    <p>Advanced Protection • Enterprise Grade • $7.99/month</p>
-     <div>
-    <p>DISCLAIMER: IF YOUR GONNA BUY PREMIER! PLEASE KEEP REGULAR SAFEGUARD IN YOUR SERVER, PREMIER COUNTS AS AN ADDITION ONTO SAFEGUARD! THANK YOU.</p>
-  </section>
+  <section id="bots" class="bots-section">
+    <h2>The Safeguard Family</h2>
+    <p>From advanced protection to premium automation and even music playback — meet our three powerful bots built to enhance your Discord community.</p>
 
-  <section class="pricing">
-    <div class="price">
-      <h2>Upgrade to Premier</h2>
-      <h3>$7.99 <span style="font-size:1rem;">/ month</span></h3>
-      <ul>
-        <li>✔ AI-based Anti-Raid & Anti-Nuke Protection</li>
-        <li>✔ Real-time Incident Detection & Auto Recovery</li>
-        <li>✔ Advanced Audit Logs & Threat Reports</li>
-        <li>✔ Priority Support with 1-hour response times</li>
-        <li>✔ Customizable License Dashboard Access</li>
-        <li>✔ Early Access to Beta Features</li>
-      </ul>
-      <a href="/checkout" class="purchase-btn">Purchase Premier License</a>
+    <div class="bots-container">
+      <div class="bot-card">
+        <img src="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" alt="Safeguard">
+        <h3>Safeguard</h3>
+        <p>The original all-in-one Discord security bot featuring anti-nuke, anti-raid, moderation, and activity monitoring for ultimate peace of mind.</p>
+        <a href="#">Learn More →</a>
+      </div>
+
+      <div class="bot-card">
+        <img src="https://i.postimg.cc/brDy1C6X/Safe-Guard-Premier.png" alt="Safeguard Premier">
+        <h3>Safeguard Premier</h3>
+        <p>Unlock the next level of defense with AI-based threat detection, custom audit analytics, role protection, and enterprise-grade control systems.</p>
+        <a href="/premier">Explore Premier →</a>
+      </div>
+
+      <div class="bot-card">
+        <img src="https://i.postimg.cc/C5BhbPc3/Safe-Guard-Music.png" alt="Safeguard Music">
+        <h3>Safeguard Music</h3>
+        <p>Experience seamless, secure, and high-quality music playback. Connect YouTube, Spotify, or SoundCloud with built-in protection and zero lag.</p>
+        <a href="#">Try Music →</a>
+      </div>
     </div>
-  </section>
-
-  <section class="rules">
-    <h2>Safeguard Premier Rules & Terms</h2>
-    <ol>
-      <li>Each license key is unique and tied to one Discord server and one user.</li>
-      <li>Unauthorized key sharing, resale, or redistribution is strictly prohibited.</li>
-      <li>Subscription renews monthly; failure to renew disables Premier access.</li>
-      <li>Refunds may only be issued within 7 days under verified service failure.</li>
-      <li>Using Premier tools to harm, spam, or bypass Discord systems results in termination.</li>
-      <li>Premier features are limited to servers compliant with Discord TOS and OpsLink policies.</li>
-      <li>All billing is handled through OpsLink’s secure Stripe integration.</li>
-      <li>Violating these terms may result in loss of license without refund.</li>
-      <li>OpsLink Systems reserves the right to update these terms with or without notice. It is your responsibility to maintain updated.</li>
-    </ol>
-  </section>
-
-  <section class="compare">
-    <table>
-      <thead>
-        <tr>
-          <th>Feature</th>
-          <th>Safeguard (Free)</th>
-          <th>Safeguard Premier ($7.99/mo)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Basic Anti-Raid</td>
-          <td>✅</td>
-          <td>✅ Enhanced AI</td>
-        </tr>
-        <tr>
-          <td>Audit Logging</td>
-          <td>⚠️ Limited</td>
-          <td>✅ Full detailed logs</td>
-        </tr>
-        <tr>
-          <td>Incident Detection</td>
-          <td>❌</td>
-          <td>✅ Real-time AI alerts</td>
-        </tr>
-        <tr>
-          <td>Dashboard Access</td>
-          <td>✅</td>
-          <td>✅ Premier Control Panel</td>
-        </tr>
-        <tr>
-          <td>Support Level</td>
-          <td>Community Only</td>
-          <td>Priority 24/7 Support</td>
-        </tr>
-        <tr>
-          <td>License Protection</td>
-          <td>Free Use</td>
-          <td>🔒 Licensed & Verified</td>
-        </tr>
-      </tbody>
-    </table>
   </section>
 
   <footer>

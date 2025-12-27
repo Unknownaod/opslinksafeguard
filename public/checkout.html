@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Safeguard Premier Checkout – OpsLink Systems</title>
-  <link rel="icon" href="/assets/Safeguard-Bot.png" />
+  <link rel="icon" href="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" />
   <script src="https://js.stripe.com/v3/"></script>
 
 <style>
@@ -31,21 +31,63 @@
   }
 
   nav {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    padding: 20px 60px;
-    background: rgba(10, 15, 25, 0.6);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 60px;
+      background: rgba(10,15,25,0.7);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-  .nav-left { display: flex; align-items: center; gap: 12px; }
-  .nav-left img { width: 40px; height: 40px; filter: drop-shadow(0 0 6px rgba(255,102,0,0.6)); }
-  .nav-left span { font-size: 1.35rem; font-weight: 600; color: var(--accent); }
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-logo-link {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .nav-logo {
+      height: 40px;
+    }
+
+    .nav-title {
+      margin-left: 8px;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .nav-left img {
+      width: 36px;
+      height: 36px;
+      filter: drop-shadow(0 0 6px rgba(255,102,0,0.4));
+    }
+
+    .nav-left span {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .nav-links a {
+      color: var(--text-soft);
+      text-decoration: none;
+      margin-left: 24px;
+      font-weight: 500;
+      transition: 0.2s ease;
+    }
+
+    .nav-links a:hover { color: var(--accent2); }
 
   .checkout-wrapper {
     flex: 1;
@@ -215,12 +257,17 @@
   .agreement-box a:hover { text-decoration: underline; }
 
   footer {
-    text-align: center;
-    padding: 25px;
-    font-size: 0.9rem;
-    color: var(--text-soft);
-    border-top: 1px solid rgba(255,255,255,0.05);
-  }
+      border-top: 1px solid rgba(255,255,255,0.05);
+      background: #070b15;
+      color: var(--text-soft);
+      text-align: center;
+      padding: 30px 10px 40px;
+      font-size: 0.9rem;
+      margin-top: 60px;
+    }
+
+    footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    footer a:hover { text-decoration: underline; }
 
   .glow {
     position: fixed;
@@ -247,9 +294,18 @@
 
 <nav>
   <div class="nav-left">
-    <img src="/assets/Safeguard-Bot.png" alt="Safeguard Logo" />
-    <span>OpsLink Safeguard</span>
+    <a href="/home" class="nav-logo-link">
+      <img src="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" alt="Safeguard Logo" class="nav-logo" />
+      <span class="nav-title">OpsLink Safeguard</span>
+    </a>
   </div>
+  <div class="nav-links">
+      <a href="/home">Home</a>
+      <a href="/billing">Billing</a>
+      <a href="/checkout" style="color:#ff944d;">Checkout</a>
+      <a href="/billing">Back</a>
+      <a href="https://discord.gg/UF6Dt66phh">Support</a>
+    </div>
 </nav>
 
 <div class="checkout-wrapper">
@@ -306,7 +362,10 @@
   </div>
 </div>
 
-<footer>© 2025 OpsLink Systems Network — All Rights Reserved.</footer>
+<footer>
+    © 2025 OpsLink Systems Network — All Rights Reserved.<br>
+    Visit <a href="https://opslinksystems.xyz">OpsLink Systems</a> for more.
+  </footer>
 
 <script>
   const stripe = Stripe("pk_live_51SVFpBLQjsrxMZMFiPh041fNL37kau7u4uITjjmKXkBabyHvx30Xl6scvSFDHBJDZlG6C71GFKltPWMEQwcU8z1R00j99wuaPd");

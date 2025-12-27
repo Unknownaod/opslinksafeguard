@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Status – OpsLink Safeguard</title>
+<link rel="icon" href="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* === EXISTING STYLES (UNCHANGED) === */
+:root{
+ --bg:#04060d;
+ --panel:#0b1220;
+ --panel2:#04060d;
+ --accent:#ff7a18;
+ --accent2:#ff944d;
+ --green:#22c55e;
+ --red:#ef4444;
+ --yellow:#facc15;
+ --text:#e5e7eb;
+ --muted:#a1a1aa;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  background: radial-gradient(circle at 20% 20%, #0b1220, #050816 70%);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ===== NAV ===== */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 60px;
+  background: rgba(10,15,25,0.7);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-logo-link {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .nav-logo {
+      height: 40px;
+    }
+
+    .nav-title {
+      margin-left: 8px;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+.nav-left img {
+  width: 36px;
+  height: 36px;
+  filter: drop-shadow(0 0 6px rgba(255,102,0,0.4));
+}
+
+.nav-left span {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.nav-links a {
+  color: var(--text-soft);
+  text-decoration: none;
+  margin-left: 24px;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+.nav-links a:hover { color: var(--accent2); }
+
+/* ===== LAYOUT ===== */
+.wrap{
+ max-width:1000px;
+ margin:60px auto;
+ padding:0 24px;
+}
+
+.header {
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ text-align:center;
+ gap:10px;
+ margin-bottom:40px;
+}
+
+.title{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ font-weight:bold;
+}
+
+.title.up h1{color:#00c853}
+.title.down h1{color:#ff1744}
+
+.title.up img{filter:drop-shadow(0 0 8px rgba(34,197,94,.5))}
+.title.down img{filter:drop-shadow(0 0 8px rgba(239,68,68,.6))}
+
+.live-status{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:8px;
+ font-size:12px;
+ opacity:.85;
+ margin-top:6px;
+}
+
+.refresh{
+ animation:spin 1.4s linear infinite;
+ opacity:.6;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.admin-btn{
+ margin-top:14px;
+ padding:8px 16px;
+ font-size:13px;
+ font-weight:600;
+ border-radius:999px;
+ background:rgba(255,148,77,.12);
+ color:var(--accent2);
+ border:1px solid rgba(255,148,77,.35);
+ cursor:pointer;
+ transition:.18s ease;
+}
+.admin-btn:hover{
+ background:rgba(255,148,77,.2);
+ box-shadow:0 0 0 3px rgba(255,148,77,.15);
+ transform:translateY(-1px);
+}
+
+/* ===== SERVICE CARD ===== */
+.card{
+ background:linear-gradient(180deg,#04060d,#0b1220);
+ border-radius:18px;
+ padding:24px;
+ margin-bottom:28px;
+ border: 1px solid rgba(255,255,255,0.05);
+ box-shadow: 0 0 20px rgba(255,102,0,0.15);
+}
+
+.row{
+ display:flex;
+ justify-content:space-between;
+ align-items:flex-start;
+}
+
+.status{
+ font-weight:800;
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+}
+
+.status.up{color:var(--green)}
+.status.down{color:var(--red)}
+.status.degraded{color:var(--yellow)}
+
+.status-icon-bar{
+ width:14px;
+ height:14px;
+}
+
+.uptime{
+ font-size:12px;
+ opacity:.7;
+ margin-top:4px;
+}
+
+/* ===== BARS ===== */
+.bars{
+ display:flex;
+ gap:3px;
+ margin-top:14px;
+}
+
+.bar{
+ width:6px;
+ height:20px;
+ border-radius:4px;
+ background:#1f2937;
+ position:relative;
+ cursor:pointer;
+ transition:.2s ease;
+}
+.bar.up{background:var(--green)}
+.bar.down{background:var(--red)}
+.bar.degraded{background:var(--yellow)}
+.bar:hover{transform:translateY(-2px)}
+
+/* ===== TOOLTIP ===== */
+.tooltip{
+ position:absolute;
+ bottom:32px;
+ left:50%;
+ transform:translateX(-50%) translateY(6px);
+ background:#020617;
+ border-radius:12px;
+ padding:10px 12px;
+ font-size:12px;
+ box-shadow:0 20px 40px rgba(0,0,0,.6);
+ opacity:0;
+ pointer-events:none;
+ transition:.15s ease;
+ white-space:nowrap;
+ z-index:20;
+}
+.bar:hover .tooltip{
+ opacity:1;
+ transform:translateX(-50%) translateY(0);
+}
+
+.tooltip-header{
+ display:flex;
+ align-items:center;
+ gap:6px;
+ font-weight:700;
+ margin-bottom:4px;
+}
+.tooltip-header.up{color:var(--green)}
+.tooltip-header.down{color:var(--red)}
+.tooltip-header.degraded{color:var(--yellow)}
+
+.tooltip-icon{width:12px;height:12px}
+.tooltip-time{font-size:11px;opacity:.75}
+.tooltip-reason{margin-top:6px;font-size:11px;opacity:.85}
+
+/* ===== INCIDENT FEED ===== */
+.feed{
+ background:#020617;
+ border-radius:16px;
+ padding:18px;
+ box-shadow: 0 0 20px rgba(255,102,0,0.15);
+}
+
+.incident{
+ background:#0b1220;
+ border-left:4px solid var(--red);
+ border-radius:12px;
+ padding:14px;
+ margin-bottom:12px;
+}
+.incident.resolved{
+ border-left-color:var(--green);
+ opacity:.85;
+}
+
+/* ===== FOOTER ===== */
+footer {
+  border-top: 1px solid rgba(255,255,255,0.05);
+  background: #070b15;
+  color: var(--text-soft);
+  text-align: center;
+  padding: 30px 10px 40px;
+  font-size: 0.9rem;
+  margin-top: 60px;
+}
+
+footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+footer a:hover { text-decoration: underline; }
+</style>
+</head>
+
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="/home" class="nav-logo-link">
+      <img src="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" alt="Safeguard Logo" class="nav-logo" />
+      <span class="nav-title">OpsLink Safeguard</span>
+    </a>
+  </div>
+  <div class="nav-links">
+    <a href="/home">Home</a>
+    <a href="/bots">Our Bots</a>
+    <a href="/panel">Panel</a>
+    <a href="/status" style="color:#ff944d;">Status</a>
+    <a href="/docs">Docs</a>
+    <a href="/premier">Premier</a>
+    <a href="/billing">Billing</a>
+    <a href="https://discord.gg/UF6Dt66phh">Support</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<div class="header">
+ <div class="title" id="titleWrap">
+  <img id="statusIcon" src="https://i.postimg.cc/3Rbr45Z3/operational.png" width="26">
+  <h1 id="overall">All systems operational</h1>
+ </div>
+ <div class="live-status">
+  <span class="refresh">⟳</span>
+  <span id="updated">Updated just now</span>
+ </div>
+ <button class="admin-btn" onclick="location.href='/admin'">
+  Admin Panel
+ </button>
+</div>
+
+<div id="banner"></div>
+<div id="services"></div>
+
+<div class="feed">
+ <strong>Incident history (last 30 days)</strong>
+ <div id="incidents"></div>
+</div>
+
+</div>
+
+<footer>
+ © 2025 OpsLink Systems Network — All Rights Reserved.<br>
+ Visit <a href="https://opslinksystems.xyz">OpsLink Systems</a> for more.
+</footer>
+
+<script>
+let lastUpdate = null;
+
+const ICONS = {
+    up: "https://i.postimg.cc/3Rbr45Z3/operational.png",
+    down: "https://i.postimg.cc/vBS8gFvs/down.png"
+};
+
+function updateAgo() {
+    if (!lastUpdate) return;
+    const diff = Math.floor((Date.now() - lastUpdate) / 1000);
+    let txt = "just now";
+    if (diff >= 60) txt = Math.floor(diff / 60) + " min ago";
+    else if (diff > 5) txt = diff + " sec ago";
+    document.getElementById("updated").textContent = "Updated " + txt;
+}
+
+function fmtDuration(ms) {
+    const m = Math.floor(ms / 60000);
+    const h = Math.floor(m / 60);
+    const d = Math.floor(h / 24);
+    if (d > 0) return `${d}d ${h % 24}h ${m % 60}m`;
+    if (h > 0) return `${h}h ${m % 60}m`;
+    return `${m}m`;
+}
+
+async function load() {
+    const r = await fetch("/api/status");
+    const data = await r.json();
+
+    lastUpdate = data.lastUpdate || Date.now();
+    updateAgo();
+
+    const services = document.getElementById("services");
+    const incidentsBox = document.getElementById("incidents");
+    const overall = document.getElementById("overall");
+    const titleWrap = document.getElementById("titleWrap");
+    const icon = document.getElementById("statusIcon");
+
+    services.innerHTML = "";
+    incidentsBox.innerHTML = "";
+
+    let anyDown = false;
+    const DAY = 86400000;
+
+    data.services.forEach(s => {
+        if (s.status === "down") anyDown = true;
+
+        let up = 0, downCount = 0, degraded = 0;
+        s.history.forEach(h => {
+            if (h.status === "up") up++;
+            if (h.status === "down") downCount++;
+            if (h.status === "degraded") degraded++;
+        });
+        const uptimePct = ((up + degraded) / (up + downCount + degraded) * 100).toFixed(2);
+        const totalDowntimeMs = downCount * 60000;
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+            <div class="row">
+                <div>
+                    <strong>${s.name}</strong>
+                    <div class="uptime">
+                        Total Uptime: ${uptimePct}% • Total Downtime: ${fmtDuration(totalDowntimeMs)}
+                    </div>
+                </div>
+                <div class="status ${s.status}">
+                    <img src="${s.status === 'up' ? ICONS.up : ICONS.down}" class="status-icon-bar">
+                    ${s.status === "up" ? "Operational" : s.status === "degraded" ? "Degraded" : "Down"}
+                </div>
+            </div>
+        `;
+
+        const bars = document.createElement("div");
+        bars.className = "bars";
+
+        const cardWidth = 1000;
+        const barWidth = 9;
+        const maxBars = Math.floor(cardWidth / barWidth);
+
+        const days = {};
+        s.history.forEach(h => {
+            const d = Math.floor(h.timestamp / DAY) * DAY;
+            if (!days[d]) days[d] = { up: 0, down: 0, degraded: 0, reason: null, timestamp: d };
+            days[d][h.status]++;
+            if (h.status === "down") days[d].reason = h.reason || "Service unavailable";
+        });
+
+        let sortedDays = Object.values(days).sort((a,b) => a.timestamp - b.timestamp);
+        sortedDays = sortedDays.slice(-maxBars);
+
+        sortedDays.forEach(h => {
+            const total = h.up + h.down + h.degraded;
+            const uptime = ((h.up + h.degraded) / total * 100).toFixed(1);
+            const downtimeMs = h.down * 60000;
+
+            const b = document.createElement("div");
+            b.className = "bar " + (h.down > 0 ? "down" : h.up > 0 ? "up" : "degraded");
+            b.innerHTML = `
+                <div class="tooltip">
+                    <div class="tooltip-header ${h.down > 0 ? "down" : h.up > 0 ? "up" : "degraded"}">
+                        <img src="${h.down > 0 ? ICONS.down : ICONS.up}" class="tooltip-icon">
+                        ${h.down > 0 ? "Down" : h.up > 0 ? "Operational" : "Degraded"}
+                    </div>
+                    <div class="tooltip-time">${new Date(h.timestamp).toLocaleDateString()}</div>
+                    <div class="tooltip-time">Uptime: ${uptime}% • Downtime: ${fmtDuration(downtimeMs)}</div>
+                    ${h.reason ? `<div class="tooltip-reason">${h.reason}</div>` : ""}
+                </div>
+            `;
+            bars.appendChild(b);
+        });
+
+        const emptyBars = maxBars - sortedDays.length;
+        for (let i = 0; i < emptyBars; i++) {
+            const b = document.createElement("div");
+            b.className = "bar";
+            b.style.background = "#1f2937";
+            bars.appendChild(b);
+        }
+
+        card.appendChild(bars);
+        services.appendChild(card);
+    });
+
+    if (anyDown) {
+        overall.textContent = "Some systems are down";
+        icon.src = ICONS.down;
+        titleWrap.classList.add("down");
+        titleWrap.classList.remove("up");
+    } else {
+        overall.textContent = "All systems operational";
+        icon.src = ICONS.up;
+        titleWrap.classList.add("up");
+        titleWrap.classList.remove("down");
+    }
+
+    data.incidents?.forEach(i => {
+        const end = i.end_time || Date.now();
+        const dur = fmtDuration(end - i.start_time);
+
+        const d = document.createElement("div");
+        d.className = "incident" + (i.end_time ? " resolved" : "");
+        d.innerHTML = `
+            <strong>${i.title}</strong><br>
+            <small>${i.reason || "No additional details provided."}</small><br>
+            <small>Downtime: ${dur}</small><br>
+            <small>${new Date(i.start_time).toLocaleString()}${i.end_time ? " – " + new Date(i.end_time).toLocaleString() : " (Ongoing)"}</small>
+        `;
+        incidentsBox.appendChild(d);
+    });
+}
+
+load();
+setInterval(load, 15000);
+setInterval(updateAgo, 1000);
+</script>
+
+</body>
+</html>
