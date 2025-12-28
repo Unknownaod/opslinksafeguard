@@ -3,39 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <title>Safeguard Premier — Billing</title>
-  <link rel="icon" href="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" />
+  <link rel="icon" href="/assets/Safeguard-Bot.png" />
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-  --bg:#050816;
-  --panel:#0b1220ee;
-  --accent:#ff6600;
-  --accent-hover:#ff8c42;
-  --text:#e5e7eb;
-  --muted:#94a3b8;
-  --radius:18px;
-  --glass:rgba(255,255,255,.06);
-}
+      --bg:#050816;
+      --panel:#0b1220ee;
+      --accent:#ff6600;
+      --accent-hover:#ff8c42;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --radius:18px;
+      --glass:rgba(255,255,255,.06);
+    }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-body {
-  background: linear-gradient(145deg,#050816,#090f2d);
-  font-family: 'Inter', sans-serif;
-  color: var(--text);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+    body {
+      background: linear-gradient(145deg,#050816,#090f2d);
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-/* ================= NAVBAR ================= */
-
-nav {
+    /* ================= NAVBAR ================= */
+    nav {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -43,8 +42,10 @@ nav {
       background: rgba(10,15,25,0.7);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(255,255,255,0.05);
-      position: sticky;
+      position: fixed;
       top: 0;
+      left: 0;
+      width: 100%;
       z-index: 100;
     }
 
@@ -94,147 +95,143 @@ nav {
 
     .nav-links a:hover { color: var(--accent2); }
 
-/* ================= PAGE LAYOUT ================= */
+    /* ================= MAIN CONTENT ================= */
+    main {
+      flex: 1; /* take remaining space between navbar and footer */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 100px 20px 60px; /* top padding for navbar, bottom for footer */
+    }
 
-.page {
-  min-height: calc(100vh - 80px); /* navbar height */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px 20px;
-  flex: 1;
-}
+    /* ================= BILLING CARD ================= */
+    .wrapper {
+      width: 480px;
+      max-width: 90%;
+      padding: 48px;
+      background: var(--panel);
+      border-radius: var(--radius);
+      text-align: center;
+      border: 1px solid var(--glass);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 0 40px rgba(0,0,0,.45);
+      animation: fadeIn .6s ease-out;
+    }
 
-/* ================= BILLING CARD ================= */
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 12px;
+      background: linear-gradient(90deg,#ff6600,#ffa54d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
-.wrapper {
-  width: 480px;
-  padding: 48px;
-  background: var(--panel);
-  border-radius: var(--radius);
-  text-align: center;
-  border: 1px solid var(--glass);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 0 40px rgba(0,0,0,.45);
-  animation: fadeIn .6s ease-out;
-}
+    p {
+      font-size: 1rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
 
-h1 {
-  font-size: 2rem;
-  margin-bottom: 12px;
-  background: linear-gradient(90deg,#ff6600,#ffa54d);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+    input {
+      width: 100%;
+      padding: 14px;
+      background: #11172d;
+      color: white;
+      border: 1px solid #1e2a44;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      font-size: 1rem;
+      outline: none;
+    }
 
-p {
-  font-size: 1rem;
-  color: var(--muted);
-  margin-bottom: 24px;
-}
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 6px #ff660040;
+    }
 
-input {
-  width: 100%;
-  padding: 14px;
-  background: #11172d;
-  color: white;
-  border: 1px solid #1e2a44;
-  border-radius: var(--radius);
-  margin-bottom: 16px;
-  font-size: 1rem;
-  outline: none;
-}
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 5px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: .25s;
+      box-shadow: 0 0 12px #ff660040;
+    }
 
-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 6px #ff660040;
-}
+    button:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+    }
 
-button {
-  width: 100%;
-  padding: 14px;
-  margin-top: 5px;
-  font-size: 1.05rem;
-  font-weight: 600;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: .25s;
-  box-shadow: 0 0 12px #ff660040;
-}
+    .small-btn {
+      background: #1a2238;
+      margin-top: 12px;
+      box-shadow: none;
+    }
 
-button:hover {
-  background: var(--accent-hover);
-  transform: translateY(-2px);
-}
+    .small-btn:hover {
+      background: #263355;
+    }
 
-.small-btn {
-  background: #1a2238;
-  margin-top: 12px;
-  box-shadow: none;
-}
+    code {
+      color: #ff8c42;
+      font-size: 1rem;
+    }
 
-.small-btn:hover {
-  background: #263355;
-}
+    footer.wrapper-footer {
+      font-size: .8rem;
+      opacity: .5;
+      margin-top: 18px;
+    }
 
-code {
-  color: #ff8c42;
-  font-size: 1rem;
-}
+    /* ================= SITE FOOTER ================= */
+    .site-footer {
+      padding: 30px 10px 40px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      background: linear-gradient(
+        180deg,
+        rgba(7,11,21,0.85),
+        rgba(7,11,21,0.6)
+      );
+      color: var(--muted);
+      backdrop-filter: blur(8px);
+      opacity: 1;
+      text-align: center;
+      font-size: 0.9rem;
+      width: 100%;
+      flex-shrink: 0;
+    }
 
-footer {
-  font-size: .8rem;
-  opacity: .5;
-  margin-top: 18px;
-}
+    .site-footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
 
-/* ================= SITE FOOTER ================= */
+    .site-footer a:hover {
+      text-decoration: underline;
+    }
 
-.site-footer {
-  padding: 30px 10px 40px;
-  margin-top: 60px;
-  border-top: 1px solid rgba(255,255,255,0.05);
-  background: linear-gradient(
-    180deg,
-    rgba(7,11,21,0.85),
-    rgba(7,11,21,0.6)
-  );
-  color: var(--muted);
-  backdrop-filter: blur(8px);
-  opacity: 1;
-  text-align: center;
-  font-size: 0.9rem;
-}
-
-.site-footer a {
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.site-footer a:hover {
-  text-decoration: underline;
-}
-
-/* ================= ANIMATION ================= */
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   </style>
 </head>
 <body>
-    <nav>
+  <nav>
     <div class="nav-left">
       <a href="/home" class="nav-logo-link">
         <img src="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" alt="Safeguard Logo" class="nav-logo" />
@@ -253,32 +250,29 @@ footer {
     </div>
   </nav>
 
-  <div class="page">
-  <div class="wrapper">
-    <h1>Billing & Subscription</h1>
-    <p>Manage your Safeguard Premier billing profile and subscription.</p>
+  <main>
+    <div class="wrapper">
+      <h1>Billing & Subscription</h1>
+      <p>Manage your Safeguard Premier billing profile and subscription.</p>
 
-    <!-- DISPLAY SAVED CUSTOMER ID -->
-    <div id="cidDisplay" style="display:none; margin-bottom:18px;">
-      <small style="opacity:.7;">Your Stripe Customer ID:</small><br>
-      <code id="cidText"></code>
-      <button class="small-btn" onclick="resetCID()">Change Customer ID</button>
+      <div id="cidDisplay" style="display:none; margin-bottom:18px;">
+        <small style="opacity:.7;">Your Stripe Customer ID:</small><br>
+        <code id="cidText"></code>
+        <button class="small-btn" onclick="resetCID()">Change Customer ID</button>
+      </div>
+
+      <div id="cidArea">
+        <input id="cidInput" placeholder="Enter Stripe Customer ID (cus_xxxxxxx)">
+        <button onclick="saveCID()">Save Customer ID</button>
+      </div>
+
+      <button id="billingBtn" style="display:none;" onclick="openPortal()">
+        Open Billing Portal
+      </button>
+
+      <footer class="wrapper-footer">Powered securely by Stripe</footer>
     </div>
-
-    <!-- INPUT NEW CUSTOMER ID -->
-    <div id="cidArea">
-      <input id="cidInput" placeholder="Enter Stripe Customer ID (cus_xxxxxxx)">
-      <button onclick="saveCID()">Save Customer ID</button>
-    </div>
-
-    <!-- OPEN BILLING PORTAL -->
-    <button id="billingBtn" style="display:none;" onclick="openPortal()">
-      Open Billing Portal
-    </button>
-
-    <footer>Powered securely by Stripe</footer>
-  </div>
-  </div>
+  </main>
 
   <script>
     const cidDisplay = document.getElementById("cidDisplay");
@@ -293,6 +287,7 @@ footer {
     function saveCID() {
       const val = cidInput.value.trim();
       if (!val.startsWith("cus_")) return alert("Customer ID must start with 'cus_'.");
+
       localStorage.setItem("safeguard_customer", val);
       showCID(val);
       alert("Customer ID saved successfully!");
@@ -328,9 +323,10 @@ footer {
       else alert(data.message || "Unable to access billing portal.");
     }
   </script>
+
   <footer class="site-footer">
-  © 2025 OpsLink Systems Network — All Rights Reserved.<br>
-  Visit <a href="https://opslinksystems.xyz">OpsLink Systems</a> for more.
-</footer>
+    © 2025 OpsLink Systems Network — All Rights Reserved.<br>
+    Visit <a href="https://opslinksystems.xyz">OpsLink Systems</a> for more.
+  </footer>
 </body>
 </html>
