@@ -61,48 +61,45 @@
      NAVIGATION
   ================================ */
   nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 60px;
-    background: rgba(10,15,25,0.7);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    position: sticky;
-    top: 48px; /* leave room for banner */
-    z-index: 100;
-  }
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 60px;
+      background: rgba(10,15,25,0.7);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-  .nav-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-  .nav-left img {
-    width: 36px;
-    height: 36px;
-    filter: drop-shadow(0 0 6px rgba(255,102,0,0.4));
-  }
+    .nav-left img {
+      width: 36px;
+      height: 36px;
+      filter: drop-shadow(0 0 6px rgba(255,102,0,0.4));
+    }
 
-  .nav-left span {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: var(--accent);
-    letter-spacing: 0.5px;
-  }
+    .nav-left span {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
 
-  .nav-links a {
-    color: var(--text-soft);
-    text-decoration: none;
-    margin-left: 24px;
-    font-weight: 500;
-    transition: 0.2s ease;
-  }
+    .nav-links a {
+      color: var(--text-soft);
+      text-decoration: none;
+      margin-left: 24px;
+      font-weight: 500;
+      transition: 0.2s ease;
+    }
 
-  .nav-links a:hover {
-    color: var(--accent2);
-  }
+    .nav-links a:hover { color: var(--accent2); }
 
   /* ================================
      HERO SECTION
@@ -246,7 +243,7 @@
     border: 1px solid rgba(255,255,255,0.05);
     width: 300px;
     padding: 30px 20px 40px;
-    box-shadow: 0 0 25px rgba(255,102,0,0.05);
+    box-shadow: 0 0 25px rgba(255,102,0,0.15);
     transition: 0.3s ease;
   }
 
@@ -327,21 +324,19 @@
 
   <nav>
     <div class="nav-left">
-    <a href="/home" class="nav-logo-link">
-      <img src="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" alt="Safeguard Logo" class="nav-logo" />
-      <span class="nav-title">OpsLink Safeguard</span>
-    </a>
-  </div>
-  <div class="nav-links">
-    <a href="/home">Home</a>
-    <a href="/bots">Our Bots</a>
-    <a href="/panel">Panel</a>
-    <a href="/status">Status</a>
-    <a href="/docs" style="color:#ff944d;">Docs</a>
-    <a href="/premier">Premier</a>
-    <a href="/billing">Billing</a>
-    <a href="https://discord.gg/UF6Dt66phh">Support</a>
-  </div>
+      <img src="https://i.postimg.cc/4y7fpLWq/Safe-Guard-Bot.png" alt="Safeguard Logo">
+      <span>OpsLink Safeguard</span>
+    </div>
+    <div class="nav-links">
+      <a href="/home" style="color:#ff944d;">Home</a>
+      <a href="/bots">Our Bots</a>
+      <a href="/panel">Panel</a>
+      <a href="/status">Status</a>
+      <a href="/docs">Docs</a>
+      <a href="/premier">Premier</a>
+      <a href="/billing">Billing</a>
+      <a href="https://discord.gg/UF6Dt66phh">Support</a>
+    </div>
   </nav>
 
   <section class="hero">
