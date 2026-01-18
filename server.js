@@ -2,10 +2,8 @@
  * ENV & CORE IMPORTS
  *********************************************************/
 require("dotenv").config();
-
 const express = require("express");
 const path = require("path");
-const session = require("express-session");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const Stripe = require("stripe");
@@ -16,25 +14,7 @@ const fetch = (...args) => import("node-fetch").then(({ default: fn }) => fn(...
  *********************************************************/
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-/*********************************************************
- * FLAGS
- *********************************************************/
 const IS_VERCEL = !!process.env.VERCEL;
-
-/*********************************************************
- * SESSION (Serverless-safe, in-memory for local only)
- *********************************************************/
-if (!IS_VERCEL) {
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || "supersecret",
-      resave: false,
-      saveUninitialized: true,
-      cookie: { secure: false },
-    })
-  );
-}
 
 /*********************************************************
  * ENV VARIABLES
@@ -61,29 +41,24 @@ const {
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 /*********************************************************
- * MONGODB CONNECTION (CACHED)
+ * MONGODB CONNECTION (main)
  *********************************************************/
-let mongoConn;
-async function connectMongo() {
-  if (mongoConn) return mongoConn;
-  mongoConn = await mongoose.connect(MONGODB_URI);
-  console.log("✅ MongoDB connected");
-  return mongoConn;
-}
+mongoose.set("strictQuery", true);
+mongoose
+  .connect(MONGODB_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB error:", err));
 
 /*********************************************************
- * STRIPE LICENSE DB (Separate connection)
+ * STRIPE LICENSE DB (dedicated connection)
  *********************************************************/
 const licenseKeySchema = require("./models/LicenseKey");
-let stripeConn;
-async function connectStripeDB() {
-  if (stripeConn) return stripeConn;
-  stripeConn = mongoose.createConnection(MONGODB_URI);
-  stripeConn.model("LicenseKey", licenseKeySchema);
-  console.log("🔗 Stripe License DB connected");
-  return stripeConn;
-}
+const stripeConn = mongoose.createConnection(MONGODB_URI);
+const LicenseKey = stripeConn.model("LicenseKey", licenseKeySchema);
 
+/*********************************************************
+ * GENERATE LICENSE KEY
+ *********************************************************/
 function generateLicenseKey() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let key = "SAFE-";
@@ -95,7 +70,7 @@ function generateLicenseKey() {
 }
 
 /*********************************************************
- * STRIPE WEBHOOK (RAW)
+ * STRIPE WEBHOOK
  *********************************************************/
 app.post(
   "/api/stripe-webhook",
@@ -104,24 +79,17 @@ app.post(
     const sig = req.headers["stripe-signature"];
     try {
       const event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
-
       if (event.type === "payment_intent.succeeded") {
         const intent = event.data.object;
         const licenseKey = generateLicenseKey();
-
-        const conn = await connectStripeDB();
-        const LicenseKey = conn.model("LicenseKey");
-
         await LicenseKey.create({
           key: licenseKey,
           paymentId: intent.id,
           plan: intent.metadata?.plan || "Premier",
           active: true,
         });
-
         console.log(`🎟 License generated: ${licenseKey}`);
       }
-
       res.status(200).send("Webhook received");
     } catch (err) {
       console.error("⚠️ Webhook verification failed:", err.message);
@@ -159,7 +127,7 @@ async function logDiscord(title, description, color = 0xff7a18) {
 }
 
 /*********************************************************
- * ADMIN AUTH (JWT — serverless-safe)
+ * ADMIN AUTH (JWT-based, serverless safe)
  *********************************************************/
 app.post("/api/admin/login", (req, res) => {
   const { email, password } = req.body || {};
@@ -183,112 +151,6 @@ function requireAdmin(req, res, next) {
 }
 
 /*********************************************************
- * MONGODB MODELS FOR STATUS
- *********************************************************/
-const serverSchema = new mongoose.Schema({
-  serverId: String,
-  name: String,
-});
-const checkSchema = new mongoose.Schema({
-  serverId: String,
-  status: String,
-  timestamp: { type: Date, default: Date.now },
-  reason: String,
-  incidentId: { type: mongoose.Schema.Types.ObjectId, ref: "Incident" },
-});
-const incidentSchema = new mongoose.Schema({
-  serverId: String,
-  title: String,
-  reason: String,
-  severity: String,
-  startTime: { type: Date, default: Date.now },
-  endTime: Date,
-});
-
-const ServerModel = mongoose.models.Server || mongoose.model("Server", serverSchema);
-const Check = mongoose.models.Check || mongoose.model("Check", checkSchema);
-const Incident = mongoose.models.Incident || mongoose.model("Incident", incidentSchema);
-
-/*********************************************************
- * SERVERS
- *********************************************************/
-const SERVERS = [
-  { serverId: "c3934795", name: "SafeGuard" },
-  { serverId: "d1435ec6", name: "SafeGuard Premier" },
-  { serverId: "d16160bb", name: "SafeGuard Music" },
-  { serverId: "1d0c90d8", name: "OpsLink Systems" },
-];
-
-/*********************************************************
- * STATUS CHECK FUNCTION (replaces cron + sqlite)
- *********************************************************/
-async function inferDownReason(state, apiFailed) {
-  if (apiFailed) return "Monitoring system could not reach the server";
-  if (state === "offline") return "Server is offline";
-  if (state === "stopping") return "Server is stopping";
-  return "Service became unavailable";
-}
-
-async function checkServers() {
-  await connectMongo();
-
-  for (const s of SERVERS) {
-    let status = "down",
-      reason = null,
-      apiFailed = false;
-
-    try {
-      const r = await fetch(`${PANEL_URL}/api/client/servers/${s.serverId}/resources`, {
-        headers: { Authorization: `Bearer ${USER_API_KEY}` },
-      });
-      const j = await r.json();
-      const state = j.attributes.current_state;
-      if (state === "running" || state === "starting") status = "up";
-      else if (state === "stopping") {
-        status = "degraded";
-        reason = "Server is stopping";
-      } else status = "down";
-      reason = reason || inferDownReason(state, false);
-    } catch {
-      status = "down";
-      apiFailed = true;
-      reason = inferDownReason(null, true);
-    }
-
-    const lastCheck = await Check.findOne({ serverId: s.serverId }).sort({ timestamp: -1 });
-    let incidentId = lastCheck?.incidentId || null;
-
-    if (lastCheck?.status !== "down" && status === "down") {
-      const incident = await Incident.create({
-        serverId: s.serverId,
-        title: `${s.name} outage`,
-        reason: reason || "Service unavailable",
-        severity: "critical",
-      });
-      incidentId = incident._id;
-      await Check.create({ serverId: s.serverId, status, reason, incidentId });
-      logDiscord("🚨 Service Down", `**${s.name}**\n${reason}`, 0xef4444);
-    }
-
-    if (lastCheck?.status === "down" && status !== "down" && lastCheck.incidentId) {
-      await Incident.findByIdAndUpdate(lastCheck.incidentId, { endTime: new Date() });
-      await Check.create({ serverId: s.serverId, status, reason: null, incidentId: null });
-      logDiscord("<✅> Service Restored", `**${s.name}** is operational`, 0x22c55e);
-    }
-
-    if (!lastCheck || lastCheck.status !== status) {
-      await Check.create({ serverId: s.serverId, status, reason, incidentId });
-    }
-  }
-}
-
-// Example route to trigger status check (can be scheduled in Vercel)
-app.get("/api/check-servers", async (req, res) => {
-  await checkServers();
-  res.json({ success: true });
-});
-
-/*********************************************************
  * MODULE SCHEMA & ROUTES
  *********************************************************/
 const moduleSchema = new mongoose.Schema({
@@ -301,7 +163,6 @@ const moduleSchema = new mongoose.Schema({
 });
 
 const Module = mongoose.models.Module || mongoose.model("Module", moduleSchema);
-
 const DEFAULT_MODULE_CATALOGUE = [
   { id: "tickets", name: "Ticket System", description: "Advanced multi-panel ticket system with logging and transcripts.", enabled: true },
   { id: "welcome", name: "Welcome / Goodbye / Autorole", description: "Welcome cards, goodbye messages, join/leave DMs and autoroles.", enabled: true },
@@ -319,7 +180,6 @@ const DEFAULT_MODULE_CATALOGUE = [
 async function ensureModulesForGuild(guildId) {
   const existing = await Module.find({ guildId });
   if (existing.length >= DEFAULT_MODULE_CATALOGUE.length) return;
-
   const ops = DEFAULT_MODULE_CATALOGUE.map((m) => ({
     updateOne: {
       filter: { guildId, id: m.id },
@@ -327,31 +187,22 @@ async function ensureModulesForGuild(guildId) {
       upsert: true,
     },
   }));
-
   if (ops.length) await Module.bulkWrite(ops);
 }
 
 /*********************************************************
  * STATIC PAGE ROUTES
  *********************************************************/
-const pages = [
-  "home", "admin-login", "admin", "billing", "bots", "checkout", "docs", "panel", "premier", "status"
-];
-
+const pages = ["home","admin-login","admin","billing","bots","checkout","docs","panel","premier","status"];
 pages.forEach(page => app.get(`/${page}`, (_, res) => res.sendFile(path.join(publicPath, `${page}.html`))));
 app.get("/dashboard", (_, res) => res.sendFile(path.join(publicPath, "dashboard.html")));
 app.get("/dashboard/:id", (_, res) => res.sendFile(path.join(publicPath, "dashboard-guild.html")));
 app.get(/.*\.html$/, (req, res) => res.redirect(301, req.path.replace(/\.html$/, "") === "/home" ? "/" : req.path.replace(/\.html$/, "")));
 app.get("/", (_, res) => res.sendFile(path.join(publicPath, "home.html")));
-app.use((req, res) => res.status(404).sendFile(path.join(publicPath, "home.html")));
+app.use((req,res) => res.status(404).sendFile(path.join(publicPath,"home.html")));
 
 /*********************************************************
- * MONGODB MAIN CONNECTION
- *********************************************************/
-connectMongo();
-
-/*********************************************************
- * START SERVER (LOCAL ONLY)
+ * START SERVER (local only)
  *********************************************************/
 if (!IS_VERCEL) {
   app.listen(PORT, () => console.log(`✅ Safeguard panel running → http://localhost:${PORT}`));
