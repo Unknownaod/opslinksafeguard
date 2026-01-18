@@ -9,14 +9,7 @@ const session = require("express-session");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const Stripe = require("stripe");
-const cron = require("node-cron");
-const Database = require("better-sqlite3");
 const fetch = (...args) => import("node-fetch").then(({ default: fn }) => fn(...args));
-
-/*********************************************************
- * FLAGS
- *********************************************************/
-const IS_VERCEL = !!process.env.VERCEL;
 
 /*********************************************************
  * EXPRESS APP
@@ -25,7 +18,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /*********************************************************
- * SESSION (serverless-safe)
+ * FLAGS
+ *********************************************************/
+const IS_VERCEL = !!process.env.VERCEL;
+
+/*********************************************************
+ * SESSION (Serverless-safe, in-memory for local only)
  *********************************************************/
 if (!IS_VERCEL) {
   app.use(
@@ -63,18 +61,27 @@ const {
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 /*********************************************************
- * STRIPE LICENSE DB (Dedicated Mongoose Connection)
+ * MONGODB CONNECTION (CACHED)
+ *********************************************************/
+let mongoConn;
+async function connectMongo() {
+  if (mongoConn) return mongoConn;
+  mongoConn = await mongoose.connect(MONGODB_URI);
+  console.log("✅ MongoDB connected");
+  return mongoConn;
+}
+
+/*********************************************************
+ * STRIPE LICENSE DB (Separate connection)
  *********************************************************/
 const licenseKeySchema = require("./models/LicenseKey");
-let webhookDB;
-
-async function getStripeDB() {
-  if (!webhookDB) {
-    webhookDB = mongoose.createConnection(MONGODB_URI);
-    webhookDB.model("LicenseKey", licenseKeySchema);
-    console.log("🔗 Stripe License DB connected");
-  }
-  return webhookDB;
+let stripeConn;
+async function connectStripeDB() {
+  if (stripeConn) return stripeConn;
+  stripeConn = mongoose.createConnection(MONGODB_URI);
+  stripeConn.model("LicenseKey", licenseKeySchema);
+  console.log("🔗 Stripe License DB connected");
+  return stripeConn;
 }
 
 function generateLicenseKey() {
@@ -102,7 +109,7 @@ app.post(
         const intent = event.data.object;
         const licenseKey = generateLicenseKey();
 
-        const conn = await getStripeDB();
+        const conn = await connectStripeDB();
         const LicenseKey = conn.model("LicenseKey");
 
         await LicenseKey.create({
@@ -124,7 +131,7 @@ app.post(
 );
 
 /*********************************************************
- * BODY PARSERS (after webhook)
+ * BODY PARSERS
  *********************************************************/
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -152,92 +159,70 @@ async function logDiscord(title, description, color = 0xff7a18) {
 }
 
 /*********************************************************
- * SQLITE STATUS DB (guarded for serverless)
+ * ADMIN AUTH (JWT — serverless-safe)
  *********************************************************/
-let db;
-if (!IS_VERCEL) {
-  db = new Database("uptime.db");
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS checks (
-      server_id TEXT,
-      status TEXT,
-      timestamp INTEGER,
-      reason TEXT,
-      incident_id INTEGER
-    );
-    CREATE TABLE IF NOT EXISTS incidents (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      server_id TEXT,
-      title TEXT,
-      reason TEXT,
-      severity TEXT,
-      start_time INTEGER,
-      end_time INTEGER
-    );
-    CREATE TABLE IF NOT EXISTS incident_updates (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      incident_id INTEGER,
-      message TEXT,
-      timestamp INTEGER
-    );
-    CREATE TABLE IF NOT EXISTS maintenance (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      server_id TEXT,
-      start_time INTEGER,
-      end_time INTEGER,
-      reason TEXT
-    );
-  `);
-}
-
-/*********************************************************
- * ADMIN AUTH
- *********************************************************/
-function requireAdmin(req, res, next) {
-  if (IS_VERCEL) return next(); // Skip session check in serverless
-  if (!req.session?.admin) return res.status(401).json({ error: "Unauthorized" });
-  next();
-}
-
 app.post("/api/admin/login", (req, res) => {
   const { email, password } = req.body || {};
   if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-    if (!IS_VERCEL) req.session.admin = true;
-    logDiscord("🔐 Admin Login", email, 0x2563eb);
     const token = jwt.sign({ admin: true }, SESSION_SECRET, { expiresIn: "2h" });
-    return res.json({ success: true, token });
+    logDiscord("🔐 Admin Login", email);
+    return res.json({ token });
   }
   res.status(401).json({ error: "Invalid login" });
 });
 
-app.get("/api/admin/me", (req, res) => {
-  if (!IS_VERCEL) return res.json({ admin: !!req.session.admin });
-  res.json({ admin: true });
-});
-
-app.post("/api/admin/logout", (req, res) => {
-  if (!IS_VERCEL && req.session) {
-    req.session.destroy(() => {
-      logDiscord("🚪 Admin Logout", "Session ended");
-      res.json({ success: true });
-    });
-  } else {
-    logDiscord("🚪 Admin Logout", "Serverless bypass");
-    res.json({ success: true });
+function requireAdmin(req, res, next) {
+  const auth = req.headers.authorization;
+  if (!auth) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    jwt.verify(auth.split(" ")[1], SESSION_SECRET);
+    next();
+  } catch {
+    res.status(401).json({ error: "Invalid token" });
   }
-});
+}
 
 /*********************************************************
- * SERVER CHECKS CRON (guarded for serverless)
+ * MONGODB MODELS FOR STATUS
+ *********************************************************/
+const serverSchema = new mongoose.Schema({
+  serverId: String,
+  name: String,
+});
+const checkSchema = new mongoose.Schema({
+  serverId: String,
+  status: String,
+  timestamp: { type: Date, default: Date.now },
+  reason: String,
+  incidentId: { type: mongoose.Schema.Types.ObjectId, ref: "Incident" },
+});
+const incidentSchema = new mongoose.Schema({
+  serverId: String,
+  title: String,
+  reason: String,
+  severity: String,
+  startTime: { type: Date, default: Date.now },
+  endTime: Date,
+});
+
+const ServerModel = mongoose.models.Server || mongoose.model("Server", serverSchema);
+const Check = mongoose.models.Check || mongoose.model("Check", checkSchema);
+const Incident = mongoose.models.Incident || mongoose.model("Incident", incidentSchema);
+
+/*********************************************************
+ * SERVERS
  *********************************************************/
 const SERVERS = [
-  { id: "c3934795", name: "SafeGuard" },
-  { id: "d1435ec6", name: "SafeGuard Premier" },
-  { id: "d16160bb", name: "SafeGuard Music" },
-  { id: "1d0c90d8", name: "OpsLink Systems" },
+  { serverId: "c3934795", name: "SafeGuard" },
+  { serverId: "d1435ec6", name: "SafeGuard Premier" },
+  { serverId: "d16160bb", name: "SafeGuard Music" },
+  { serverId: "1d0c90d8", name: "OpsLink Systems" },
 ];
 
-function inferDownReason(state, apiFailed) {
+/*********************************************************
+ * STATUS CHECK FUNCTION (replaces cron + sqlite)
+ *********************************************************/
+async function inferDownReason(state, apiFailed) {
   if (apiFailed) return "Monitoring system could not reach the server";
   if (state === "offline") return "Server is offline";
   if (state === "stopping") return "Server is stopping";
@@ -245,14 +230,15 @@ function inferDownReason(state, apiFailed) {
 }
 
 async function checkServers() {
-  if (IS_VERCEL) return; // skip cron in serverless
+  await connectMongo();
+
   for (const s of SERVERS) {
     let status = "down",
       reason = null,
       apiFailed = false;
 
     try {
-      const r = await fetch(`${PANEL_URL}/api/client/servers/${s.id}/resources`, {
+      const r = await fetch(`${PANEL_URL}/api/client/servers/${s.serverId}/resources`, {
         headers: { Authorization: `Bearer ${USER_API_KEY}` },
       });
       const j = await r.json();
@@ -261,60 +247,49 @@ async function checkServers() {
       else if (state === "stopping") {
         status = "degraded";
         reason = "Server is stopping";
-      } else {
-        status = "down";
-        reason = inferDownReason(state, false);
-      }
+      } else status = "down";
+      reason = reason || inferDownReason(state, false);
     } catch {
       status = "down";
       apiFailed = true;
       reason = inferDownReason(null, true);
     }
 
-    const last = db
-      .prepare(
-        `SELECT status, incident_id FROM checks WHERE server_id=? ORDER BY timestamp DESC LIMIT 1`
-      )
-      .get(s.id);
+    const lastCheck = await Check.findOne({ serverId: s.serverId }).sort({ timestamp: -1 });
+    let incidentId = lastCheck?.incidentId || null;
 
-    let incidentId = last?.incident_id || null;
-
-    if (last?.status !== "down" && status === "down") {
-      const result = db
-        .prepare(
-          `INSERT INTO incidents (server_id,title,reason,severity,start_time) VALUES (?,?,?,?,?)`
-        )
-        .run(s.id, `${s.name} outage`, reason || "Service unavailable", "critical", Date.now());
-      incidentId = result.lastInsertRowid;
-      db.prepare(
-        `INSERT INTO incident_updates (incident_id,message,timestamp) VALUES (?,?,?)`
-      ).run(incidentId, "Service went offline", Date.now());
+    if (lastCheck?.status !== "down" && status === "down") {
+      const incident = await Incident.create({
+        serverId: s.serverId,
+        title: `${s.name} outage`,
+        reason: reason || "Service unavailable",
+        severity: "critical",
+      });
+      incidentId = incident._id;
+      await Check.create({ serverId: s.serverId, status, reason, incidentId });
       logDiscord("🚨 Service Down", `**${s.name}**\n${reason}`, 0xef4444);
     }
 
-    if (last?.status === "down" && status !== "down" && last.incident_id) {
-      db.prepare(`UPDATE incidents SET end_time=? WHERE id=?`).run(Date.now(), last.incident_id);
-      db.prepare(
-        `INSERT INTO incident_updates (incident_id,message,timestamp) VALUES (?,?,?)`
-      ).run(last.incident_id, "Service restored", Date.now());
+    if (lastCheck?.status === "down" && status !== "down" && lastCheck.incidentId) {
+      await Incident.findByIdAndUpdate(lastCheck.incidentId, { endTime: new Date() });
+      await Check.create({ serverId: s.serverId, status, reason: null, incidentId: null });
       logDiscord("<✅> Service Restored", `**${s.name}** is operational`, 0x22c55e);
-      incidentId = null;
     }
 
-    db.prepare(
-      `INSERT INTO checks (server_id,status,timestamp,reason,incident_id) VALUES (?,?,?,?,?)`
-    ).run(s.id, status, Date.now(), reason, incidentId);
+    if (!lastCheck || lastCheck.status !== status) {
+      await Check.create({ serverId: s.serverId, status, reason, incidentId });
+    }
   }
 }
 
-if (!IS_VERCEL && !global.__CRON_STARTED__) {
-  cron.schedule("*/1 * * * *", checkServers);
-  checkServers();
-  global.__CRON_STARTED__ = true;
-}
+// Example route to trigger status check (can be scheduled in Vercel)
+app.get("/api/check-servers", async (req, res) => {
+  await checkServers();
+  res.json({ success: true });
+});
 
 /*********************************************************
- * MODULE SCHEMA & DEFAULTS
+ * MODULE SCHEMA & ROUTES
  *********************************************************/
 const moduleSchema = new mongoose.Schema({
   guildId: String,
@@ -342,7 +317,6 @@ const DEFAULT_MODULE_CATALOGUE = [
 ];
 
 async function ensureModulesForGuild(guildId) {
-  await mongoose.connect(MONGODB_URI);
   const existing = await Module.find({ guildId });
   if (existing.length >= DEFAULT_MODULE_CATALOGUE.length) return;
 
@@ -354,230 +328,30 @@ async function ensureModulesForGuild(guildId) {
     },
   }));
 
-  if (ops.length) {
-    await Module.bulkWrite(ops);
-    console.log(`✅ Seeded modules for guild ${guildId}`);
-  }
+  if (ops.length) await Module.bulkWrite(ops);
 }
-
-/*********************************************************
- * STATUS API
- *********************************************************/
-app.get("/api/status", (req, res) => {
-  if (IS_VERCEL) return res.json({ services: [], incidents: [], maintenance: [], lastUpdate: Date.now() });
-  const now = Date.now();
-  const RANGE = 90 * 86400000;
-  const INCIDENT_RANGE = 30 * 86400000;
-
-  const services = SERVERS.map((s) => {
-    const rows = db
-      .prepare(
-        `SELECT status,timestamp,reason,incident_id FROM checks WHERE server_id=? AND timestamp>? ORDER BY timestamp ASC`
-      )
-      .all(s.id, now - RANGE);
-
-    return {
-      id: s.id,
-      name: s.name,
-      status: rows.at(-1)?.status || "down",
-      history: rows,
-      incident: db.prepare(`SELECT * FROM incidents WHERE server_id=? AND end_time IS NULL`).get(s.id),
-    };
-  });
-
-  const incidents = db
-    .prepare(`SELECT * FROM incidents WHERE start_time>? ORDER BY start_time DESC`)
-    .all(now - INCIDENT_RANGE);
-
-  const maintenance = db
-    .prepare(
-      `SELECT * FROM maintenance WHERE start_time<=? AND end_time>=? ORDER BY start_time DESC LIMIT 1`
-    )
-    .get(now, now);
-
-  res.json({ services, incidents, maintenance, lastUpdate: now });
-});
-
-/*********************************************************
- * DISCORD OAUTH / USER / GUILDS
- *********************************************************/
-app.get("/auth/discord", (req, res) => {
-  const scope = encodeURIComponent("identify guilds");
-  const url =
-    `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}` +
-    `&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}` +
-    `&response_type=code&scope=${scope}`;
-  res.redirect(url);
-});
-
-app.get("/auth/discord/callback", async (req, res) => {
-  const code = req.query.code;
-  if (!code) return res.redirect("/?error=no_code");
-
-  try {
-    const params = new URLSearchParams({
-      client_id: DISCORD_CLIENT_ID,
-      client_secret: DISCORD_CLIENT_SECRET,
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: DISCORD_REDIRECT_URI,
-      scope: "identify guilds",
-    });
-
-    const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
-      method: "POST",
-      body: params,
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    });
-
-    const oauthData = await tokenRes.json();
-    if (!oauthData.access_token) return res.redirect("/?error=oauth_failed");
-
-    const userRes = await fetch("https://discord.com/api/users/@me", {
-      headers: { Authorization: `Bearer ${oauthData.access_token}` },
-    });
-    const user = await userRes.json();
-
-    const token = jwt.sign({ user, access_token: oauthData.access_token }, SESSION_SECRET, {
-      expiresIn: "1h",
-    });
-
-    res.redirect("/?token=" + encodeURIComponent(token));
-  } catch (err) {
-    console.error("Discord OAuth error:", err);
-    res.redirect("/?error=oauth_failed");
-  }
-});
-
-app.get("/api/user", (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth) return res.json({ loggedIn: false });
-
-  try {
-    const decoded = jwt.verify(auth.split(" ")[1], SESSION_SECRET);
-    res.json({ loggedIn: true, user: decoded.user });
-  } catch {
-    res.json({ loggedIn: false });
-  }
-});
-
-app.get("/api/guilds", async (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth) return res.status(401).json({ error: "Missing token" });
-
-  try {
-    const decoded = jwt.verify(auth.split(" ")[1], SESSION_SECRET);
-    const access = decoded.access_token;
-
-    const userRes = await fetch("https://discord.com/api/users/@me/guilds", {
-      headers: { Authorization: `Bearer ${access}` },
-    });
-    const userGuilds = await userRes.json();
-
-    const botRes = await fetch("https://discord.com/api/users/@me/guilds", {
-      headers: { Authorization: `Bot ${BOT_TOKEN}` },
-    });
-    const botGuilds = await botRes.json();
-    const botIds = new Set((Array.isArray(botGuilds) ? botGuilds.map((g) => g.id) : []));
-
-    const manageable = (Array.isArray(userGuilds) ? userGuilds : []).filter(
-      (g) => (BigInt(g.permissions ?? 0n) & 0x20n) === 0x20n
-    ).map((g) => ({ ...g, installed: botIds.has(g.id) }));
-
-    res.json(manageable);
-  } catch (err) {
-    console.error("Guild fetch error:", err);
-    res.status(401).json({ error: "Invalid or expired token" });
-  }
-});
-
-/*********************************************************
- * MODULE ROUTES
- *********************************************************/
-app.get("/api/modules/:guildId", async (req, res) => {
-  try {
-    await mongoose.connect(MONGODB_URI);
-    const guildId = req.params.guildId;
-    await ensureModulesForGuild(guildId);
-    const modules = await Module.find({ guildId }).sort({ name: 1 });
-    res.json(modules);
-  } catch (err) {
-    console.error("Get modules error:", err);
-    res.status(500).json({ error: "Failed to load modules" });
-  }
-});
-
-app.post("/api/modules/toggle/:moduleId", async (req, res) => {
-  try {
-    const moduleId = req.params.moduleId;
-    const { guildId, enabled } = req.body || {};
-
-    if (!guildId) return res.status(400).json({ error: "Missing guildId in body" });
-
-    const mod = await Module.findOne({ guildId, id: moduleId });
-    if (!mod) return res.status(404).json({ error: "Module not found" });
-
-    mod.enabled = typeof enabled === "boolean" ? enabled : !mod.enabled;
-    await mod.save();
-    console.log(`🔧 Toggled module ${mod.id} (${mod.guildId}) → ${mod.enabled}`);
-    res.json({ success: true, enabled: mod.enabled });
-  } catch (err) {
-    console.error("Toggle module error:", err);
-    res.status(500).json({ error: "Failed to toggle module" });
-  }
-});
-
-app.post("/api/modules/update/:moduleId", async (req, res) => {
-  try {
-    const moduleId = req.params.moduleId;
-    const { guildId, settings } = req.body || {};
-
-    if (!guildId) return res.status(400).json({ error: "Missing guildId in body" });
-
-    const mod = await Module.findOne({ guildId, id: moduleId });
-    if (!mod) return res.status(404).json({ error: "Module not found" });
-
-    mod.settings = settings || {};
-    await mod.save();
-
-    console.log(`💾 Updated settings for ${mod.id} (${mod.guildId})`);
-    res.json({ success: true, settings: mod.settings });
-  } catch (err) {
-    console.error("Update module settings error:", err);
-    res.status(500).json({ error: "Failed to update module" });
-  }
-});
 
 /*********************************************************
  * STATIC PAGE ROUTES
  *********************************************************/
 const pages = [
-  "home","admin-login","admin","billing","bots","checkout","docs","panel","premier","status",
+  "home", "admin-login", "admin", "billing", "bots", "checkout", "docs", "panel", "premier", "status"
 ];
-pages.forEach((page) => {
-  app.get(`/${page}`, (_, res) => res.sendFile(path.join(publicPath, `${page}.html`)));
-});
 
+pages.forEach(page => app.get(`/${page}`, (_, res) => res.sendFile(path.join(publicPath, `${page}.html`))));
 app.get("/dashboard", (_, res) => res.sendFile(path.join(publicPath, "dashboard.html")));
 app.get("/dashboard/:id", (_, res) => res.sendFile(path.join(publicPath, "dashboard-guild.html")));
-
-app.get(/.*\.html$/, (req, res) => {
-  const clean = req.path.replace(/\.html$/, "");
-  res.redirect(301, clean === "/home" ? "/" : clean);
-});
-
+app.get(/.*\.html$/, (req, res) => res.redirect(301, req.path.replace(/\.html$/, "") === "/home" ? "/" : req.path.replace(/\.html$/, "")));
 app.get("/", (_, res) => res.sendFile(path.join(publicPath, "home.html")));
 app.use((req, res) => res.status(404).sendFile(path.join(publicPath, "home.html")));
 
 /*********************************************************
  * MONGODB MAIN CONNECTION
  *********************************************************/
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB error:", err));
+connectMongo();
 
 /*********************************************************
- * START SERVER
+ * START SERVER (LOCAL ONLY)
  *********************************************************/
 if (!IS_VERCEL) {
   app.listen(PORT, () => console.log(`✅ Safeguard panel running → http://localhost:${PORT}`));
