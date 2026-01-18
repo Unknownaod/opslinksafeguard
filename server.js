@@ -41,7 +41,7 @@ const {
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 /*********************************************************
- * MONGODB CONNECTION (main)
+ * MONGODB CONNECTION
  *********************************************************/
 mongoose.set("strictQuery", true);
 mongoose
@@ -127,7 +127,7 @@ async function logDiscord(title, description, color = 0xff7a18) {
 }
 
 /*********************************************************
- * ADMIN AUTH (JWT-based, serverless safe)
+ * ADMIN AUTH (JWT)
  *********************************************************/
 app.post("/api/admin/login", (req, res) => {
   const { email, password } = req.body || {};
@@ -163,6 +163,7 @@ const moduleSchema = new mongoose.Schema({
 });
 
 const Module = mongoose.models.Module || mongoose.model("Module", moduleSchema);
+
 const DEFAULT_MODULE_CATALOGUE = [
   { id: "tickets", name: "Ticket System", description: "Advanced multi-panel ticket system with logging and transcripts.", enabled: true },
   { id: "welcome", name: "Welcome / Goodbye / Autorole", description: "Welcome cards, goodbye messages, join/leave DMs and autoroles.", enabled: true },
@@ -191,21 +192,145 @@ async function ensureModulesForGuild(guildId) {
 }
 
 /*********************************************************
+ * SERVER STATUS SCHEMA (MongoDB)
+ *********************************************************/
+const serverSchema = new mongoose.Schema({ serverId: String, name: String });
+const checkSchema = new mongoose.Schema({
+  serverId: String,
+  status: String,
+  timestamp: { type: Date, default: Date.now },
+  reason: String,
+  incidentId: { type: mongoose.Schema.Types.ObjectId, ref: "Incident" },
+});
+const incidentSchema = new mongoose.Schema({
+  serverId: String,
+  title: String,
+  reason: String,
+  severity: String,
+  startTime: { type: Date, default: Date.now },
+  endTime: Date,
+});
+const maintenanceSchema = new mongoose.Schema({
+  serverId: String,
+  startTime: Date,
+  endTime: Date,
+  reason: String,
+});
+
+const ServerModel = mongoose.models.Server || mongoose.model("Server", serverSchema);
+const Check = mongoose.models.Check || mongoose.model("Check", checkSchema);
+const Incident = mongoose.models.Incident || mongoose.model("Incident", incidentSchema);
+const Maintenance = mongoose.models.Maintenance || mongoose.model("Maintenance", maintenanceSchema);
+
+const SERVERS = [
+  { serverId: "c3934795", name: "SafeGuard" },
+  { serverId: "d1435ec6", name: "SafeGuard Premier" },
+  { serverId: "d16160bb", name: "SafeGuard Music" },
+  { serverId: "1d0c90d8", name: "OpsLink Systems" },
+];
+
+/*********************************************************
+ * SERVER CHECK FUNCTION (Serverless-safe)
+ *********************************************************/
+async function inferDownReason(state, apiFailed) {
+  if (apiFailed) return "Monitoring system could not reach the server";
+  if (state === "offline") return "Server is offline";
+  if (state === "stopping") return "Server is stopping";
+  return "Service became unavailable";
+}
+
+async function checkServers() {
+  for (const s of SERVERS) {
+    let status = "down", reason = null, apiFailed = false;
+    try {
+      const r = await fetch(`${PANEL_URL}/api/client/servers/${s.serverId}/resources`, {
+        headers: { Authorization: `Bearer ${USER_API_KEY}` },
+      });
+      const j = await r.json();
+      const state = j.attributes.current_state;
+      if (state === "running" || state === "starting") status = "up";
+      else if (state === "stopping") { status = "degraded"; reason = "Server is stopping"; }
+      reason = reason || (await inferDownReason(state, false));
+    } catch {
+      status = "down"; apiFailed = true; reason = await inferDownReason(null, true);
+    }
+
+    const lastCheck = await Check.findOne({ serverId: s.serverId }).sort({ timestamp: -1 });
+    let incidentId = lastCheck?.incidentId || null;
+
+    if (lastCheck?.status !== "down" && status === "down") {
+      const incident = await Incident.create({
+        serverId: s.serverId,
+        title: `${s.name} outage`,
+        reason: reason || "Service unavailable",
+        severity: "critical",
+      });
+      incidentId = incident._id;
+      await Check.create({ serverId: s.serverId, status, reason, incidentId });
+      logDiscord("🚨 Service Down", `**${s.name}**\n${reason}`, 0xef4444);
+    }
+
+    if (lastCheck?.status === "down" && status !== "down" && lastCheck.incidentId) {
+      await Incident.findByIdAndUpdate(lastCheck.incidentId, { endTime: new Date() });
+      await Check.create({ serverId: s.serverId, status, reason: null, incidentId: null });
+      logDiscord("<✅> Service Restored", `**${s.name}** is operational`, 0x22c55e);
+    }
+
+    if (!lastCheck || lastCheck.status !== status) {
+      await Check.create({ serverId: s.serverId, status, reason, incidentId });
+    }
+  }
+}
+
+// Serverless trigger for Vercel Cron
+app.get("/api/check-servers", async (req,res)=>{
+  await checkServers();
+  res.json({success:true});
+});
+
+/*********************************************************
+ * STATUS API
+ *********************************************************/
+app.get("/api/status", async (req,res)=>{
+  const now = Date.now();
+  const RANGE = 90*86400000;
+  const INCIDENT_RANGE = 30*86400000;
+
+  const services = [];
+  for(const s of SERVERS){
+    const rows = await Check.find({serverId:s.serverId,timestamp:{$gte:new Date(now-RANGE)}}).sort({timestamp:1});
+    const incident = await Incident.findOne({serverId:s.serverId,endTime:null});
+    services.push({
+      id:s.serverId,
+      name:s.name,
+      status:rows.length?rows[rows.length-1].status:"down",
+      history:rows,
+      incident,
+    });
+  }
+
+  const incidents = await Incident.find({startTime:{$gte:new Date(now-INCIDENT_RANGE)}}).sort({startTime:-1});
+  const maintenance = await Maintenance.findOne({startTime:{$lte:now},endTime:{$gte:now}});
+
+  res.json({services,incidents,maintenance,lastUpdate:now});
+});
+
+/*********************************************************
  * STATIC PAGE ROUTES
  *********************************************************/
 const pages = ["home","admin-login","admin","billing","bots","checkout","docs","panel","premier","status"];
-pages.forEach(page => app.get(`/${page}`, (_, res) => res.sendFile(path.join(publicPath, `${page}.html`))));
-app.get("/dashboard", (_, res) => res.sendFile(path.join(publicPath, "dashboard.html")));
-app.get("/dashboard/:id", (_, res) => res.sendFile(path.join(publicPath, "dashboard-guild.html")));
-app.get(/.*\.html$/, (req, res) => res.redirect(301, req.path.replace(/\.html$/, "") === "/home" ? "/" : req.path.replace(/\.html$/, "")));
-app.get("/", (_, res) => res.sendFile(path.join(publicPath, "home.html")));
-app.use((req,res) => res.status(404).sendFile(path.join(publicPath,"home.html")));
+pages.forEach(page=>app.get(`/${page}`,(_,res)=>res.sendFile(path.join(publicPath,`${page}.html`))));
+app.get("/dashboard",(_,res)=>res.sendFile(path.join(publicPath,"dashboard.html")));
+app.get("/dashboard/:id",(_,res)=>res.sendFile(path.join(publicPath,"dashboard-guild.html")));
+app.get(/.*\.html$/,(req,res)=>res.redirect(301,req.path.replace(/\.html$/,"")=="/home"?"/":req.path.replace(/\.html$/,"")));
+app.get("/",(_,res)=>res.sendFile(path.join(publicPath,"home.html")));
+app.use((req,res)=>res.status(404).sendFile(path.join(publicPath,"home.html")));
 
 /*********************************************************
  * START SERVER (local only)
  *********************************************************/
-if (!IS_VERCEL) {
-  app.listen(PORT, () => console.log(`✅ Safeguard panel running → http://localhost:${PORT}`));
+if(!IS_VERCEL){
+  app.listen(PORT,()=>console.log(`✅ Safeguard panel running → http://localhost:${PORT}`));
 }
 
 module.exports = app;
