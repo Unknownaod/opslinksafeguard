@@ -9,9 +9,14 @@ const session = require("express-session");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const Stripe = require("stripe");
-const Database = require("better-sqlite3");
 const cron = require("node-cron");
+const Database = require("better-sqlite3");
 const fetch = (...args) => import("node-fetch").then(({ default: fn }) => fn(...args));
+
+/*********************************************************
+ * FLAGS
+ *********************************************************/
+const IS_VERCEL = !!process.env.VERCEL;
 
 /*********************************************************
  * EXPRESS APP
@@ -20,16 +25,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /*********************************************************
- * SESSION
+ * SESSION (serverless-safe)
  *********************************************************/
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "supersecret",
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false },
-  })
-);
+if (!IS_VERCEL) {
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || "supersecret",
+      resave: false,
+      saveUninitialized: true,
+      cookie: { secure: false },
+    })
+  );
+}
 
 /*********************************************************
  * ENV VARIABLES
@@ -47,6 +54,7 @@ const {
   MONGODB_URI,
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
+  SESSION_SECRET,
 } = process.env;
 
 /*********************************************************
@@ -57,16 +65,17 @@ const stripe = new Stripe(STRIPE_SECRET_KEY);
 /*********************************************************
  * STRIPE LICENSE DB (Dedicated Mongoose Connection)
  *********************************************************/
-const mongooseStripe = require("mongoose");
 const licenseKeySchema = require("./models/LicenseKey");
+let webhookDB;
 
-const webhookDB = mongooseStripe
-  .createConnection(MONGODB_URI, {})
-  .on("connected", () => console.log("🔗 Stripe License DB connected"))
-  .on("error", (err) => console.error("❌ Stripe License DB error:", err));
-
-const LicenseKey =
-  webhookDB.models.LicenseKey || webhookDB.model("LicenseKey", licenseKeySchema);
+async function getStripeDB() {
+  if (!webhookDB) {
+    webhookDB = mongoose.createConnection(MONGODB_URI);
+    webhookDB.model("LicenseKey", licenseKeySchema);
+    console.log("🔗 Stripe License DB connected");
+  }
+  return webhookDB;
+}
 
 function generateLicenseKey() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -87,15 +96,14 @@ app.post(
   async (req, res) => {
     const sig = req.headers["stripe-signature"];
     try {
-      const event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        STRIPE_WEBHOOK_SECRET
-      );
+      const event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
 
       if (event.type === "payment_intent.succeeded") {
         const intent = event.data.object;
         const licenseKey = generateLicenseKey();
+
+        const conn = await getStripeDB();
+        const LicenseKey = conn.model("LicenseKey");
 
         await LicenseKey.create({
           key: licenseKey,
@@ -144,7 +152,83 @@ async function logDiscord(title, description, color = 0xff7a18) {
 }
 
 /*********************************************************
- * SQLITE STATUS DB
+ * SQLITE STATUS DB (guarded for serverless)
+ *********************************************************/
+let db;
+if (!IS_VERCEL) {
+  db = new Database("uptime.db");
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS checks (
+      server_id TEXT,
+      status TEXT,
+      timestamp INTEGER,
+      reason TEXT,
+      incident_id INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS incidents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      server_id TEXT,
+      title TEXT,
+      reason TEXT,
+      severity TEXT,
+      start_time INTEGER,
+      end_time INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS incident_updates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      incident_id INTEGER,
+      message TEXT,
+      timestamp INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS maintenance (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      server_id TEXT,
+      start_time INTEGER,
+      end_time INTEGER,
+      reason TEXT
+    );
+  `);
+}
+
+/*********************************************************
+ * ADMIN AUTH
+ *********************************************************/
+function requireAdmin(req, res, next) {
+  if (IS_VERCEL) return next(); // Skip session check in serverless
+  if (!req.session?.admin) return res.status(401).json({ error: "Unauthorized" });
+  next();
+}
+
+app.post("/api/admin/login", (req, res) => {
+  const { email, password } = req.body || {};
+  if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    if (!IS_VERCEL) req.session.admin = true;
+    logDiscord("🔐 Admin Login", email, 0x2563eb);
+    const token = jwt.sign({ admin: true }, SESSION_SECRET, { expiresIn: "2h" });
+    return res.json({ success: true, token });
+  }
+  res.status(401).json({ error: "Invalid login" });
+});
+
+app.get("/api/admin/me", (req, res) => {
+  if (!IS_VERCEL) return res.json({ admin: !!req.session.admin });
+  res.json({ admin: true });
+});
+
+app.post("/api/admin/logout", (req, res) => {
+  if (!IS_VERCEL && req.session) {
+    req.session.destroy(() => {
+      logDiscord("🚪 Admin Logout", "Session ended");
+      res.json({ success: true });
+    });
+  } else {
+    logDiscord("🚪 Admin Logout", "Serverless bypass");
+    res.json({ success: true });
+  }
+});
+
+/*********************************************************
+ * SERVER CHECKS CRON (guarded for serverless)
  *********************************************************/
 const SERVERS = [
   { id: "c3934795", name: "SafeGuard" },
@@ -153,71 +237,6 @@ const SERVERS = [
   { id: "1d0c90d8", name: "OpsLink Systems" },
 ];
 
-const db = new Database("uptime.db");
-db.exec(`
-CREATE TABLE IF NOT EXISTS checks (
-  server_id TEXT,
-  status TEXT,
-  timestamp INTEGER,
-  reason TEXT,
-  incident_id INTEGER
-);
-CREATE TABLE IF NOT EXISTS incidents (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  server_id TEXT,
-  title TEXT,
-  reason TEXT,
-  severity TEXT,
-  start_time INTEGER,
-  end_time INTEGER
-);
-CREATE TABLE IF NOT EXISTS incident_updates (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  incident_id INTEGER,
-  message TEXT,
-  timestamp INTEGER
-);
-CREATE TABLE IF NOT EXISTS maintenance (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  server_id TEXT,
-  start_time INTEGER,
-  end_time INTEGER,
-  reason TEXT
-);
-`);
-
-/*********************************************************
- * ADMIN AUTH
- *********************************************************/
-function requireAdmin(req, res, next) {
-  if (!req.session.admin) return res.status(401).json({ error: "Unauthorized" });
-  next();
-}
-
-app.post("/api/admin/login", (req, res) => {
-  const { email, password } = req.body || {};
-  if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-    req.session.admin = true;
-    logDiscord("🔐 Admin Login", email, 0x2563eb);
-    return res.json({ success: true });
-  }
-  res.status(401).json({ error: "Invalid login" });
-});
-
-app.get("/api/admin/me", (req, res) => {
-  res.json({ admin: !!req.session.admin });
-});
-
-app.post("/api/admin/logout", (req, res) => {
-  req.session.destroy(() => {
-    logDiscord("🚪 Admin Logout", "Session ended");
-    res.json({ success: true });
-  });
-});
-
-/*********************************************************
- * SERVER CHECKS CRON
- *********************************************************/
 function inferDownReason(state, apiFailed) {
   if (apiFailed) return "Monitoring system could not reach the server";
   if (state === "offline") return "Server is offline";
@@ -226,6 +245,7 @@ function inferDownReason(state, apiFailed) {
 }
 
 async function checkServers() {
+  if (IS_VERCEL) return; // skip cron in serverless
   for (const s of SERVERS) {
     let status = "down",
       reason = null,
@@ -287,7 +307,7 @@ async function checkServers() {
   }
 }
 
-if (!global.__CRON_STARTED__) {
+if (!IS_VERCEL && !global.__CRON_STARTED__) {
   cron.schedule("*/1 * * * *", checkServers);
   checkServers();
   global.__CRON_STARTED__ = true;
@@ -322,6 +342,7 @@ const DEFAULT_MODULE_CATALOGUE = [
 ];
 
 async function ensureModulesForGuild(guildId) {
+  await mongoose.connect(MONGODB_URI);
   const existing = await Module.find({ guildId });
   if (existing.length >= DEFAULT_MODULE_CATALOGUE.length) return;
 
@@ -343,6 +364,7 @@ async function ensureModulesForGuild(guildId) {
  * STATUS API
  *********************************************************/
 app.get("/api/status", (req, res) => {
+  if (IS_VERCEL) return res.json({ services: [], incidents: [], maintenance: [], lastUpdate: Date.now() });
   const now = Date.now();
   const RANGE = 90 * 86400000;
   const INCIDENT_RANGE = 30 * 86400000;
@@ -416,7 +438,7 @@ app.get("/auth/discord/callback", async (req, res) => {
     });
     const user = await userRes.json();
 
-    const token = jwt.sign({ user, access_token: oauthData.access_token }, process.env.SESSION_SECRET, {
+    const token = jwt.sign({ user, access_token: oauthData.access_token }, SESSION_SECRET, {
       expiresIn: "1h",
     });
 
@@ -432,7 +454,7 @@ app.get("/api/user", (req, res) => {
   if (!auth) return res.json({ loggedIn: false });
 
   try {
-    const decoded = jwt.verify(auth.split(" ")[1], process.env.SESSION_SECRET);
+    const decoded = jwt.verify(auth.split(" ")[1], SESSION_SECRET);
     res.json({ loggedIn: true, user: decoded.user });
   } catch {
     res.json({ loggedIn: false });
@@ -444,30 +466,23 @@ app.get("/api/guilds", async (req, res) => {
   if (!auth) return res.status(401).json({ error: "Missing token" });
 
   try {
-    const decoded = jwt.verify(auth.split(" ")[1], process.env.SESSION_SECRET);
+    const decoded = jwt.verify(auth.split(" ")[1], SESSION_SECRET);
     const access = decoded.access_token;
 
-    // User guilds (OAuth)
     const userRes = await fetch("https://discord.com/api/users/@me/guilds", {
-      headers: { Authorization: `Bearer ${access}` }
+      headers: { Authorization: `Bearer ${access}` },
     });
     const userGuilds = await userRes.json();
 
-    // Bot guilds
     const botRes = await fetch("https://discord.com/api/users/@me/guilds", {
-      headers: { Authorization: `Bot ${BOT_TOKEN}` }
+      headers: { Authorization: `Bot ${BOT_TOKEN}` },
     });
     const botGuilds = await botRes.json();
-    const botIds = new Set(
-      Array.isArray(botGuilds) ? botGuilds.map((g) => g.id) : []
-    );
+    const botIds = new Set((Array.isArray(botGuilds) ? botGuilds.map((g) => g.id) : []));
 
-    // Manageable guilds (user has MANAGE_GUILD)
-    const manageable = (Array.isArray(userGuilds) ? userGuilds : [])
-      .filter(
-        (g) => (BigInt(g.permissions ?? 0n) & 0x20n) === 0x20n
-      )
-      .map((g) => ({ ...g, installed: botIds.has(g.id) }));
+    const manageable = (Array.isArray(userGuilds) ? userGuilds : []).filter(
+      (g) => (BigInt(g.permissions ?? 0n) & 0x20n) === 0x20n
+    ).map((g) => ({ ...g, installed: botIds.has(g.id) }));
 
     res.json(manageable);
   } catch (err) {
@@ -481,12 +496,10 @@ app.get("/api/guilds", async (req, res) => {
  *********************************************************/
 app.get("/api/modules/:guildId", async (req, res) => {
   try {
+    await mongoose.connect(MONGODB_URI);
     const guildId = req.params.guildId;
-
     await ensureModulesForGuild(guildId);
-
     const modules = await Module.find({ guildId }).sort({ name: 1 });
-
     res.json(modules);
   } catch (err) {
     console.error("Get modules error:", err);
@@ -499,21 +512,12 @@ app.post("/api/modules/toggle/:moduleId", async (req, res) => {
     const moduleId = req.params.moduleId;
     const { guildId, enabled } = req.body || {};
 
-    if (!guildId) {
-      return res.status(400).json({ error: "Missing guildId in body" });
-    }
+    if (!guildId) return res.status(400).json({ error: "Missing guildId in body" });
 
     const mod = await Module.findOne({ guildId, id: moduleId });
-    if (!mod) {
-      return res.status(404).json({ error: "Module not found" });
-    }
+    if (!mod) return res.status(404).json({ error: "Module not found" });
 
-    if (typeof enabled === "boolean") {
-      mod.enabled = enabled;
-    } else {
-      mod.enabled = !mod.enabled;
-    }
-
+    mod.enabled = typeof enabled === "boolean" ? enabled : !mod.enabled;
     await mod.save();
     console.log(`🔧 Toggled module ${mod.id} (${mod.guildId}) → ${mod.enabled}`);
     res.json({ success: true, enabled: mod.enabled });
@@ -528,14 +532,10 @@ app.post("/api/modules/update/:moduleId", async (req, res) => {
     const moduleId = req.params.moduleId;
     const { guildId, settings } = req.body || {};
 
-    if (!guildId) {
-      return res.status(400).json({ error: "Missing guildId in body" });
-    }
+    if (!guildId) return res.status(400).json({ error: "Missing guildId in body" });
 
     const mod = await Module.findOne({ guildId, id: moduleId });
-    if (!mod) {
-      return res.status(404).json({ error: "Module not found" });
-    }
+    if (!mod) return res.status(404).json({ error: "Module not found" });
 
     mod.settings = settings || {};
     await mod.save();
@@ -552,56 +552,34 @@ app.post("/api/modules/update/:moduleId", async (req, res) => {
  * STATIC PAGE ROUTES
  *********************************************************/
 const pages = [
-  "home",
-  "admin-login",
-  "admin",
-  "billing",
-  "bots",
-  "checkout",
-  "docs",
-  "panel",
-  "premier",
-  "status",
+  "home","admin-login","admin","billing","bots","checkout","docs","panel","premier","status",
 ];
-
 pages.forEach((page) => {
-  app.get(`/${page}`, (_, res) => {
-    res.sendFile(path.join(publicPath, `${page}.html`));
-  });
+  app.get(`/${page}`, (_, res) => res.sendFile(path.join(publicPath, `${page}.html`)));
 });
 
-app.get("/dashboard", (_, res) =>
-  res.sendFile(path.join(publicPath, "dashboard.html"))
-);
+app.get("/dashboard", (_, res) => res.sendFile(path.join(publicPath, "dashboard.html")));
+app.get("/dashboard/:id", (_, res) => res.sendFile(path.join(publicPath, "dashboard-guild.html")));
 
-app.get("/dashboard/:id", (_, res) =>
-  res.sendFile(path.join(publicPath, "dashboard-guild.html"))
-);
-
-// Redirect *.html → clean URL
 app.get(/.*\.html$/, (req, res) => {
   const clean = req.path.replace(/\.html$/, "");
   res.redirect(301, clean === "/home" ? "/" : clean);
 });
 
-// Home route
 app.get("/", (_, res) => res.sendFile(path.join(publicPath, "home.html")));
-
-// 404 fallback
 app.use((req, res) => res.status(404).sendFile(path.join(publicPath, "home.html")));
 
 /*********************************************************
  * MONGODB MAIN CONNECTION
  *********************************************************/
-mongoose
-  .connect(MONGODB_URI)
+mongoose.connect(MONGODB_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB error:", err));
 
 /*********************************************************
  * START SERVER
  *********************************************************/
-if (!process.env.VERCEL) {
+if (!IS_VERCEL) {
   app.listen(PORT, () => console.log(`✅ Safeguard panel running → http://localhost:${PORT}`));
 }
 
